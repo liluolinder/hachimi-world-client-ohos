@@ -1,0 +1,48 @@
+package world.hachimi.app.model
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import world.hachimi.app.api.ApiClient
+import world.hachimi.app.api.module.SongModule
+
+class MainViewModel(
+    private val apiClient: ApiClient
+): ViewModel() {
+    var isLoading by mutableStateOf(false)
+        private set
+    var songs by mutableStateOf(emptyList<SongModule.DetailResp>())
+        private set
+
+    fun mounted() {
+        getRecommendSongs()
+    }
+
+    fun unmount() {
+
+    }
+
+    private fun getRecommendSongs() {
+        viewModelScope.launch(Dispatchers.IO) {
+            isLoading = true
+
+            try {
+                val recentIds = apiClient.songModule.recent().okData<SongModule.SongListResp>()
+                val details = recentIds.songIds.map {
+                    apiClient.songModule.detail(it).okData<SongModule.DetailResp>()
+                }
+
+                songs = details
+            } catch (e: Exception) {
+                e.printStackTrace()
+                GlobalStore.alert("获取推荐音乐失败")
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+}

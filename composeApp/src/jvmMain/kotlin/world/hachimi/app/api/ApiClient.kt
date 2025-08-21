@@ -18,6 +18,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import world.hachimi.app.api.module.AuthModule
+import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.logging.Logger
 import kotlin.io.encoding.Base64
@@ -64,42 +65,64 @@ class ApiClient(private val baseUrl: String) {
         return baseUrl + path
     }
 
-    internal suspend inline fun <reified T> post(path: String, body: Any, auth: Boolean = true): WebResult<T> = withContext(Dispatchers.IO) {
-        if (auth) refreshToken()
+    internal suspend inline fun <reified T> post(path: String, body: Any, auth: Boolean = true): WebResult<T> =
+        withContext(Dispatchers.IO) {
+            if (auth) refreshToken()
 
-        val url = buildUrl(path)
-        Logger.d(TAG, "Sending POST to: $url")
-        val resp = httpClient.post(url) {
-            contentType(ContentType.Application.Json)
-            if (auth && accessToken != null) {
-                Logger.d(TAG, "with credential")
-                header("Authorization", "Bearer $accessToken")
-            }
-            setBody(body)
-        }.body<HttpResponse>()
+            val url = buildUrl(path)
+            Logger.d(TAG, "Sending POST to: $url")
+            val resp = httpClient.post(url) {
+                contentType(ContentType.Application.Json)
+                if (auth && accessToken != null) {
+                    Logger.d(TAG, "with credential")
+                    header("Authorization", "Bearer $accessToken")
+                }
+                setBody(body)
+            }.body<HttpResponse>()
 
-        val data = checkAndDecode<T>(resp, path)
-        data
-    }
+            val data = checkAndDecode<T>(resp, path)
+            data
+        }
 
-    internal suspend inline fun <reified T> get(path: String, auth: Boolean = true): WebResult<T> = withContext(Dispatchers.IO) {
-        if (auth) refreshToken()
-        val url = buildUrl(path)
-        Logger.d(TAG, "Sending GET to: $url")
-        val resp = httpClient.get(url) {
-            if (auth && accessToken != null) {
-                Logger.d(TAG, "with credential")
-                header("Authorization", "Bearer $accessToken")
-            }
-        }.body<HttpResponse>()
-        val data = checkAndDecode<T>(resp, path)
-        data
-    }
+    internal suspend inline fun <reified T> get(path: String, auth: Boolean = true): WebResult<T> =
+        withContext(Dispatchers.IO) {
+            if (auth) refreshToken()
+            val url = buildUrl(path)
+            Logger.d(TAG, "Sending GET to: $url")
+            val resp = httpClient.get(url) {
+                if (auth && accessToken != null) {
+                    Logger.d(TAG, "with credential")
+                    header("Authorization", "Bearer $accessToken")
+                }
+            }.body<HttpResponse>()
+            val data = checkAndDecode<T>(resp, path)
+            data
+        }
+
+    internal suspend inline fun <reified P, reified T> get(path: String, query: P, auth: Boolean = true): WebResult<T> =
+        withContext(Dispatchers.IO) {
+            if (auth) refreshToken()
+            val url = buildUrl(path)
+            Logger.d(TAG, "Sending GET to: $url")
+            val resp = httpClient.get(url) {
+                if (auth && accessToken != null) {
+                    Logger.d(TAG, "with credential")
+                    header("Authorization", "Bearer $accessToken")
+                }
+                val encoded = json.encodeToJsonElement(query)
+                encoded.jsonObject.forEach { (key, value) ->
+                    if (value is JsonNull) return@forEach
+                    parameter(key, value.jsonPrimitive.content)
+                }
+            }.body<HttpResponse>()
+            val data = checkAndDecode<T>(resp, path)
+            data
+        }
 
     internal suspend fun refreshToken() = withContext(Dispatchers.IO) {
         // Only execute once at the same time
         if (authLock.isLocked) {
-            authLock.withLock {  }
+            authLock.withLock { }
         } else {
             authLock.withLock {
                 if (accessToken != null) {
@@ -171,6 +194,7 @@ class ApiClient(private val baseUrl: String) {
 
     val authModule by lazy { AuthModule(this) }
     val userModule by lazy { UserModule(this) }
+    val songModule by lazy { SongModule(this) }
 }
 
 interface AuthenticationListener {
@@ -195,13 +219,13 @@ fun parseJwtWithoutVerification(token: String): JsonObject {
 }
 
 sealed class AuthError {
-    data class UnauthorizedDuringRequest(val endpoint: String, val response: HttpResponse): AuthError()
-    data class ErrorHttpResponse(val endpoint: String, val response: HttpResponse): AuthError()
-    data class ErrorResponse(val endpoint: String, val error: CommonError): AuthError()
+    data class UnauthorizedDuringRequest(val endpoint: String, val response: HttpResponse) : AuthError()
+    data class ErrorHttpResponse(val endpoint: String, val response: HttpResponse) : AuthError()
+    data class ErrorResponse(val endpoint: String, val error: CommonError) : AuthError()
     data class Exception(val endpoint: String, val exception: kotlin.Exception) : AuthError()
 }
 
-object DefaultAuthenticationListener: AuthenticationListener {
+object DefaultAuthenticationListener : AuthenticationListener {
     override suspend fun onTokenChange(accessToken: String, refreshToken: String) {
 
     }
@@ -220,13 +244,15 @@ data class WebResp<T, E>(
         val json = Json {
             ignoreUnknownKeys = true
             prettyPrint = false
+            namingStrategy = JsonNamingStrategy.SnakeCase
         }
     }
-    inline fun <reified U: T> okData(): U {
+
+    inline fun <reified U : T> okData(): U {
         return json.decodeFromJsonElement<U>(this.data)
     }
 
-    inline fun <reified D: E> errData(): E {
+    inline fun <reified D : E> errData(): E {
         return json.decodeFromJsonElement<D>(this.data)
     }
 }

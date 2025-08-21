@@ -97,8 +97,8 @@ kotlin {
 
             implementation(libs.kotlinx.datetime)
 
-            implementation(libs.androidx.sqlite.bundled)
-            implementation(libs.androidx.datastore.preferences)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -113,6 +113,8 @@ kotlin {
             implementation(libs.logback)
 
             implementation(libs.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.androidx.datastore.preferences)
 
         }
     }
@@ -200,21 +202,21 @@ buildkonfig {
 
         buildConfigField(Type.STRING, "BUILD_TYPE", "dev")
         buildConfigField(Type.STRING, "APP_PACKAGE_NAME", "world.hachimi.app.dev")
-        buildConfigField(Type.STRING, "APP_NAME", "KeepTally Dev")
+        buildConfigField(Type.STRING, "APP_NAME", "Hachimi World Dev")
         buildConfigField(Type.STRING, "API_BASE_URL", props.getProperty("app.dev.apiBaseUrl"))
     }
 
     defaultConfigs("release") {
         buildConfigField(Type.STRING, "BUILD_TYPE", "release")
         buildConfigField(Type.STRING, "APP_PACKAGE_NAME", "world.hachimi.app")
-        buildConfigField(Type.STRING, "APP_NAME", "KeepTally")
+        buildConfigField(Type.STRING, "APP_NAME", "Hachimi World")
         buildConfigField(Type.STRING, "API_BASE_URL", props.getProperty("app.release.apiBaseUrl"))
     }
 
     defaultConfigs("beta") {
         buildConfigField(Type.STRING, "BUILD_TYPE", "beta")
         buildConfigField(Type.STRING, "APP_PACKAGE_NAME", "world.hachimi.app.beta")
-        buildConfigField(Type.STRING, "APP_NAME", "KeepTally")
+        buildConfigField(Type.STRING, "APP_NAME", "Hachimi World")
         buildConfigField(Type.STRING, "API_BASE_URL", props.getProperty("app.release.apiBaseUrl"))
     }
 }
