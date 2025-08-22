@@ -42,9 +42,10 @@ object GlobalStore {
         playerExpanded = false
     }
 
-    fun setLoginUser(name: String, avatarUrl: String?) {
+    fun setLoginUser(uid: Long, name: String, avatarUrl: String?) {
         Snapshot.withMutableSnapshot {
             userInfo = UserInfo(
+                uid = uid,
                 name = name,
                 avatarUrl = avatarUrl
             )
@@ -61,6 +62,7 @@ class PlayerInfo() {
 }
 
 data class UserInfo(
+    val uid: Long,
     val name: String,
     val avatarUrl: String? = null
 )

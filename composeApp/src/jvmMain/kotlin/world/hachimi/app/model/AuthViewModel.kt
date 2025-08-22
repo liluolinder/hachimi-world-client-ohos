@@ -115,7 +115,7 @@ class AuthViewModel(
                 )
                 if (resp.ok) {
                     dataStore.set(PreferencesKeys.USER_NAME, name)
-                    GlobalStore.setLoginUser(name, null)
+                    GlobalStore.setLoginUser(uid.toLong(), name, null)
                     GlobalStore.nav.replace(Route.Root(RootContent.Home))
                 } else {
                     error = resp.errData<CommonError>().msg
@@ -135,6 +135,40 @@ class AuthViewModel(
 
     fun clearErrorMessage() {
         error = null
+    }
+
+    fun login() {
+        viewModelScope.launch {
+            try {
+                isOperating = true
+                val resp = api.authModule.loginEmail(AuthModule.LoginReq(
+                    email = email,
+                    password = password,
+                    code = null,
+                    deviceInfo = "Desktop Client"
+                ))
+                if (resp.ok) {
+                    val data = resp.okData<AuthModule.LoginResp>()
+                    // Set token to the api client
+                    api.setToken(data.token.accessToken, data.token.refreshToken)
+
+                    // Save token
+                    dataStore.set(PreferencesKeys.USER_UID, data.uid)
+                    dataStore.set(PreferencesKeys.USER_NAME, data.username)
+                    dataStore.set(PreferencesKeys.AUTH_ACCESS_TOKEN, data.token.accessToken)
+                    dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, data.token.refreshToken)
+
+                    GlobalStore.setLoginUser(data.uid, data.username, null)
+                    GlobalStore.nav.replace(Route.Root(RootContent.Home))
+                } else {
+                    error = resp.errData<CommonError>().msg
+                }
+            } catch (e: Exception) {
+                error = e.localizedMessage
+            } finally {
+                isOperating = false
+            }
+        }
     }
 
     private suspend fun mRegister() = withContext(Dispatchers.IO) {

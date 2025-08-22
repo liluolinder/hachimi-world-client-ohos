@@ -32,6 +32,8 @@ class AuthModule(
 
     @Serializable
     data class LoginResp(
+        val uid: Long,
+        val username: String,
         val token: TokenPair
     )
 

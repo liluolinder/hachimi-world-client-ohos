@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 import coil3.request.Disposable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -34,7 +36,6 @@ fun AuthScreen(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("欢迎回家")
-
             Row {
                 if (isLogin) {
                     Button(onClick = {}) {
@@ -65,7 +66,10 @@ fun AuthScreen(
                     Text("密码")
                 }, visualTransformation = PasswordVisualTransformation())
 
-                Button(onClick = {}) {
+                Button(
+                    onClick = { vm.login() },
+                    enabled = !vm.isOperating && vm.email.isNotBlank() && vm.password.isNotBlank(),
+                ) {
                     Text("登录")
                 }
             } else {
