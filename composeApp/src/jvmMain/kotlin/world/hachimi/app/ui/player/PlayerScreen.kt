@@ -19,11 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import kotlin.math.roundToInt
 
 @Composable
 fun PlayerScreen() {
+    val global = koinInject<GlobalStore>()
     Surface {
         Box {
             Row(Modifier.fillMaxSize().padding(32.dp)) {
@@ -87,7 +89,7 @@ fun PlayerScreen() {
 
             IconButton(
                 modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
-                onClick = { GlobalStore.shrinkPlayer() }
+                onClick = { global.shrinkPlayer() }
             ) {
                 Icon(Icons.Default.CloseFullscreen, "Shrink")
             }

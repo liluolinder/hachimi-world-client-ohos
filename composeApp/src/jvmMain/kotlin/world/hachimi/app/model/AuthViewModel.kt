@@ -23,7 +23,8 @@ import world.hachimi.app.storage.PreferencesKeys
 
 class AuthViewModel(
     private val api: ApiClient,
-    private val dataStore: MyDataStore
+    private val dataStore: MyDataStore,
+    private val global: GlobalStore,
 ): ViewModel() {
     var isOperating by mutableStateOf(false)
         private set
@@ -115,8 +116,8 @@ class AuthViewModel(
                 )
                 if (resp.ok) {
                     dataStore.set(PreferencesKeys.USER_NAME, name)
-                    GlobalStore.setLoginUser(uid.toLong(), name, null)
-                    GlobalStore.nav.replace(Route.Root(RootContent.Home))
+                    global.setLoginUser(uid.toLong(), name, null)
+                    global.nav.replace(Route.Root(RootContent.Home))
                 } else {
                     error = resp.errData<CommonError>().msg
                 }
@@ -130,7 +131,7 @@ class AuthViewModel(
     }
 
     fun skipProfile() {
-        GlobalStore.nav.replace(Route.Root(RootContent.Home))
+        global.nav.replace(Route.Root(RootContent.Home))
     }
 
     fun clearErrorMessage() {
@@ -158,8 +159,8 @@ class AuthViewModel(
                     dataStore.set(PreferencesKeys.AUTH_ACCESS_TOKEN, data.token.accessToken)
                     dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, data.token.refreshToken)
 
-                    GlobalStore.setLoginUser(data.uid, data.username, null)
-                    GlobalStore.nav.replace(Route.Root(RootContent.Home))
+                    global.setLoginUser(data.uid, data.username, null)
+                    global.nav.replace(Route.Root(RootContent.Home))
                 } else {
                     error = resp.errData<CommonError>().msg
                 }

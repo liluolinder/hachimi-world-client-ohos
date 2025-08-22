@@ -21,12 +21,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MainViewModel
 
 @Composable
 fun HomeScreen(vm: MainViewModel = koinViewModel()) {
+    val global = koinInject<GlobalStore>()
     DisposableEffect(vm) {
         vm.mounted()
         onDispose {
@@ -51,7 +53,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                     it.tags.map { it.name },
                     it.likeCount,
                     onClick = {
-                        GlobalStore.expandPlayer()
+                        global.expandPlayer()
                     },
                     modifier = Modifier.width(240.dp),
                 )

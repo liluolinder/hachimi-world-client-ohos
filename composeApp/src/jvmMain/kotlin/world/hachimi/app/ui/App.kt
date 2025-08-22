@@ -12,6 +12,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route.Auth
 import world.hachimi.app.nav.Route.Root
@@ -21,7 +22,8 @@ import world.hachimi.app.ui.root.RootScreen
 
 @Composable
 fun App() {
-    val rootDestination = GlobalStore.nav.backStack.last()
+    val global = koinInject<GlobalStore>()
+    val rootDestination = global.nav.backStack.last()
 
     MaterialTheme {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -32,12 +34,12 @@ fun App() {
                 }
                 FloatingActionButton(
                     modifier = Modifier.align(Alignment.BottomEnd),
-                    onClick = { GlobalStore.nav.back() }
+                    onClick = { global.nav.back() }
                 ) {
                     Icon(Icons.Default.ArrowBack, "Back")
                 }
 
-                AnimatedVisibility(visible = GlobalStore.playerExpanded, modifier = Modifier.fillMaxSize()) {
+                AnimatedVisibility(visible = global.playerExpanded, modifier = Modifier.fillMaxSize()) {
                     PlayerScreen()
                 }
             }

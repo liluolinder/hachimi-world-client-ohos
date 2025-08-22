@@ -11,7 +11,8 @@ import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.module.SongModule
 
 class MainViewModel(
-    private val apiClient: ApiClient
+    private val apiClient: ApiClient,
+    private val global: GlobalStore
 ): ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
@@ -39,7 +40,7 @@ class MainViewModel(
                 songs = details
             } catch (e: Exception) {
                 e.printStackTrace()
-                GlobalStore.alert("获取推荐音乐失败")
+                global.alert("获取推荐音乐失败")
             } finally {
                 isLoading = false
             }

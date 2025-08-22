@@ -65,6 +65,22 @@ class ApiClient(private val baseUrl: String) {
         return baseUrl + path
     }
 
+    internal suspend inline fun <reified T> postWith(path: String, auth: Boolean = true, crossinline block: HttpRequestBuilder.() -> Unit): WebResult<T> {
+        return withContext(Dispatchers.IO) {
+            if (auth) refreshToken()
+
+            val url = buildUrl(path)
+            Logger.d(TAG, "POST $path")
+            val resp = httpClient.post(url) {
+                applyAuth()
+                block()
+            }.body<HttpResponse>()
+
+            val data = checkAndDecode<T>(resp, path)
+            data
+        }
+    }
+
     internal suspend inline fun <reified T> post(path: String, body: Any, auth: Boolean = true): WebResult<T> =
         withContext(Dispatchers.IO) {
             if (auth) refreshToken()
@@ -72,12 +88,8 @@ class ApiClient(private val baseUrl: String) {
             val url = buildUrl(path)
             Logger.d(TAG, "POST $path")
             val resp = httpClient.post(url) {
+                applyAuth()
                 contentType(ContentType.Application.Json)
-                if (auth && accessToken != null) {
-                    Logger.d(TAG, "with credential")
-                    header("Authorization", "Bearer $accessToken")
-                }
-                header("X-Real-IP", "127.0.0.1")
                 setBody(body)
             }.body<HttpResponse>()
 
@@ -91,11 +103,7 @@ class ApiClient(private val baseUrl: String) {
             val url = buildUrl(path)
             Logger.d(TAG, "GET $path")
             val resp = httpClient.get(url) {
-                if (auth && accessToken != null) {
-                    Logger.d(TAG, "with credential")
-                    header("Authorization", "Bearer $accessToken")
-                }
-                header("X-Real-IP", "127.0.0.1")
+                if (auth) applyAuth()
             }.body<HttpResponse>()
             val data = checkAndDecode<T>(resp, path)
             data
@@ -107,10 +115,8 @@ class ApiClient(private val baseUrl: String) {
             val url = buildUrl(path)
             Logger.d(TAG, "GET $path")
             val resp = httpClient.get(url) {
-                if (auth && accessToken != null) {
-                    Logger.d(TAG, "with credential")
-                    header("Authorization", "Bearer $accessToken")
-                }
+                if (auth) applyAuth()
+
                 val encoded = json.encodeToJsonElement(query)
                 encoded.jsonObject.forEach { (key, value) ->
                     if (value is JsonNull) return@forEach
@@ -144,7 +150,7 @@ class ApiClient(private val baseUrl: String) {
                             authModule.rawRefreshToken(
                                 AuthModule.RefreshTokenReq(
                                     refreshToken = refreshToken!!,
-                                    deviceInfo = "TODO" // TODO: Get device info
+                                    deviceInfo = "Desktop Client" // TODO: Get device info
                                 )
                             )
                         } catch (e: Exception) {
@@ -164,7 +170,7 @@ class ApiClient(private val baseUrl: String) {
                                 Logger.w(TAG, "refreshToken: Refreshing token returns error")
                                 val data = result.errData<CommonError>()
                                 authListener.onAuthenticationError(
-                                    AuthError.ErrorResponse(
+                                    AuthError.RefreshTokenError(
                                         "refresh_token",
                                         data
                                     )
@@ -195,6 +201,13 @@ class ApiClient(private val baseUrl: String) {
         error("Error response: ${resp.status} $content")
     }
 
+    internal fun HttpRequestBuilder.applyAuth() {
+        if (accessToken != null) {
+            header("Authorization", "Bearer $accessToken")
+        }
+        header("X-Real-IP", "127.0.0.1")
+    }
+
     val authModule by lazy { AuthModule(this) }
     val userModule by lazy { UserModule(this) }
     val songModule by lazy { SongModule(this) }
@@ -222,10 +235,34 @@ fun parseJwtWithoutVerification(token: String): JsonObject {
 }
 
 sealed class AuthError {
+    /**
+     * This error should not happen since we check and refresh tokens before requesting.
+     *
+     * But could happen when Api Client access a protected endpoint without setting `auth` to `true`
+     */
     data class UnauthorizedDuringRequest(val endpoint: String, val response: HttpResponse) : AuthError()
+
+    /**
+     * If server returns HTTP status error during refreshing token
+     *
+     * When this occurs, it's better to report to backend, or retry.
+     */
     data class ErrorHttpResponse(val endpoint: String, val response: HttpResponse) : AuthError()
-    data class ErrorResponse(val endpoint: String, val error: CommonError) : AuthError()
-    data class Exception(val endpoint: String, val exception: kotlin.Exception) : AuthError()
+
+    /**
+     * If the refresh token request returns an error, such as
+     * - `invalid_refresh_token`
+     * - `inconsistent_device`
+     * - `token_revoked`?
+     *
+     * When this occurs, should let the user to re-log in
+     */
+    data class RefreshTokenError(val endpoint: String, val error: CommonError) : AuthError()
+
+    /**
+     * Unknown exception during authentication procedure
+     */
+    data class UnknownError(val endpoint: String, val exception: Exception) : AuthError()
 }
 
 object DefaultAuthenticationListener : AuthenticationListener {
