@@ -9,18 +9,30 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import coil3.request.Disposable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import org.koin.compose.viewmodel.koinViewModel
+import world.hachimi.app.model.AuthViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.RootContent
 import world.hachimi.app.nav.Route
 
 @Composable
-fun AuthScreen(init: Boolean) {
-    var isLogin by remember(init) { mutableStateOf(init) }
+fun AuthScreen(
+    displayLoginAsInitial: Boolean,
+    vm: AuthViewModel = koinViewModel()
+) {
+    DisposableEffect(vm) {
+        vm.mounted()
+        onDispose {
+            vm.unmount()
+        }
+    }
+    var isLogin by remember(displayLoginAsInitial) { mutableStateOf(displayLoginAsInitial) }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.align(Alignment.Center)) {
+        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("欢迎回家")
 
             Row {
@@ -46,13 +58,10 @@ fun AuthScreen(init: Boolean) {
             }
 
             if (isLogin) {
-                var email by remember { mutableStateOf("") }
-                var password by remember { mutableStateOf("") }
-
-                TextField(email, { email = it }, placeholder = {
+                TextField(vm.email, { vm.email = it }, placeholder = {
                     Text("邮箱")
                 })
-                TextField(password, { password = it }, placeholder = {
+                TextField(vm.password, { vm.password = it }, placeholder = {
                     Text("密码")
                 }, visualTransformation = PasswordVisualTransformation())
 
@@ -60,97 +69,94 @@ fun AuthScreen(init: Boolean) {
                     Text("登录")
                 }
             } else {
-                var step by remember { mutableStateOf(0) }
-                var email by remember { mutableStateOf("") }
-                var password by remember { mutableStateOf("") }
-                var passwordRepeat by remember { mutableStateOf("") }
-                var code by remember { mutableStateOf("") }
-                var codeRemainSecs by remember { mutableStateOf(0) }
-
-                LaunchedEffect(Unit) {
-                    while (isActive) {
-                        delay(1000)
-                        codeRemainSecs -= 1
-                    }
-                }
-
-                if (step == 0) {
+                if (vm.regStep == 0) {
                     Text("成为神人")
 
-                    TextField(email, { email = it }, placeholder = {
+                    TextField(vm.regEmail, { vm.regEmail = it }, placeholder = {
                         Text("邮箱")
                     }, singleLine = true)
-                    TextField(password, { password = it }, placeholder = {
+                    TextField(vm.regPassword, { vm.regPassword = it }, placeholder = {
                         Text("密码")
                     }, singleLine = true, visualTransformation = PasswordVisualTransformation())
-                    TextField(passwordRepeat, { passwordRepeat = it }, placeholder = {
+                    TextField(vm.regPasswordRepeat, { vm.regPasswordRepeat = it }, placeholder = {
                         Text("确认密码")
                     }, singleLine = true, visualTransformation = PasswordVisualTransformation())
 
-                    Button(onClick = {
-                        step = 1
-                        codeRemainSecs = 60
-                    }) {
+                    val enabled by derivedStateOf {
+                        vm.regEmail.isNotBlank() && vm.regPassword.isNotBlank()
+                                && vm.regPassword == vm.regPasswordRepeat
+                    }
+                    Button(
+                        onClick = { vm.regNextStep() },
+                        enabled = enabled && !vm.isOperating,
+                    ) {
                         Text("下一步")
                     }
-                } else if (step == 1) {
+                } else if (vm.regStep == 1) {
                     Text("离神人很近了")
                     Text("确认你的邮箱")
 
                     Text("已将验证码发送到您的邮箱")
 
                     Row {
-                        TextField(code, { code = it }, placeholder = {
+                        TextField(vm.regCode, { vm.regCode = it }, placeholder = {
                             Text("验证码")
                         }, singleLine = true)
-                        val sendCodeEnabled = codeRemainSecs < 0
+                        val sendCodeEnabled = vm.regCodeRemainSecs < 0
 
                         Button(
-                            onClick = {
-                                if (sendCodeEnabled) codeRemainSecs = 60
-                            },
-                            enabled = sendCodeEnabled
+                            onClick = { vm.regSendEmailCode() },
+                            enabled = sendCodeEnabled && !vm.isOperating
                         ) {
-                            Text("重新发送 (${codeRemainSecs} 秒)")
+                            Text(
+                                if (sendCodeEnabled) "重新发送"
+                                else "重新发送 (${vm.regCodeRemainSecs} 秒)"
+                            )
                         }
                     }
-                    Button(onClick = {
-                        step = 2
-                    }) {
+                    Button(
+                        onClick = { vm.regNextStep() },
+                        enabled = vm.regCode.isNotBlank() && !vm.isOperating
+                    ) {
                         Text("下一步")
                     }
-                } else if (step == 2) {
+                } else if (vm.regStep == 2) {
                     Text("只差一步")
                     Text("完善你的资料")
 
-                    var name by remember { mutableStateOf("") }
-                    var intro by remember { mutableStateOf("") }
-                    var gender by remember { mutableStateOf<Int?>(null) }
 
-                    TextField(name, { name = it }, placeholder = {
+                    TextField(vm.name, { vm.name = it }, placeholder = {
                         Text("昵称")
                     }, singleLine = true)
-                    TextField(intro, { intro = it }, placeholder = {
+                    TextField(vm.intro, { vm.intro = it }, placeholder = {
                         Text("介绍一下")
                     })
 
-                    Row {
-                        RadioButton(selected = gender == 0, onClick = { gender = 0 })
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = vm.gender == 0, onClick = { vm.gender = 0 })
                         Text("男")
 
-                        RadioButton(selected = gender == 1, onClick = { gender = 1 })
+                        RadioButton(selected = vm.gender == 1, onClick = { vm.gender = 1 })
                         Text("女")
 
-                        RadioButton(selected = gender == 2, onClick = { gender = 2 })
+                        RadioButton(selected = vm.gender == 2, onClick = { vm.gender = 2 })
                         Text("神没有性别")
                     }
-                    Button(onClick = {
-                        GlobalStore.setLoginUser("Test User", null)
-                        GlobalStore.nav.replace(Route.Root(RootContent.Home))
-                    }) {
+                    Button(
+                        onClick = { vm.finishRegister() },
+                        enabled = vm.name.isNotBlank() && vm.intro.isNotBlank() && vm.gender != null && !vm.isOperating
+                    ) {
                         Text("完成")
                     }
+
+                    Button(onClick = { vm.skipProfile() }) {
+                        Text("跳过")
+                    }
                 }
+            }
+
+            vm.error?.let {
+                Text(it)
             }
         }
     }

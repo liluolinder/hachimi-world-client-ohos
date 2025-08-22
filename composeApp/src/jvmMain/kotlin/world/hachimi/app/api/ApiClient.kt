@@ -77,6 +77,7 @@ class ApiClient(private val baseUrl: String) {
                     Logger.d(TAG, "with credential")
                     header("Authorization", "Bearer $accessToken")
                 }
+                header("X-Real-IP", "127.0.0.1")
                 setBody(body)
             }.body<HttpResponse>()
 
@@ -94,6 +95,7 @@ class ApiClient(private val baseUrl: String) {
                     Logger.d(TAG, "with credential")
                     header("Authorization", "Bearer $accessToken")
                 }
+                header("X-Real-IP", "127.0.0.1")
             }.body<HttpResponse>()
             val data = checkAndDecode<T>(resp, path)
             data
@@ -114,6 +116,7 @@ class ApiClient(private val baseUrl: String) {
                     if (value is JsonNull) return@forEach
                     parameter(key, value.jsonPrimitive.content)
                 }
+                header("X-Real-IP", "127.0.0.1")
             }.body<HttpResponse>()
             val data = checkAndDecode<T>(resp, path)
             data

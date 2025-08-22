@@ -3,6 +3,7 @@ package world.hachimi.app.api.module
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.WebResult
 import io.ktor.client.call.body
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -72,6 +73,7 @@ class AuthModule(
         return client.httpClient.post(client.buildUrl("/auth/refresh_token")) {
             contentType(ContentType.Application.Json)
             setBody(req)
+            header("X-Real-IP", "127.0.0.1")
         }.body<HttpResponse>()
     }
 
