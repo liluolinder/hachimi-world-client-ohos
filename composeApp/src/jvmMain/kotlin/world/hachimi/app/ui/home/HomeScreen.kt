@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.koin.compose.viewmodel.koinViewModel
+import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MainViewModel
 
 @Composable
@@ -49,6 +50,9 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                     it.uploaderUid.toString(),
                     it.tags.map { it.name },
                     it.likeCount,
+                    onClick = {
+                        GlobalStore.expandPlayer()
+                    },
                     modifier = Modifier.width(240.dp),
                 )
             }
@@ -65,9 +69,10 @@ private fun SongCard(
     author: String,
     tags: List<String>,
     likeCount: Long,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier) {
+    Card(modifier = modifier, onClick = onClick) {
         Column(Modifier.padding(12.dp)) {
             AsyncImage(coverUrl, null, Modifier.fillMaxWidth().aspectRatio(1f))
             Text(title)

@@ -35,8 +35,8 @@ fun RootScreen(content: RootContent) {
                     SearchBox(searchText, { searchText = it}, modifier = Modifier.widthIn(max = 400.dp))
                 }
 
-                if (GlobalStore.isLoggedIn.value) {
-                    val userInfo = GlobalStore.userInfo.value!!
+                if (GlobalStore.isLoggedIn) {
+                    val userInfo = GlobalStore.userInfo!!
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier.size(40.dp)

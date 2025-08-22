@@ -70,7 +70,7 @@ class ApiClient(private val baseUrl: String) {
             if (auth) refreshToken()
 
             val url = buildUrl(path)
-            Logger.d(TAG, "Sending POST to: $url")
+            Logger.d(TAG, "POST $path")
             val resp = httpClient.post(url) {
                 contentType(ContentType.Application.Json)
                 if (auth && accessToken != null) {
@@ -88,7 +88,7 @@ class ApiClient(private val baseUrl: String) {
         withContext(Dispatchers.IO) {
             if (auth) refreshToken()
             val url = buildUrl(path)
-            Logger.d(TAG, "Sending GET to: $url")
+            Logger.d(TAG, "GET $path")
             val resp = httpClient.get(url) {
                 if (auth && accessToken != null) {
                     Logger.d(TAG, "with credential")
@@ -103,7 +103,7 @@ class ApiClient(private val baseUrl: String) {
         withContext(Dispatchers.IO) {
             if (auth) refreshToken()
             val url = buildUrl(path)
-            Logger.d(TAG, "Sending GET to: $url")
+            Logger.d(TAG, "GET $path")
             val resp = httpClient.get(url) {
                 if (auth && accessToken != null) {
                     Logger.d(TAG, "with credential")
