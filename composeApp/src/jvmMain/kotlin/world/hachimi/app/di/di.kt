@@ -14,6 +14,8 @@ import world.hachimi.app.model.AuthViewModel
 import world.hachimi.app.model.CreationCenterViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MainViewModel
+import world.hachimi.app.player.Player
+import world.hachimi.app.player.PlayerImpl
 import world.hachimi.app.storage.MyDataStore
 
 val appModule = module {
@@ -22,6 +24,7 @@ val appModule = module {
     }
     single { getPreferencesDataStore() }
     single { MyDataStore(get()) }
+    single<Player> { PlayerImpl() }
 
     singleOf(::GlobalStore)
 
@@ -31,7 +34,7 @@ val appModule = module {
 }
 
 private fun getPreferencesDataStore(): DataStore<Preferences> {
-    val file = JVMPlatform().getDataDir().resolve("settings.preferences_pb")
+    val file = JVMPlatform.getDataDir().resolve("settings.preferences_pb")
 
     return PreferenceDataStoreFactory.createWithPath { file.toOkioPath() }
 }

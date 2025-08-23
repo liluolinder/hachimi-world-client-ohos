@@ -4,7 +4,7 @@ import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
 import java.io.File
 
-class JVMPlatform : Platform {
+object JVMPlatform : Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
 
     private val appName = BuildKonfig.APP_PACKAGE_NAME
@@ -30,4 +30,4 @@ class JVMPlatform : Platform {
     }
 }
 
-actual fun getPlatform(): Platform = JVMPlatform()
+actual fun getPlatform(): Platform = JVMPlatform

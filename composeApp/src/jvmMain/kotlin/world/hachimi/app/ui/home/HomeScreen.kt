@@ -1,23 +1,13 @@
 package world.hachimi.app.ui.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -36,14 +26,31 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
         }
     }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Text("推荐音乐")
+    Column(Modifier.fillMaxSize()) {
+        Text("推荐音乐", style = MaterialTheme.typography.headlineSmall)
 
         if (vm.isLoading) {
             CircularProgressIndicator()
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize(),) {
+            itemsIndexed(vm.songs, key = { index, item -> item.id }) { index, item ->
+                SongCard(
+                    item.coverUrl,
+                    item.title,
+                    item.subtitle,
+                    item.uploaderUid.toString(),
+                    item.tags.map { it.name },
+                    item.likeCount,
+                    onClick = {
+                        global.playSong(item.id)
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                )
+            }
+        }
+
+        /*Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             vm.songs.forEach {
                 SongCard(
                     it.coverUrl,
@@ -58,7 +65,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                     modifier = Modifier.width(240.dp),
                 )
             }
-        }
+        }*/
     }
 }
 
@@ -75,17 +82,34 @@ private fun SongCard(
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier, onClick = onClick) {
-        Column(Modifier.padding(12.dp)) {
-            AsyncImage(coverUrl, null, Modifier.fillMaxWidth().aspectRatio(1f))
-            Text(title)
-            Text(author)
-
-            Row {
-                tags.forEach { tag ->
-                    Surface(Modifier.padding(4.dp)) {
-                        Text(tag)
+        Column {
+            Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
+                AsyncImage(coverUrl, null, Modifier.fillMaxSize())
+                Row(Modifier.align(Alignment.BottomStart).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    tags.forEach { tag ->
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondary,
+                            shape = MaterialTheme.shapes.small,
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                text= tag, style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
+
+                /*Row(Modifier.align(Alignment.BottomEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(Icons.Default.Favorite, "Like", tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(18.dp))
+                    Text(likeCount.toString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+                }*/
+            }
+
+            Column(Modifier.padding(vertical = 8.dp, horizontal = 8.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+                Text(author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+
+
             }
         }
     }

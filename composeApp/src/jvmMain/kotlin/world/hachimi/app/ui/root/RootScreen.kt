@@ -19,12 +19,13 @@ import world.hachimi.app.nav.RootContent
 import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
+import world.hachimi.app.ui.root.component.FooterPlayer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootScreen(content: RootContent) {
     val global = koinInject<GlobalStore>()
-    Column {
+    Column(Modifier.fillMaxSize()) {
         Surface(Modifier.fillMaxWidth().height(68.dp)) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp),
@@ -72,7 +73,7 @@ fun RootScreen(content: RootContent) {
             }
         }
 
-        Row {
+        Row(Modifier.weight(1f).fillMaxWidth()) {
             Card(Modifier.padding(start = 24.dp, top = 24.dp).width(210.dp)) {
                 Column(Modifier.padding(12.dp)) {
                     NavItem("首页", selected = content == RootContent.Home, onSelectedChange = {
@@ -122,6 +123,8 @@ fun RootScreen(content: RootContent) {
                 }
             }
         }
+
+        FooterPlayer()
     }
 }
 

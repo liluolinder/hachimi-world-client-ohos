@@ -33,6 +33,7 @@ class SongModule(
         val title: String,
         val subtitle: String,
         val description: String,
+        val durationSeconds: Int,
         val tags: List<TagItem>,
         val lyrics: String,
         val audioUrl: String,

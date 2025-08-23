@@ -31,6 +31,8 @@ logback = "1.5.18"
 buildkonfig = "0.17.1"
 coil = "3.3.0"
 filekit = "0.10.0"
+mp3spi = "1.9.5.4"
+jflac = "1.5.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -72,11 +74,13 @@ koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
 koin-compose-viewmodelNavigation = { module = "io.insert-koin:koin-compose-viewmodel-navigation" }
 
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-coil-compose = {module="io.coil-kt.coil3:coil-compose", version.ref = "coil"}
-coil-network-ktor3 = {module="io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil"}
-filekit-dialogs =  { module = "io.github.vinceglb:filekit-dialogs", version.ref="filekit" }
-filekit-dialogs-compose =  { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref="filekit" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "filekit" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 filekit-coil = { module = "io.github.vinceglb:filekit-coil", version.ref = "filekit" }
+mp3spi = { module = "com.googlecode.soundlibs:mp3spi", version.ref = "mp3spi" }
+jflac = {module = "org.jflac:jflac-codec", version.ref = "jflac"}
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
