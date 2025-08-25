@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
-import world.hachimi.app.util.formatDuration
 import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -69,7 +70,7 @@ fun FooterPlayer() {
         Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
             Card(modifier = Modifier.aspectRatio(1f), onClick = {
                 global.expandPlayer()
-            }) {
+            }, colors = CardDefaults.outlinedCardColors(), elevation = CardDefaults.outlinedCardElevation()) {
                 playerState.songCoverUrl?.let {
                     AsyncImage(
                         modifier = Modifier.fillMaxSize(),

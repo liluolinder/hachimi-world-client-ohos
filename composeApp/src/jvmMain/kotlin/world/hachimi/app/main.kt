@@ -39,7 +39,8 @@ fun main() {
             title = "Hachimi World",
             state = WindowState(
                 size = DpSize(1200.dp, 800.dp)
-            )
+            ),
+            alwaysOnTop = BuildKonfig.BUILD_TYPE == "dev"
         ) {
             LaunchedEffect(Unit) {
                 window.minimumSize = Dimension(1000, 700)

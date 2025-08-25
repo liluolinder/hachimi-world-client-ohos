@@ -26,28 +26,35 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
         }
     }
 
-    Column(Modifier.fillMaxSize()) {
-        Text("推荐音乐", style = MaterialTheme.typography.headlineSmall)
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            Text(
+                modifier = Modifier.padding(top = 24.dp),
+                text ="推荐音乐", style = MaterialTheme.typography.titleLarge
+            )
 
-        if (vm.isLoading) {
-            CircularProgressIndicator()
+            Spacer(Modifier.height(12.dp))
+
+            LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize(),) {
+                itemsIndexed(vm.songs, key = { index, item -> item.id }) { index, item ->
+                    SongCard(
+                        item.coverUrl,
+                        item.title,
+                        item.subtitle,
+                        item.uploaderUid.toString(),
+                        item.tags.map { it.name },
+                        item.likeCount,
+                        onClick = {
+                            global.playSong(item.id)
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    )
+                }
+            }
         }
 
-        LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize(),) {
-            itemsIndexed(vm.songs, key = { index, item -> item.id }) { index, item ->
-                SongCard(
-                    item.coverUrl,
-                    item.title,
-                    item.subtitle,
-                    item.uploaderUid.toString(),
-                    item.tags.map { it.name },
-                    item.likeCount,
-                    onClick = {
-                        global.playSong(item.id)
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(12.dp),
-                )
-            }
+        if (vm.isLoading) {
+            CircularProgressIndicator(Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
     }
 }

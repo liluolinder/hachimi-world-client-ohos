@@ -36,12 +36,12 @@ fun App() {
                     is Root -> RootScreen(rootDestination)
                     is Auth -> AuthScreen(rootDestination.initialLogin)
                 }
-                FloatingActionButton(
+                /*FloatingActionButton(
                     modifier = Modifier.align(Alignment.BottomEnd),
                     onClick = { global.nav.back() }
                 ) {
                     Icon(Icons.Default.ArrowBack, "Back")
-                }
+                }*/
 
                 AnimatedVisibility(visible = global.playerExpanded, modifier = Modifier.fillMaxSize()) {
                     PlayerScreen()
