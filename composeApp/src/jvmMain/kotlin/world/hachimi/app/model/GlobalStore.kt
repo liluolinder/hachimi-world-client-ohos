@@ -28,7 +28,6 @@ import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
 import world.hachimi.app.nav.Navigator
-import world.hachimi.app.nav.RootContent
 import world.hachimi.app.player.PlayEvent
 import world.hachimi.app.player.Player
 import world.hachimi.app.storage.MyDataStore
@@ -44,7 +43,7 @@ class GlobalStore(
     private val player: Player
 ) {
     var initialized by mutableStateOf(false)
-    val nav = Navigator(Route.Root(RootContent.Home))
+    val nav = Navigator(Route.Root.Home)
     var isLoggedIn by mutableStateOf(false)
         private set
     var userInfo by mutableStateOf<UserInfo?>(null)

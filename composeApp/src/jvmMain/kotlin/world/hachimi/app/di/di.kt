@@ -11,9 +11,10 @@ import world.hachimi.app.BuildKonfig
 import world.hachimi.app.JVMPlatform
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.model.AuthViewModel
-import world.hachimi.app.model.CreationCenterViewModel
+import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MainViewModel
+import world.hachimi.app.model.MyArtworkViewModel
 import world.hachimi.app.player.Player
 import world.hachimi.app.player.PlayerImpl
 import world.hachimi.app.storage.MyDataStore
@@ -30,7 +31,8 @@ val appModule = module {
 
     viewModelOf(::MainViewModel)
     viewModelOf(::AuthViewModel)
-    viewModelOf(::CreationCenterViewModel)
+    viewModelOf(::PublishViewModel)
+    viewModelOf(::MyArtworkViewModel)
 }
 
 private fun getPreferencesDataStore(): DataStore<Preferences> {

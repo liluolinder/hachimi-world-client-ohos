@@ -4,21 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
-import coil3.request.Disposable
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.AuthViewModel
-import world.hachimi.app.model.GlobalStore
-import world.hachimi.app.nav.RootContent
-import world.hachimi.app.nav.Route
 
 @Composable
 fun AuthScreen(

@@ -24,7 +24,8 @@ import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
 
-class CreationCenterViewModel(
+class PublishViewModel(
+    private val global: GlobalStore,
     private val api: ApiClient
 ) : ViewModel(CoroutineScope(Dispatchers.IO)) {
     var title by mutableStateOf("")
@@ -304,5 +305,6 @@ class CreationCenterViewModel(
 
     fun closeDialog() {
         showSuccessDialog = false
+        global.nav.back()
     }
 }

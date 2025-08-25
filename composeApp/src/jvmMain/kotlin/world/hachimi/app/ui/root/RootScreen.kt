@@ -15,15 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
-import world.hachimi.app.nav.RootContent
 import world.hachimi.app.nav.Route
-import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
+import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.root.component.FooterPlayer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RootScreen(content: RootContent) {
+fun RootScreen(content: Route.Root) {
     val global = koinInject<GlobalStore>()
     Column(Modifier.fillMaxSize()) {
         Surface(Modifier.fillMaxWidth().height(68.dp)) {
@@ -76,33 +75,33 @@ fun RootScreen(content: RootContent) {
         Row(Modifier.weight(1f).fillMaxWidth()) {
             Card(Modifier.padding(start = 24.dp, top = 24.dp).width(300.dp), colors = CardDefaults.outlinedCardColors(), shape = CardDefaults.outlinedShape) {
                 Column(Modifier.padding(12.dp)) {
-                    NavItem("首页", selected = content == RootContent.Home, onSelectedChange = {
-                        global.nav.push(Route.Root(RootContent.Home))
+                    NavItem("首页", selected = content == Route.Root.Home, onSelectedChange = {
+                        global.nav.push(Route.Root.Home)
                     })
                     if (global.isLoggedIn) {
-                        NavItem("最近点赞", selected = content == RootContent.RecentLike, onSelectedChange = {
-                            global.nav.push(Route.Root(RootContent.RecentLike))
+                        NavItem("最近点赞", selected = content == Route.Root.RecentLike, onSelectedChange = {
+                            global.nav.push(Route.Root.RecentLike)
                         })
-                        NavItem("最近播放", selected = content == RootContent.RecentPlay, onSelectedChange = {
-                            global.nav.push(Route.Root(RootContent.RecentPlay))
-                        })
-
-                        NavItem("我的歌单", selected = content == RootContent.MyPlaylist, onSelectedChange = {
-                            global.nav.push(Route.Root(RootContent.MyPlaylist))
-                        })
-                        NavItem("我的关注", selected = content == RootContent.MySubscribe, onSelectedChange = {
-                            global.nav.push(Route.Root(RootContent.MySubscribe))
+                        NavItem("最近播放", selected = content == Route.Root.RecentPlay, onSelectedChange = {
+                            global.nav.push(Route.Root.RecentPlay)
                         })
 
-                        NavItem("创作中心", selected = content == RootContent.CreationCenter, onSelectedChange = {
-                            global.nav.push(Route.Root(RootContent.CreationCenter))
+                        NavItem("我的歌单", selected = content == Route.Root.MyPlaylist, onSelectedChange = {
+                            global.nav.push(Route.Root.MyPlaylist)
+                        })
+                        NavItem("我的关注", selected = content == Route.Root.MySubscribe, onSelectedChange = {
+                            global.nav.push(Route.Root.MySubscribe)
                         })
 
-                        NavItem("委员会中心", selected = content == RootContent.CommitteeCenter, onSelectedChange = {
-                            global.nav.push(Route.Root(RootContent.CommitteeCenter))
+                        NavItem("创作中心", selected = content is Route.Root.CreationCenter, onSelectedChange = {
+                            global.nav.push(Route.Root.CreationCenter.Default)
                         })
-                        NavItem("维护者中心", selected = content == RootContent.ContributorCenter, onSelectedChange = {
-                            global.nav.push(Route.Root(RootContent.ContributorCenter))
+
+                        NavItem("委员会中心", selected = content == Route.Root.CommitteeCenter, onSelectedChange = {
+                            global.nav.push(Route.Root.CommitteeCenter)
+                        })
+                        NavItem("维护者中心", selected = content == Route.Root.ContributorCenter, onSelectedChange = {
+                            global.nav.push(Route.Root.ContributorCenter)
                         })
                     }
                 }
@@ -112,14 +111,14 @@ fun RootScreen(content: RootContent) {
 
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 when (content) {
-                    RootContent.Home -> HomeScreen()
-                    RootContent.CommitteeCenter -> {}
-                    RootContent.ContributorCenter -> {}
-                    RootContent.CreationCenter -> CreationCenterScreen()
-                    RootContent.MyPlaylist -> {}
-                    RootContent.MySubscribe -> {}
-                    RootContent.RecentLike -> {}
-                    RootContent.RecentPlay -> {}
+                    Route.Root.Home -> HomeScreen()
+                    Route.Root.RecentLike -> {}
+                    Route.Root.RecentPlay -> {}
+                    Route.Root.MyPlaylist -> {}
+                    Route.Root.MySubscribe -> {}
+                    is Route.Root.CreationCenter -> CreationCenterScreen(content)
+                    Route.Root.CommitteeCenter -> {}
+                    Route.Root.ContributorCenter -> {}
                 }
             }
         }

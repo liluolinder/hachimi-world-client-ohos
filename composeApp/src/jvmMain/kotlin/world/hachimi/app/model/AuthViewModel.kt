@@ -17,7 +17,6 @@ import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.AuthModule
 import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.logging.Logger
-import world.hachimi.app.nav.RootContent
 import world.hachimi.app.nav.Route
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.PreferencesKeys
@@ -118,7 +117,7 @@ class AuthViewModel(
                 if (resp.ok) {
                     dataStore.set(PreferencesKeys.USER_NAME, name)
                     global.setLoginUser(uid.toLong(), name, null)
-                    global.nav.replace(Route.Root(RootContent.Home))
+                    global.nav.replace(Route.Root.Home)
                 } else {
                     error = resp.errData<CommonError>().msg
                 }
@@ -132,7 +131,7 @@ class AuthViewModel(
     }
 
     fun skipProfile() {
-        global.nav.replace(Route.Root(RootContent.Home))
+        global.nav.replace(Route.Root.Home)
     }
 
     fun clearErrorMessage() {
@@ -163,7 +162,7 @@ class AuthViewModel(
                     dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, data.token.refreshToken)
 
                     global.setLoginUser(data.uid, data.username, null)
-                    global.nav.replace(Route.Root(RootContent.Home))
+                    global.nav.replace(Route.Root.Home)
                 } else {
                     error = resp.errData<CommonError>().msg
                 }

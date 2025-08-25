@@ -32,7 +32,7 @@ fun App() {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Box(Modifier.fillMaxSize()) {
                 when(rootDestination) {
-                    is Root -> RootScreen(rootDestination.child)
+                    is Root -> RootScreen(rootDestination)
                     is Auth -> AuthScreen(rootDestination.initialLogin)
                 }
                 FloatingActionButton(
