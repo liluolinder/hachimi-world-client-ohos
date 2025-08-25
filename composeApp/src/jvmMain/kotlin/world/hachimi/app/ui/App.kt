@@ -22,13 +22,14 @@ import world.hachimi.app.nav.Route.Root
 import world.hachimi.app.ui.auth.AuthScreen
 import world.hachimi.app.ui.player.PlayerScreen
 import world.hachimi.app.ui.root.RootScreen
+import world.hachimi.app.ui.theme.AppTheme
 
 @Composable
 fun App() {
     val global = koinInject<GlobalStore>()
     val rootDestination = global.nav.backStack.last()
 
-    MaterialTheme {
+    AppTheme(darkTheme = false) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Box(Modifier.fillMaxSize()) {
                 when(rootDestination) {
