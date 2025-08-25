@@ -74,7 +74,7 @@ fun RootScreen(content: RootContent) {
         }
 
         Row(Modifier.weight(1f).fillMaxWidth()) {
-            Card(Modifier.padding(start = 24.dp, top = 24.dp).width(210.dp)) {
+            Card(Modifier.padding(start = 24.dp, top = 24.dp).width(300.dp), colors = CardDefaults.outlinedCardColors(), shape = CardDefaults.outlinedShape) {
                 Column(Modifier.padding(12.dp)) {
                     NavItem("首页", selected = content == RootContent.Home, onSelectedChange = {
                         global.nav.push(Route.Root(RootContent.Home))
@@ -135,7 +135,17 @@ private fun NavItem(
     onSelectedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
-    if (selected) {
+    NavigationDrawerItem(
+        modifier = modifier,
+        label = { Text(label) },
+        selected = selected,
+        onClick = {
+            if (!selected) {
+                onSelectedChange(true)
+            }
+        }
+    )
+    /*if (selected) {
         Button(modifier = modifier, onClick = {}) {
             Text(label)
         }
@@ -143,7 +153,7 @@ private fun NavItem(
         TextButton(modifier = modifier, onClick = { onSelectedChange(true) }) {
             Text(label)
         }
-    }
+    }*/
 }
 
 @Composable

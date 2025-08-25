@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import world.hachimi.app.api.ApiClient
@@ -13,7 +14,7 @@ import world.hachimi.app.api.module.SongModule
 class MainViewModel(
     private val apiClient: ApiClient,
     private val global: GlobalStore
-): ViewModel() {
+): ViewModel(CoroutineScope(Dispatchers.IO)) {
     var isLoading by mutableStateOf(false)
         private set
     var songs by mutableStateOf(emptyList<SongModule.DetailResp>())

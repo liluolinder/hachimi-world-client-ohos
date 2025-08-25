@@ -49,23 +49,6 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                 )
             }
         }
-
-        /*Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            vm.songs.forEach {
-                SongCard(
-                    it.coverUrl,
-                    it.title,
-                    it.subtitle,
-                    it.uploaderUid.toString(),
-                    it.tags.map { it.name },
-                    it.likeCount,
-                    onClick = {
-                        global.expandPlayer()
-                    },
-                    modifier = Modifier.width(240.dp),
-                )
-            }
-        }*/
     }
 }
 
@@ -108,8 +91,6 @@ private fun SongCard(
             Column(Modifier.padding(vertical = 8.dp, horizontal = 8.dp)) {
                 Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                 Text(author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-
-
             }
         }
     }

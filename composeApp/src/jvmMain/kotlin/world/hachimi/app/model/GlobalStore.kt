@@ -17,7 +17,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
 import org.jetbrains.compose.resources.StringResource
 import world.hachimi.app.JVMPlatform
@@ -30,9 +29,11 @@ import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
 import world.hachimi.app.nav.Navigator
 import world.hachimi.app.nav.RootContent
+import world.hachimi.app.player.PlayEvent
 import world.hachimi.app.player.Player
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.PreferencesKeys
+import world.hachimi.app.util.LrcParser
 
 /**
  * Global shared data and logic. Can work without UI displaying
@@ -53,7 +54,7 @@ class GlobalStore(
 
     val playerState = PlayerUIState()
 
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(Dispatchers.IO)
     val snackbarHostState = SnackbarHostState()
 
     fun initialize() {
@@ -64,9 +65,35 @@ class GlobalStore(
             initialized = true
         }
         scope.launch(Dispatchers.IO) {
+            player.addListener(object : Player.Listener {
+                override fun onEvent(event: PlayEvent) {
+                    when (event) {
+                        PlayEvent.End -> {
+                            playerState.isPlaying = false
+                        }
+
+                        is PlayEvent.Error -> {
+
+                        }
+
+                        PlayEvent.Pause -> {
+                            playerState.isPlaying = false
+                        }
+
+                        PlayEvent.Play -> {
+                            playerState.isPlaying = true
+                        }
+
+                        is PlayEvent.Seek -> {
+
+                        }
+                    }
+                }
+
+            })
             while (isActive) {
                 val currentPosition = player.currentPosition()
-                playerState.currentSongPositionMs = currentPosition.toInt()
+                playerState.setCurrentSongPosition(currentPosition)
                 delay(100)
             }
         }
@@ -134,8 +161,9 @@ class GlobalStore(
                         playerState.songCoverUrl = data.coverUrl
                         playerState.songTitle = data.title
                         playerState.songAuthor = data.uploaderUid.toString() // TODO: Be user name
-                        playerState.currentSongPositionMs = 0
                         playerState.songDurationSecs = data.durationSeconds
+                        playerState.setCurrentSongPosition(0L)
+                        playerState.setLyrics(data.lyrics)
                     }
 
                     val filename = data.audioUrl.substringAfterLast("/")
@@ -183,7 +211,6 @@ class GlobalStore(
                         songBytes
                     }
                     player.prepare(bytes, autoPlay = true)
-                    playerState.isPlaying = true
                 } else {
                     alert(resp.errData<CommonError>().msg)
                     return@launch
@@ -201,17 +228,16 @@ class GlobalStore(
     fun playOrPause() {
         if (player.isPlaying()) {
             player.pause()
-            playerState.isPlaying = false
         } else {
             player.play()
-            playerState.isPlaying = true
         }
     }
 
     fun setSongProgress(progress: Float) {
-        val targetPositionMs = (progress * (playerState.songDurationSecs * 1000L)).toInt()
-        playerState.currentSongPositionMs = targetPositionMs
-        player.seek(targetPositionMs.toLong(), true)
+        val targetPositionMs = (progress * (playerState.songDurationSecs * 1000L)).toLong()
+        player.seek(targetPositionMs, true)
+
+        playerState.setCurrentSongPosition(targetPositionMs)
     }
 
     fun expandPlayer() {
@@ -246,10 +272,68 @@ class PlayerUIState() {
     var songAuthor by mutableStateOf("")
     var songCoverUrl by mutableStateOf<String?>(null)
     var songDurationSecs by mutableStateOf(0)
-    var currentSongPositionMs by mutableStateOf(0)
-    var currentLyricsLine by mutableStateOf(0)
+
+    var currentSongPositionMs by mutableStateOf(0L)
+        private set
+    var currentLyricsLine by mutableStateOf(-1)
+        private set
+    var timedLyricsEnabled by mutableStateOf(false)
+        private set
+    var lyricsLines by mutableStateOf<List<String>>(emptyList())
+        private set
+    private var lrcSegments: List<TimedLyricsSegment> = emptyList()
 
     var downloadProgress by mutableStateOf(0f)
+
+    data class TimedLyricsSegment(
+        val startTimeMs: Long,
+        val endTimeMs: Long,
+        val spans: List<TimedLyricsSpan>
+    )
+
+    data class TimedLyricsSpan(
+        val startTimeMs: Long,
+        val endTimeMs: Long,
+        val text: String
+    )
+
+    fun setCurrentSongPosition(milliseconds: Long) {
+        currentSongPositionMs = milliseconds
+
+        if (timedLyricsEnabled) {
+            val currentLineIndex = lrcSegments.indexOfFirst {
+                it.startTimeMs <= milliseconds && milliseconds <= it.endTimeMs
+            }
+            currentLyricsLine = currentLineIndex
+        }
+    }
+
+    fun setLyrics(content: String) {
+        try {
+            val lrcLines = LrcParser.parse(content)
+            val result = mutableListOf<TimedLyricsSegment>()
+            for ((index, line) in lrcLines.withIndex()) {
+                val startTime = line.timestampMs
+
+                val next = lrcLines.getOrNull(index + 1)
+                val endTime = next?.timestampMs ?: Long.MAX_VALUE
+
+                val segment = TimedLyricsSegment(
+                    startTimeMs = startTime,
+                    endTimeMs = endTime,
+                    // TODO: Support enhanced lrc later
+                    spans = listOf(TimedLyricsSpan(startTime, endTime, line.content))
+                )
+                result.add(segment)
+            }
+            this.lrcSegments = result
+            lyricsLines = lrcSegments.map { it.spans.first().text }
+            timedLyricsEnabled = true
+        } catch (e: Exception) {
+            lyricsLines = content.lines()
+            timedLyricsEnabled = false
+        }
+    }
 }
 
 data class UserInfo(

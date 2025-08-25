@@ -26,7 +26,7 @@ import world.hachimi.app.logging.Logger
 
 class CreationCenterViewModel(
     private val api: ApiClient
-) : ViewModel(CoroutineScope(Dispatchers.Default)) {
+) : ViewModel(CoroutineScope(Dispatchers.IO)) {
     var title by mutableStateOf("")
     var subtitle by mutableStateOf("")
     val tags = mutableStateListOf<String>()

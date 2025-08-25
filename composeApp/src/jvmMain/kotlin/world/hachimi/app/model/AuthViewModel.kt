@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,7 +26,7 @@ class AuthViewModel(
     private val api: ApiClient,
     private val dataStore: MyDataStore,
     private val global: GlobalStore,
-): ViewModel() {
+) : ViewModel(CoroutineScope(Dispatchers.IO)) {
     var isOperating by mutableStateOf(false)
         private set
 
@@ -45,8 +46,8 @@ class AuthViewModel(
     var uid by mutableStateOf("")
         private set
     var name by mutableStateOf("")
-    var intro by  mutableStateOf("")
-    var gender by  mutableStateOf<Int?>(null)
+    var intro by mutableStateOf("")
+    var gender by mutableStateOf<Int?>(null)
 
     var error by mutableStateOf<String?>(null)
 
@@ -142,12 +143,14 @@ class AuthViewModel(
         viewModelScope.launch {
             try {
                 isOperating = true
-                val resp = api.authModule.loginEmail(AuthModule.LoginReq(
-                    email = email,
-                    password = password,
-                    code = null,
-                    deviceInfo = "Desktop Client"
-                ))
+                val resp = api.authModule.loginEmail(
+                    AuthModule.LoginReq(
+                        email = email,
+                        password = password,
+                        code = null,
+                        deviceInfo = "Desktop Client"
+                    )
+                )
                 if (resp.ok) {
                     val data = resp.okData<AuthModule.LoginResp>()
                     // Set token to the api client
@@ -175,12 +178,14 @@ class AuthViewModel(
     private suspend fun mRegister() = withContext(Dispatchers.IO) {
         try {
             isOperating = true
-            val resp = api.authModule.registerEmail(AuthModule.RegisterReq(
-                email = regEmail,
-                password = regPassword,
-                code = regCode,
-                deviceInfo = "Desktop Client" // TODO
-            ))
+            val resp = api.authModule.registerEmail(
+                AuthModule.RegisterReq(
+                    email = regEmail,
+                    password = regPassword,
+                    code = regCode,
+                    deviceInfo = "Desktop Client" // TODO
+                )
+            )
             if (resp.ok) {
                 val data: AuthModule.RegisterResp = resp.okData()
                 uid = data.uid.toString()

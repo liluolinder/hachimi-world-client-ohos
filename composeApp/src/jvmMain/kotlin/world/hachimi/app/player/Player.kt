@@ -58,6 +58,7 @@ class PlayerImpl() : Player {
 
     private lateinit var stream: AudioInputStream
     private var ready = false
+    private val listeners: MutableSet<Player.Listener> = mutableSetOf()
 
     override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
         if (isPlaying()) {
@@ -67,6 +68,13 @@ class PlayerImpl() : Player {
 
         ready = false
         clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
+        clip.addLineListener {
+            when (it.type) {
+                LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
+                LineEvent.Type.STOP -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
+            }
+        }
+
         val defaultFormat = clip.format
 
         val stream = AudioSystem.getAudioInputStream(ByteArrayInputStream(bytes))
@@ -74,7 +82,6 @@ class PlayerImpl() : Player {
 //        val sampleSizeInBites = baseFormat.sampleSizeInBits.takeIf { it > 0 } ?: 32 // Defaults to fltp(32bits)
 
         val decodedStream = AudioSystem.getAudioInputStream(defaultFormat, stream)
-
         clip.open(decodedStream)
         if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
             volumeControl = clip.getControl(FloatControl.Type.VOLUME) as FloatControl
@@ -146,11 +153,11 @@ class PlayerImpl() : Player {
     }
 
     override fun addListener(listener: Player.Listener) {
-        TODO()
+        listeners.add(listener)
     }
 
     override fun removeListener(listener: Player.Listener) {
-        TODO()
+        listeners.remove(listener)
     }
 
     suspend fun drain() = withContext(Dispatchers.IO) {

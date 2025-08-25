@@ -62,12 +62,14 @@ fun FooterPlayer() {
 
     AnimatedVisibility(
         visible = playerState.hasSong,
-        modifier = Modifier.height(120.dp).fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         enter = expandVertically(),
         exit = shrinkVertically()
     ) {
-        Row(Modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
-            Card(Modifier.aspectRatio(1f)) {
+        Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
+            Card(modifier = Modifier.aspectRatio(1f), onClick = {
+                global.expandPlayer()
+            }) {
                 playerState.songCoverUrl?.let {
                     AsyncImage(
                         modifier = Modifier.fillMaxSize(),
