@@ -13,6 +13,7 @@ import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.root.component.FooterPlayer
 import world.hachimi.app.ui.root.component.SideNavigation
 import world.hachimi.app.ui.root.component.TopAppBar
+import world.hachimi.app.ui.search.SearchScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +29,7 @@ fun RootScreen(content: Route.Root) {
 
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 when (content) {
+                    is Route.Root.Search -> SearchScreen(content.query)
                     Route.Root.Home -> HomeScreen()
                     Route.Root.RecentLike -> {}
                     Route.Root.RecentPlay -> {}

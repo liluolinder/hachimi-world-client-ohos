@@ -54,6 +54,8 @@ sealed class Route {
         }
         data object CommitteeCenter: Root()
         data object ContributorCenter: Root()
+
+        data class Search(val query: String): Root()
     }
     data class Auth(val initialLogin: Boolean = true) : Route()
 }

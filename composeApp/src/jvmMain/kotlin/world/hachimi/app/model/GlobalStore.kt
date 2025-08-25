@@ -161,9 +161,9 @@ class GlobalStore(
                         playerState.songTitle = data.title
                         playerState.songAuthor = data.uploaderUid.toString() // TODO: Be user name
                         playerState.songDurationSecs = data.durationSeconds
-                        playerState.setCurrentSongPosition(0L)
                         playerState.setLyrics(data.lyrics)
                     }
+                    playerState.setCurrentSongPosition(0L)
 
                     val filename = data.audioUrl.substringAfterLast("/")
                     val cacheFile = JVMPlatform.getCacheDir()

@@ -45,7 +45,7 @@ fun TopAppBar(global: GlobalStore) {
                 SearchBox(
                     searchText, { searchText = it }, modifier = Modifier.widthIn(max = 400.dp),
                     onSearch = {
-                        // TODO
+                        global.nav.navigateTo(Route.Root.Search(searchText))
                     }
                 )
             }
@@ -108,7 +108,11 @@ private fun SearchBox(
                         innerTextField()
                     }
                     Spacer(Modifier.width(8.dp))
-                    IconButton(modifier = Modifier.align(Alignment.CenterVertically), onClick = onSearch) {
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                        onClick = onSearch,
+                        enabled = remember(searchText) { searchText.isNotBlank() }
+                    ) {
                         Icon(Icons.Default.Search, "Search")
                     }
                 }
@@ -116,7 +120,11 @@ private fun SearchBox(
         },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onSearch() })
+        keyboardActions = KeyboardActions(onSearch = {
+            if (searchText.isNotBlank()) {
+                onSearch()
+            }
+        })
     )
 }
 

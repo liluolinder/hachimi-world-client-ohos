@@ -1,19 +1,14 @@
 package world.hachimi.app.api.module
 
-import io.ktor.client.content.ProgressListener
-import io.ktor.client.plugins.onUpload
-import io.ktor.client.request.forms.InputProvider
-import io.ktor.client.request.forms.MultiPartFormDataContent
-import io.ktor.client.request.forms.formData
-import io.ktor.client.request.setBody
-import io.ktor.http.HttpHeaders
-import io.ktor.http.headersOf
-import kotlinx.io.Buffer
+import io.ktor.client.content.*
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.http.*
 import kotlinx.io.Source
 import kotlinx.serialization.Serializable
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.WebResult
-import java.io.Serial
 
 class SongModule(
     private val client: ApiClient
@@ -171,4 +166,40 @@ class SongModule(
 
     suspend fun publish(req: PublishReq): WebResult<PublishResp> =
         client.post("/song/publish", req)
+
+    @Serializable
+    data class SearchReq(
+        val q: String,
+        val limit: Int?,
+        val offset: Int?,
+        val filter: String?,
+    )
+
+    @Serializable
+    data class SearchResp(
+        val hits: List<SearchSongItem>,
+        val query: String,
+        val processingTimeMs: Long,
+        val totalHits: Int?,
+        val limit: Int,
+        val offset: Int,
+    )
+
+    @Serializable
+    data class SearchSongItem(
+        val id: Long,
+        val displayId: String,
+        val title: String,
+        val subtitle: String,
+        val description: String,
+        val artist: String,
+        val durationSeconds: Int,
+        val playCount: Long,
+        val likeCount: Long,
+        val coverArtUrl: String,
+        val audioUrl: String,
+    )
+
+    suspend fun search(req: SearchReq): WebResult<SearchResp> =
+        client.get("/song/search", req, false)
 }
