@@ -74,7 +74,7 @@ fun SearchScreen(
             key = { _, item -> item.displayId }
         ) { index, item ->
             SearchSongItem(item, Modifier.widthIn(min = 300.dp).padding(vertical = 12.dp), {
-                global.playSong(item.displayId)
+                global.insertToQueue(item.displayId, true, false)
             })
         }
     }

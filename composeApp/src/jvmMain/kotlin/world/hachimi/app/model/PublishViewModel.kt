@@ -114,7 +114,7 @@ class PublishViewModel(
                     resp.okData<SongModule.UploadAudioFileResp>()
                 } catch (e: Exception) {
                     Logger.e("creation", "Failed to upload audio file", e)
-                    error = e.localizedMessage
+                    error = e.message
                     return@launch
                 } finally {
                     audioUploading = false
@@ -172,7 +172,7 @@ class PublishViewModel(
                     resp.okData<SongModule.UploadImageResp>()
                 } catch (e: Exception) {
                     Logger.e("creation", "Failed to upload cover image", e)
-                    error = e.localizedMessage
+                    error = e.message
                     return@launch
                 } finally {
                     coverImageUploading = false
@@ -295,7 +295,7 @@ class PublishViewModel(
                     }
                 } catch (e: Exception) {
                     Logger.e("creation", "Failed to publish song", e)
-                    error = e.localizedMessage
+                    error = e.message
                 } finally {
                     isOperating = false
                 }

@@ -2,6 +2,7 @@ package world.hachimi.app.model
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
@@ -13,6 +14,7 @@ import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -33,6 +35,8 @@ import world.hachimi.app.player.Player
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.PreferencesKeys
 import world.hachimi.app.util.LrcParser
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Global shared data and logic. Can work without UI displaying
@@ -56,6 +60,16 @@ class GlobalStore(
     private val scope = CoroutineScope(Dispatchers.IO)
     val snackbarHostState = SnackbarHostState()
 
+    val musicQueue = mutableStateListOf<MusicQueueItem>()
+    var queueCurrentIndex by mutableStateOf(-1)
+
+    data class MusicQueueItem(
+        val songId: String,
+        val name: String,
+        val artist: String,
+        val duration: Duration
+    )
+
     fun initialize() {
         scope.launch(Dispatchers.IO) {
             coroutineScope {
@@ -69,6 +83,7 @@ class GlobalStore(
                     when (event) {
                         PlayEvent.End -> {
                             playerState.isPlaying = false
+                            queueNext()
                         }
 
                         is PlayEvent.Error -> {
@@ -129,99 +144,115 @@ class GlobalStore(
     }
 
     @Deprecated("Use alert with i18n instead")
-    fun alert(text: String) {
+    fun alert(text: String?) {
         scope.launch {
-            snackbarHostState.showSnackbar(text, withDismissAction = true)
+            snackbarHostState.showSnackbar(text ?: "Alert", withDismissAction = true)
         }
     }
 
     fun alert(text: StringResource, vararg params: Any?) {
-
+        TODO()
     }
 
-    fun setCurrentSong() {
+    fun playSongInQueue(id: String) {
+        val index = musicQueue.indexOfFirst { it.songId == id }
+        if (index != -1) {
+            val song = musicQueue[index]
 
-    }
-
-    fun playSong(id: String) {
-        // TODO: Extract this logic
-        scope.launch(Dispatchers.IO) {
-            player.pause()
-
-            playerState.isLoading = true
-            try {
-                val resp = apiClient.songModule.detail(id)
-                if (resp.ok) {
-                    Logger.i("global", "Reading detail")
-                    val data = resp.okData<SongModule.DetailResp>()
-                    Snapshot.withMutableSnapshot {
-                        playerState.songId = id
-                        playerState.hasSong = true
-                        playerState.songCoverUrl = data.coverUrl
-                        playerState.songTitle = data.title
-                        playerState.songAuthor = data.uploaderUid.toString() // TODO: Be user name
-                        playerState.songDurationSecs = data.durationSeconds
-                        playerState.setLyrics(data.lyrics)
-                    }
-                    playerState.setCurrentSongPosition(0L)
-
-                    val filename = data.audioUrl.substringAfterLast("/")
-                    val cacheFile = JVMPlatform.getCacheDir()
-                        .resolve("song_caches").also {
-                            it.mkdirs()
-                        }
-                        .resolve(filename)
-                    val bytes = if (cacheFile.exists()) {
-                        cacheFile.readBytes()
-                    } else {
-                        Logger.i("global", "Downloading")
-                        playerState.downloadProgress = 0f
-                        val downloadResponse = apiClient.httpClient.get(data.audioUrl)
-
-                        val songBytes: ByteArray
-                        val contentLength = downloadResponse.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-                        if (contentLength != null) {
-                            Logger.i("global", "Has content length")
-                            playerState.downloadProgress = 0.01f
-
-                            val buffer = Buffer()
-                            val channel = downloadResponse.bodyAsChannel()
-                            var totalBytesRead = 0L
-
-                            while (isActive) {
-                                val byteBuffer = ByteArray(4096)
-                                val bytesRead = channel.readAvailable(byteBuffer, 0, byteBuffer.size)
-
-                                if (bytesRead == -1) break
-
-                                totalBytesRead += bytesRead
-                                buffer.write(byteBuffer, 0, bytesRead)
-                                val progress = totalBytesRead.toDouble() / contentLength.toDouble()
-                                playerState.downloadProgress = progress.toFloat()
-                            }
-
-                            songBytes = buffer.readBytes()
-                        } else {
-                            // Oh, copy occurs here
-                            songBytes = downloadResponse.bodyAsBytes()
-                        }
-
-                        cacheFile.writeBytes(songBytes)
-                        songBytes
-                    }
-                    player.prepare(bytes, autoPlay = true)
-                } else {
-                    alert(resp.errData<CommonError>().msg)
-                    return@launch
-                }
-            } catch (e: Exception) {
-                Logger.e("player", "Failed to play song", e)
-                alert(e.localizedMessage)
-                return@launch
-            } finally {
-                playerState.isLoading = false
+            queueCurrentIndex = index
+            scope.launch {
+                play(song.songId)
             }
         }
+    }
+
+    fun queuePrevious() {
+        if (musicQueue.isNotEmpty()) {
+            val currentIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
+            if (currentIndex == -1) {
+                playSongInQueue(musicQueue.first().songId)
+            } else {
+                if (currentIndex == 0) {
+                    playSongInQueue(musicQueue.last().songId)
+                } else {
+                    playSongInQueue(musicQueue[currentIndex - 1].songId)
+                }
+            }
+        }
+    }
+
+    fun queueNext() {
+        if (musicQueue.isNotEmpty()) {
+            val currentIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
+            if (currentIndex == -1) {
+                playSongInQueue(musicQueue.first().songId)
+            } else {
+                if (currentIndex >= musicQueue.lastIndex) {
+                    playSongInQueue(musicQueue.first().songId)
+                } else {
+                    playSongInQueue(musicQueue[currentIndex + 1].songId)
+                }
+            }
+        }
+    }
+
+    /**
+     * Add song to queue
+     * @param instantPlay instantly play after inserting
+     * @param append appends to tail or insert after current playing
+     */
+    fun insertToQueue(id: String, instantPlay: Boolean, append: Boolean) {
+        scope.launch {
+            val resp = async {
+                apiClient.songModule.detail(id)
+            }
+
+            val indexInQueue = musicQueue.indexOfFirst { it.songId == id }
+
+            // Remove and reinsert
+            if (indexInQueue != -1) {
+                musicQueue.removeAt(indexInQueue)
+            }
+
+            val currentPlayingIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
+            try {
+                val resp = resp.await()
+                if (resp.ok) {
+                    val data = resp.okData<SongModule.DetailResp>()
+                    val item = MusicQueueItem(
+                        songId = data.id,
+                        name = data.title,
+                        artist = data.uploaderUid.toString(),
+                        duration = data.durationSeconds.seconds
+                    )
+
+                    if (append) {
+                        musicQueue.add(currentPlayingIndex + 1, item)
+                    } else {
+                        musicQueue.add(item)
+                    }
+
+                    if (instantPlay) {
+                        queueNext()
+                    }
+                } else {
+                    val err = resp.errData<CommonError>()
+                    alert(err.msg)
+                }
+            } catch (e: Exception) {
+                alert(e.message)
+            }
+        }
+    }
+
+    fun removeFromQueue(id: String) {
+        val currentPlayingIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
+        val targetIndex = musicQueue.indexOfFirst { it.songId == id }
+
+        if (currentPlayingIndex == targetIndex) {
+            queueNext()
+        }
+        musicQueue.removeAt(targetIndex)
     }
 
     fun playOrPause() {
@@ -230,14 +261,6 @@ class GlobalStore(
         } else {
             player.play()
         }
-    }
-
-    fun previous() {
-        // TODO
-    }
-
-    fun next() {
-        // TODO
     }
 
     fun setSongProgress(progress: Float) {
@@ -263,6 +286,87 @@ class GlobalStore(
                 avatarUrl = avatarUrl
             )
             isLoggedIn = true
+        }
+    }
+
+    /**
+     * This is only for play current song. Not interested in the music queue.
+     */
+    private suspend fun play(id: String) {
+        player.pause()
+
+        playerState.isLoading = true
+        try {
+            val resp = apiClient.songModule.detail(id)
+            if (resp.ok) {
+                Logger.i("global", "Reading detail")
+                val data = resp.okData<SongModule.DetailResp>()
+                Snapshot.withMutableSnapshot {
+                    playerState.songId = id
+                    playerState.hasSong = true
+                    playerState.songCoverUrl = data.coverUrl
+                    playerState.songTitle = data.title
+                    playerState.songAuthor = data.uploaderUid.toString() // TODO: Be user name
+                    playerState.songDurationSecs = data.durationSeconds
+                    playerState.setLyrics(data.lyrics)
+                }
+                playerState.setCurrentSongPosition(0L)
+
+                val filename = data.audioUrl.substringAfterLast("/")
+                val cacheFile = JVMPlatform.getCacheDir()
+                    .resolve("song_caches").also {
+                        it.mkdirs()
+                    }
+                    .resolve(filename)
+                val bytes = if (cacheFile.exists()) {
+                    cacheFile.readBytes()
+                } else {
+                    Logger.i("global", "Downloading")
+                    playerState.downloadProgress = 0f
+                    val downloadResponse = apiClient.httpClient.get(data.audioUrl)
+
+                    val songBytes: ByteArray
+                    val contentLength = downloadResponse.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+                    if (contentLength != null) {
+                        Logger.i("global", "Has content length")
+                        playerState.downloadProgress = 0.01f
+
+                        val buffer = Buffer()
+                        val channel = downloadResponse.bodyAsChannel()
+                        var totalBytesRead = 0L
+
+                        while (true) {
+                            val byteBuffer = ByteArray(4096)
+                            val bytesRead = channel.readAvailable(byteBuffer, 0, byteBuffer.size)
+
+                            if (bytesRead == -1) break
+
+                            totalBytesRead += bytesRead
+                            buffer.write(byteBuffer, 0, bytesRead)
+                            val progress = totalBytesRead.toDouble() / contentLength.toDouble()
+                            playerState.downloadProgress = progress.toFloat()
+                        }
+
+                        songBytes = buffer.readBytes()
+                    } else {
+                        // Oh, copy occurs here
+                        songBytes = downloadResponse.bodyAsBytes()
+                    }
+
+                    cacheFile.writeBytes(songBytes)
+                    songBytes
+                }
+                player.prepare(bytes, autoPlay = true)
+            } else {
+                alert(resp.errData<CommonError>().msg)
+                return
+            }
+        } catch (e: Exception) {
+            Logger.e("player", "Failed to play song", e)
+            alert(e.message)
+            return
+        } finally {
+            playerState.isLoading = false
         }
     }
 }

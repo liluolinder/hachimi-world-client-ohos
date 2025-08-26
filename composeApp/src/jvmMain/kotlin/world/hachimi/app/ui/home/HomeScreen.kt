@@ -47,7 +47,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                         item.tags.map { it.name },
                         item.likeCount,
                         onClick = {
-                            global.playSong(item.id)
+                            global.insertToQueue(item.id, true, false)
                         },
                         modifier = Modifier.fillMaxWidth().padding(12.dp),
                     )

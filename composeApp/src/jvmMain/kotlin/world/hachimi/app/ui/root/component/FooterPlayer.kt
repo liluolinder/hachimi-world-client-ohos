@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
@@ -46,6 +47,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
@@ -89,8 +91,8 @@ fun FooterPlayer() {
                     isLoading = playerState.isLoading,
                     loadingProgress = playerState.downloadProgress,
                     onPlayPauseClick = { global.playOrPause() },
-                    onPreviousClick = { global.previous() },
-                    onNextClick = { global.next() }
+                    onPreviousClick = { global.queuePrevious() },
+                    onNextClick = { global.queueNext() }
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -102,6 +104,21 @@ fun FooterPlayer() {
                         global.setSongProgress(it)
                     }
                 )
+            }
+
+            var queueExpanded by remember { mutableStateOf(false) }
+
+            IconButton(onClick = { queueExpanded = true }) {
+                Icon(Icons.AutoMirrored.Filled.QueueMusic, "Queue")
+            }
+
+            if (queueExpanded) Popup(
+                alignment = Alignment.CenterEnd,
+                onDismissRequest = { queueExpanded = false }
+            ) {
+                MusicQueue(onClose = {
+                    queueExpanded = false
+                })
             }
         }
     }

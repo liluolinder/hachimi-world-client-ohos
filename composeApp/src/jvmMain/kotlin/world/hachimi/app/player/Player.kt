@@ -1,8 +1,5 @@
 package world.hachimi.app.player
 
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import world.hachimi.app.logging.Logger
@@ -60,8 +57,13 @@ class PlayerImpl() : Player {
     private var ready = false
     private val listeners: MutableSet<Player.Listener> = mutableSetOf()
 
+    @get:Synchronized
+    @set:Synchronized
+    private var pauseByUser = false
+
     override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
         if (isPlaying()) {
+            pauseByUser = true
             clip.stop()
             clip.close()
         }
@@ -71,7 +73,16 @@ class PlayerImpl() : Player {
         clip.addLineListener {
             when (it.type) {
                 LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
-                LineEvent.Type.STOP -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
+                LineEvent.Type.STOP -> {
+                    if (pauseByUser) {
+                        Logger.i("player", "Pause")
+                        pauseByUser = false
+                        listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
+                    } else {
+                        Logger.i("player", "End")
+                        listeners.forEach { listener -> listener.onEvent(PlayEvent.End) }
+                    }
+                }
             }
         }
 
@@ -119,12 +130,14 @@ class PlayerImpl() : Player {
 
     override fun pause() {
         if (ready) {
+            pauseByUser = true
             clip.stop()
         }
     }
 
     override fun seek(position: Long, autoStart: Boolean) {
         if (autoStart || isPlaying()) {
+            pauseByUser = true
             clip.stop()
             clip.microsecondPosition = position * 1000L
             clip.start()

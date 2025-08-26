@@ -85,7 +85,7 @@ class AuthViewModel(
                 regCodeRemainSecs = 60
             } catch (e: Exception) {
                 Logger.e("auth", "Failed to send email code", e)
-                error = e.localizedMessage
+                error = e.message
             } finally {
                 isOperating = false
             }
@@ -122,7 +122,7 @@ class AuthViewModel(
                     error = resp.errData<CommonError>().msg
                 }
             } catch (e: Exception) {
-                error = e.localizedMessage
+                error = e.message
             } finally {
                 isOperating = false
             }
@@ -167,7 +167,7 @@ class AuthViewModel(
                     error = resp.errData<CommonError>().msg
                 }
             } catch (e: Exception) {
-                error = e.localizedMessage
+                error = e.message
             } finally {
                 isOperating = false
             }
@@ -204,7 +204,7 @@ class AuthViewModel(
                 error = resp.errData<CommonError>().msg
             }
         } catch (e: Exception) {
-            error = e.localizedMessage
+            error = e.message
         } finally {
             isOperating = false
         }

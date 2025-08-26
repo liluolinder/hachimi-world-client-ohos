@@ -61,7 +61,7 @@ class SearchViewModel(
                 }
             } catch (e: Exception) {
                 Logger.e("search", "Failed to search", e)
-                global.alert(e.localizedMessage)
+                global.alert(e.message)
             } finally {
                 loading = false
             }
