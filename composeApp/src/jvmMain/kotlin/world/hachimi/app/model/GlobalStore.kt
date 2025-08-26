@@ -232,6 +232,14 @@ class GlobalStore(
         }
     }
 
+    fun previous() {
+        // TODO
+    }
+
+    fun next() {
+        // TODO
+    }
+
     fun setSongProgress(progress: Float) {
         val targetPositionMs = (progress * (playerState.songDurationSecs * 1000L)).toLong()
         player.seek(targetPositionMs, true)

@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -43,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.font.FontFamily
@@ -54,7 +52,6 @@ import world.hachimi.app.model.GlobalStore
 import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun FooterPlayer() {
@@ -80,103 +77,138 @@ fun FooterPlayer() {
                 }
             }
 
-            Column(Modifier.padding(start = 16.dp)) {
+            Column(Modifier.padding(start = 16.dp).width(200.dp)) {
                 Text(playerState.songTitle, style = MaterialTheme.typography.titleMedium)
                 Text(playerState.songAuthor, style = MaterialTheme.typography.titleMedium)
             }
 
-            Column(Modifier.weight(1f), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(top = 12.dp).align(androidx.compose.ui.Alignment.CenterHorizontally)) {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.SkipPrevious, "Skip Previous")
-                    }
-                    IconButton(onClick = {
-                        global.playOrPause()
-                    }, colors = IconButtonDefaults.filledIconButtonColors()) {
-                        if (playerState.isLoading) {
-                            if (playerState.downloadProgress == 0f) CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = LocalContentColor.current,
-                                strokeWidth = 2.dp
-                            ) else {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = LocalContentColor.current,
-                                    strokeWidth = 2.dp,
-                                    progress = {
-                                        playerState.downloadProgress
-                                    }
-                                )
-                            }
-                        } else {
-                            if (playerState.isPlaying) {
-                                Icon(Icons.Default.Pause, "Pause")
-                            } else {
-                                Icon(Icons.Default.PlayArrow, "Play")
-                            }
-                        }
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.SkipNext, "Skip Next")
-                    }
-                }
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                SongControl(
+                    modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
+                    isPlaying = playerState.isPlaying,
+                    isLoading = playerState.isLoading,
+                    loadingProgress = playerState.downloadProgress,
+                    onPlayPauseClick = { global.playOrPause() },
+                    onPreviousClick = { global.previous() },
+                    onNextClick = { global.next() }
+                )
+
                 Spacer(Modifier.height(12.dp))
 
-                var isDragging by remember { mutableStateOf(false) }
-                val playingProgress by derivedStateOf {
-                    (playerState.currentSongPositionMs.toDouble() / (playerState.songDurationSecs * 1000.0)).toFloat()
-                }
-                var draggingProgress by remember { mutableStateOf(0f) }
-                var offsetX by remember { mutableStateOf(0f) }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = formatSongDuration(playerState.currentSongPositionMs.milliseconds),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                    Box(Modifier.width(500.dp).height(6.dp).background(MaterialTheme.colorScheme.primaryContainer)
-                        .pointerInput(Unit) {
-                            awaitEachGesture {
-                                val down = awaitFirstDown()
-                                offsetX = down.position.x
-                                draggingProgress = down.position.x / size.width
-                                isDragging = true
-
-                                while (true) {
-                                    val change = awaitDragOrCancellation(down.id)
-                                    if (change != null && change.pressed) {
-                                        val summed = offsetX + change.positionChange().x
-                                        change.consume()
-                                        offsetX = summed
-                                        draggingProgress = summed / size.width
-                                    } else {
-                                        break
-                                    }
-                                }
-                                isDragging = false
-                                global.setSongProgress(draggingProgress)
-                            }
-                        }
-                    ) {
-                        val progress = if (isDragging) draggingProgress else playingProgress
-                        Box(Modifier.fillMaxWidth(progress).height(6.dp).background(MaterialTheme.colorScheme.primary))
+                SongProgress(
+                    durationMillis = playerState.songDurationSecs * 1000L,
+                    currentMillis = playerState.currentSongPositionMs,
+                    onProgressChange = {
+                        global.setSongProgress(it)
                     }
-                    Text(
-                        text = formatSongDuration(playerState.songDurationSecs.seconds),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
-
+                )
             }
         }
     }
+}
 
+@Composable
+private fun SongControl(
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean,
+    isLoading: Boolean,
+    loadingProgress: Float,
+    onPlayPauseClick: () -> Unit,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier
+    ) {
+        IconButton(onClick = onPreviousClick) {
+            Icon(Icons.Default.SkipPrevious, "Skip Previous")
+        }
+        IconButton(onClick = onPlayPauseClick, colors = IconButtonDefaults.filledIconButtonColors()) {
+            if (isLoading) {
+                if (loadingProgress == 0f) CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = LocalContentColor.current,
+                    strokeWidth = 2.dp
+                ) else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = LocalContentColor.current,
+                        strokeWidth = 2.dp,
+                        progress = { loadingProgress }
+                    )
+                }
+            } else {
+                if (isPlaying) {
+                    Icon(Icons.Default.Pause, "Pause")
+                } else {
+                    Icon(Icons.Default.PlayArrow, "Play")
+                }
+            }
+        }
+        IconButton(onClick = onNextClick) {
+            Icon(Icons.Default.SkipNext, "Skip Next")
+        }
+    }
+}
+
+@Composable
+private fun SongProgress(
+    durationMillis: Long,
+    currentMillis: Long,
+    onProgressChange: (Float) -> Unit,
+) {
+    var isDragging by remember { mutableStateOf(false) }
+    val playingProgress by derivedStateOf {
+        (currentMillis.toDouble() / durationMillis).toFloat()
+    }
+    var draggingProgress by remember { mutableStateOf(0f) }
+    var offsetX by remember { mutableStateOf(0f) }
+
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = formatSongDuration(currentMillis.milliseconds),
+            style = MaterialTheme.typography.labelSmall,
+            fontFamily = FontFamily.Monospace,
+        )
+        Box(
+            Modifier.width(500.dp).height(6.dp).background(MaterialTheme.colorScheme.primaryContainer)
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        offsetX = down.position.x
+                        draggingProgress = down.position.x / size.width
+                        isDragging = true
+
+                        while (true) {
+                            val change = awaitDragOrCancellation(down.id)
+                            if (change != null && change.pressed) {
+                                val summed = offsetX + change.positionChange().x
+                                change.consume()
+                                offsetX = summed
+                                draggingProgress = summed / size.width
+                            } else {
+                                break
+                            }
+                        }
+                        isDragging = false
+                        onProgressChange(draggingProgress)
+                    }
+                }
+        ) {
+            val progress = if (isDragging) draggingProgress else playingProgress
+            Box(Modifier.fillMaxWidth(progress).height(6.dp).background(MaterialTheme.colorScheme.primary))
+        }
+        Text(
+            text = formatSongDuration(durationMillis.milliseconds),
+            style = MaterialTheme.typography.labelSmall,
+            fontFamily = FontFamily.Monospace,
+        )
+    }
 }
 
 @Stable
@@ -184,5 +216,5 @@ fun formatSongDuration(duration: Duration): String {
     val seconds = duration.inWholeSeconds
     val minutesPart = seconds / 60
     val secondsPart = seconds % 60
-    return "${minutesPart}:${String.format(Locale.US,"%02d", secondsPart)}"
+    return "${minutesPart}:${String.format(Locale.US, "%02d", secondsPart)}"
 }
