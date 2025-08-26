@@ -116,6 +116,7 @@ class GlobalStore(
     private suspend fun loadLoginStatus() {
         val uid = dataStore.get(PreferencesKeys.USER_UID)
         val username = dataStore.get(PreferencesKeys.USER_NAME)
+        val avatar = dataStore.get(PreferencesKeys.USER_AVATAR)
         val accessToken = dataStore.get(PreferencesKeys.AUTH_ACCESS_TOKEN)
         val refreshToken = dataStore.get(PreferencesKeys.AUTH_REFRESH_TOKEN)
 
@@ -139,14 +140,18 @@ class GlobalStore(
                 }
             })
             isLoggedIn = true
-            userInfo = UserInfo(uid, username, avatarUrl = null)
+            userInfo = UserInfo(uid, username, avatarUrl = avatar)
         }
+    }
+
+    fun logout() {
+
     }
 
     @Deprecated("Use alert with i18n instead")
     fun alert(text: String?) {
         scope.launch {
-            snackbarHostState.showSnackbar(text ?: "Alert", withDismissAction = true)
+            snackbarHostState.showSnackbar(text ?: "Unknown Error", withDismissAction = true)
         }
     }
 
@@ -279,6 +284,7 @@ class GlobalStore(
     }
 
     fun setLoginUser(uid: Long, name: String, avatarUrl: String?) {
+        // TODO: Store user here
         Snapshot.withMutableSnapshot {
             userInfo = UserInfo(
                 uid = uid,
@@ -286,6 +292,14 @@ class GlobalStore(
                 avatarUrl = avatarUrl
             )
             isLoggedIn = true
+        }
+        scope.launch {
+            dataStore.set(PreferencesKeys.USER_NAME, name)
+            dataStore.set(PreferencesKeys.USER_UID, uid)
+
+            avatarUrl?.let {
+                dataStore.set(PreferencesKeys.USER_AVATAR, avatarUrl)
+            }
         }
     }
 
@@ -450,5 +464,5 @@ class PlayerUIState() {
 data class UserInfo(
     val uid: Long,
     val name: String,
-    val avatarUrl: String? = null
+    val avatarUrl: String?
 )

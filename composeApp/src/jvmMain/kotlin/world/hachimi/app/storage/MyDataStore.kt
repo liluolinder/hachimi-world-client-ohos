@@ -42,6 +42,7 @@ class MyDataStore(
 object PreferencesKeys {
     val USER_UID = longPreferencesKey("user_uid")
     val USER_NAME = stringPreferencesKey("user_name")
+    val USER_AVATAR = stringPreferencesKey("user_avatar")
     val AUTH_ACCESS_TOKEN = stringPreferencesKey("auth_access_token")
     val AUTH_REFRESH_TOKEN = stringPreferencesKey("auth_refresh_token")
 }

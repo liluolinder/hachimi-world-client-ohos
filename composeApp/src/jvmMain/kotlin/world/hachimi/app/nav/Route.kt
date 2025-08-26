@@ -22,6 +22,7 @@ sealed class Route {
         data object ContributorCenter: Root()
 
         data class Search(val query: String): Root()
+        object UserSpace: Root()
     }
     data class Auth(val initialLogin: Boolean = true) : Route()
 }

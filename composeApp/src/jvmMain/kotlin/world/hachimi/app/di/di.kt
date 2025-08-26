@@ -16,6 +16,7 @@ import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MainViewModel
 import world.hachimi.app.model.MyArtworkViewModel
 import world.hachimi.app.model.SearchViewModel
+import world.hachimi.app.model.UserSpaceViewModel
 import world.hachimi.app.player.Player
 import world.hachimi.app.player.PlayerImpl
 import world.hachimi.app.storage.MyDataStore
@@ -35,6 +36,7 @@ val appModule = module {
     viewModelOf(::PublishViewModel)
     viewModelOf(::MyArtworkViewModel)
     viewModelOf(::SearchViewModel)
+    viewModelOf(::UserSpaceViewModel)
 }
 
 private fun getPreferencesDataStore(): DataStore<Preferences> {

@@ -1,7 +1,7 @@
 package world.hachimi.app.ui.root.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
@@ -14,11 +14,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
@@ -45,18 +47,30 @@ fun TopAppBar(global: GlobalStore) {
                 SearchBox(
                     searchText, { searchText = it }, modifier = Modifier.widthIn(max = 400.dp),
                     onSearch = {
-                        global.nav.navigateTo(Route.Root.Search(searchText))
+                        global.nav.push(Route.Root.Search(searchText))
                     }
                 )
             }
 
             if (global.isLoggedIn) {
                 val userInfo = global.userInfo!!
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.clickable {
+                        global.nav.push(Route.Root.UserSpace)
+                    },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier.size(40.dp)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(0.12f), CircleShape)
-                    )
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onSurface.copy(0.12f))
+                    ) {
+                        AsyncImage(
+                            model = userInfo.avatarUrl,
+                            contentDescription = "User Avatar",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                     Column(Modifier.padding(start = 8.dp)) {
                         Text(
                             text = userInfo.name,
