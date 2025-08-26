@@ -13,7 +13,10 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
+import hachimiworld.composeapp.generated.resources.Res
+import hachimiworld.composeapp.generated.resources.icon
 import io.github.vinceglb.filekit.coil.addPlatformFileSupport
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 import world.hachimi.app.di.appModule
@@ -40,6 +43,7 @@ fun main() {
             state = WindowState(
                 size = DpSize(1200.dp, 800.dp)
             ),
+            icon = painterResource(Res.drawable.icon),
             alwaysOnTop = BuildKonfig.BUILD_TYPE == "dev"
         ) {
             LaunchedEffect(Unit) {
