@@ -62,11 +62,7 @@ class PlayerImpl() : Player {
     private var pauseByUser = false
 
     override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
-        if (isPlaying()) {
-            pauseByUser = true
-            clip.stop()
-            clip.close()
-        }
+        clip.close()
 
         ready = false
         clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
