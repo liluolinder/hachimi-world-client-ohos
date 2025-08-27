@@ -54,7 +54,7 @@ fun PlayerScreen() {
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = "基米ID：${global.playerState.songId}",
+                            text = "基米ID：${global.playerState.songDisplayId}",
                             style = MaterialTheme.typography.labelSmall,
                             color = LocalContentColor.current.copy(0.7f)
                         )

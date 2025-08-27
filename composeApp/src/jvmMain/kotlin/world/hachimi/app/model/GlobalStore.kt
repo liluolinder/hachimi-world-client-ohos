@@ -26,6 +26,7 @@ import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.AuthError
 import world.hachimi.app.api.AuthenticationListener
 import world.hachimi.app.api.CommonError
+import world.hachimi.app.api.module.PlaylistModule
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
@@ -43,7 +44,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class GlobalStore(
     private val dataStore: MyDataStore,
-    private val apiClient: ApiClient,
+    private val api: ApiClient,
     private val player: Player
 ) {
     var initialized by mutableStateOf(false)
@@ -64,7 +65,8 @@ class GlobalStore(
     var queueCurrentIndex by mutableStateOf(-1)
 
     data class MusicQueueItem(
-        val songId: String,
+        val id: Long,
+        val displayId: String,
         val name: String,
         val artist: String,
         val duration: Duration
@@ -121,8 +123,8 @@ class GlobalStore(
         val refreshToken = dataStore.get(PreferencesKeys.AUTH_REFRESH_TOKEN)
 
         if (uid != null && username != null && accessToken != null && refreshToken != null) {
-            apiClient.setToken(accessToken, refreshToken)
-            apiClient.setAuthListener(object : AuthenticationListener {
+            api.setToken(accessToken, refreshToken)
+            api.setAuthListener(object : AuthenticationListener {
                 override suspend fun onTokenChange(accessToken: String, refreshToken: String) {
                     dataStore.set(PreferencesKeys.AUTH_ACCESS_TOKEN, accessToken)
                     dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, refreshToken)
@@ -168,27 +170,27 @@ class GlobalStore(
     }
 
     fun playSongInQueue(id: String) {
-        val index = musicQueue.indexOfFirst { it.songId == id }
+        val index = musicQueue.indexOfFirst { it.displayId == id }
         if (index != -1) {
             val song = musicQueue[index]
 
             queueCurrentIndex = index
             scope.launch {
-                play(song.songId)
+                play(song.displayId)
             }
         }
     }
 
     fun queuePrevious() {
         if (musicQueue.isNotEmpty()) {
-            val currentIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
+            val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
             if (currentIndex == -1) {
-                playSongInQueue(musicQueue.first().songId)
+                playSongInQueue(musicQueue.first().displayId)
             } else {
                 if (currentIndex == 0) {
-                    playSongInQueue(musicQueue.last().songId)
+                    playSongInQueue(musicQueue.last().displayId)
                 } else {
-                    playSongInQueue(musicQueue[currentIndex - 1].songId)
+                    playSongInQueue(musicQueue[currentIndex - 1].displayId)
                 }
             }
         }
@@ -196,14 +198,14 @@ class GlobalStore(
 
     fun queueNext() {
         if (musicQueue.isNotEmpty()) {
-            val currentIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
+            val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
             if (currentIndex == -1) {
-                playSongInQueue(musicQueue.first().songId)
+                playSongInQueue(musicQueue.first().displayId)
             } else {
                 if (currentIndex >= musicQueue.lastIndex) {
-                    playSongInQueue(musicQueue.first().songId)
+                    playSongInQueue(musicQueue.first().displayId)
                 } else {
-                    playSongInQueue(musicQueue[currentIndex + 1].songId)
+                    playSongInQueue(musicQueue[currentIndex + 1].displayId)
                 }
             }
         }
@@ -214,26 +216,27 @@ class GlobalStore(
      * @param instantPlay instantly play after inserting
      * @param append appends to tail or insert after current playing
      */
-    fun insertToQueue(id: String, instantPlay: Boolean, append: Boolean) {
+    fun insertToQueue(songDisplayId: String, instantPlay: Boolean, append: Boolean) {
         scope.launch {
             val resp = async {
-                apiClient.songModule.detail(id)
+                api.songModule.detail(songDisplayId)
             }
 
-            val indexInQueue = musicQueue.indexOfFirst { it.songId == id }
+            val indexInQueue = musicQueue.indexOfFirst { it.displayId == songDisplayId }
 
             // Remove and reinsert
             if (indexInQueue != -1) {
                 musicQueue.removeAt(indexInQueue)
             }
 
-            val currentPlayingIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
+            val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
             try {
                 val resp = resp.await()
                 if (resp.ok) {
                     val data = resp.okData<SongModule.DetailResp>()
                     val item = MusicQueueItem(
-                        songId = data.id,
+                        id = data.id,
+                        displayId = data.displayId,
                         name = data.title,
                         artist = data.uploaderName,
                         duration = data.durationSeconds.seconds
@@ -259,8 +262,8 @@ class GlobalStore(
     }
 
     fun removeFromQueue(id: String) {
-        val currentPlayingIndex = musicQueue.indexOfFirst { it.songId == playerState.songId }
-        val targetIndex = musicQueue.indexOfFirst { it.songId == id }
+        val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
+        val targetIndex = musicQueue.indexOfFirst { it.displayId == id }
 
         if (currentPlayingIndex == targetIndex) {
             queueNext()
@@ -319,12 +322,13 @@ class GlobalStore(
 
         playerState.isLoading = true
         try {
-            val resp = apiClient.songModule.detail(id)
+            val resp = api.songModule.detail(id)
             if (resp.ok) {
                 Logger.i("global", "Reading detail")
                 val data = resp.okData<SongModule.DetailResp>()
                 Snapshot.withMutableSnapshot {
-                    playerState.songId = id
+                    playerState.songId = data.id
+                    playerState.songDisplayId = data.displayId
                     playerState.hasSong = true
                     playerState.songCoverUrl = data.coverUrl
                     playerState.songTitle = data.title
@@ -345,7 +349,7 @@ class GlobalStore(
                 } else {
                     Logger.i("global", "Downloading")
                     playerState.downloadProgress = 0f
-                    val downloadResponse = apiClient.httpClient.get(data.audioUrl)
+                    val downloadResponse = api.httpClient.get(data.audioUrl)
 
                     val songBytes: ByteArray
                     val contentLength = downloadResponse.headers[HttpHeaders.ContentLength]?.toLongOrNull()
@@ -391,6 +395,115 @@ class GlobalStore(
             playerState.isLoading = false
         }
     }
+
+
+
+
+    // Playlist related states
+    // Store at here because the footer player is shared across multiple screens
+    var toBeAddedSongId by mutableStateOf<Long?>(null)
+    var showPlaylistDialog by mutableStateOf(false)
+    var playlists by mutableStateOf<List<PlaylistModule.PlaylistItem>>(emptyList())
+    var playlistIsLoading by mutableStateOf(false)
+    var selectedPlaylistId by mutableStateOf<Long?>(null)
+    var addingToPlaylistOperating by mutableStateOf(false)
+
+    fun addToPlaylist() {
+        if (!playerState.hasSong) return
+        scope.launch {
+            toBeAddedSongId = playerState.songId
+            selectedPlaylistId = null
+            showPlaylistDialog = true
+            refreshPlaylist()
+        }
+    }
+
+    private suspend fun refreshPlaylist() {
+        playlistIsLoading = true
+
+        try {
+            val resp = api.playlistModule.list()
+            if (resp.ok) {
+                val data = resp.okData<PlaylistModule.ListResp>()
+                playlists = data.playlists
+            } else {
+                val data = resp.errData<CommonError>()
+                alert(data.msg)
+            }
+        } catch (e: Exception) {
+            Logger.e("player", "Failed to play playlist", e)
+            alert(e.message)
+        } finally {
+            playlistIsLoading = false
+        }
+    }
+
+    fun confirmAddToPlaylist() {
+        scope.launch {
+            addingToPlaylistOperating = true
+            try {
+                val resp = api.playlistModule.addSong(PlaylistModule.AddSongReq(
+                    playlistId = selectedPlaylistId ?: return@launch,
+                    songId = toBeAddedSongId ?: return@launch
+                ))
+                if (resp.ok) {
+                    showPlaylistDialog = false
+                } else {
+                    alert(resp.errData<CommonError>().msg)
+                }
+            } catch (e: Exception) {
+                Logger.e("player", "Failed to add playlist", e)
+                alert(e.message)
+            } finally {
+                addingToPlaylistOperating = false
+            }
+        }
+    }
+
+    fun cancelAddToPlaylist() {
+        showPlaylistDialog = false
+    }
+
+    var showCreatePlaylistDialog by mutableStateOf(false)
+    var createPlaylistName by mutableStateOf("")
+    var createPlaylistDescription by mutableStateOf("")
+    var createPlaylistPrivate by mutableStateOf(false)
+    var createPlaylistOperating by mutableStateOf(false)
+
+    fun createPlaylist() {
+        createPlaylistName = ""
+        createPlaylistDescription = ""
+        showCreatePlaylistDialog = true
+    }
+
+    fun confirmCreatePlaylist() {
+        scope.launch {
+            createPlaylistOperating = true
+            // Do something
+            try {
+                val resp = api.playlistModule.create(PlaylistModule.CreatePlaylistReq(
+                    name = createPlaylistName,
+                    description = createPlaylistDescription.takeIf { it.isNotBlank() },
+                    isPublic = !createPlaylistPrivate
+                ))
+                if (resp.ok) {
+                    showCreatePlaylistDialog = false
+                    refreshPlaylist()
+                } else {
+                    alert(resp.errData<CommonError>().msg)
+                }
+            } catch (e: Exception) {
+                Logger.e("player", "Failed to create playlist", e)
+                alert(e.message)
+            } finally {
+                createPlaylistOperating = false
+            }
+        }
+    }
+
+    fun cancelCreatePlaylist() {
+        showCreatePlaylistDialog = false
+    }
 }
 
 /**
@@ -398,7 +511,8 @@ class GlobalStore(
  */
 class PlayerUIState() {
     var hasSong by mutableStateOf(false)
-    var songId by mutableStateOf("")
+    var songId by mutableStateOf<Long?>(null)
+    var songDisplayId by mutableStateOf("")
     var isPlaying by mutableStateOf(false)
     var isLoading by mutableStateOf(false)
     var songTitle by mutableStateOf("")

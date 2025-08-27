@@ -24,7 +24,8 @@ class SongModule(
 
     @Serializable
     data class DetailResp(
-        val id: String,
+        val id: Long,
+        val displayId: String,
         val title: String,
         val subtitle: String,
         val description: String,

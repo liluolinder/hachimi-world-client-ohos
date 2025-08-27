@@ -18,6 +18,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import world.hachimi.app.api.module.AuthModule
+import world.hachimi.app.api.module.PlaylistModule
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.logging.Logger
@@ -211,6 +212,7 @@ class ApiClient(private val baseUrl: String) {
     val authModule by lazy { AuthModule(this) }
     val userModule by lazy { UserModule(this) }
     val songModule by lazy { SongModule(this) }
+    val playlistModule by lazy { PlaylistModule(this) }
 }
 
 interface AuthenticationListener {

@@ -42,7 +42,7 @@ fun MusicQueue(
             }
 
             global.musicQueue.fastForEachIndexed { index, item ->
-                val isPlaying = item.songId == global.playerState.songId
+                val isPlaying = item.displayId == global.playerState.songDisplayId
 
                 val interactionSource = remember { MutableInteractionSource() }
                 val hovered by interactionSource.collectIsHoveredAsState();
@@ -58,7 +58,7 @@ fun MusicQueue(
                         modifier = Modifier.height(42.dp).clickable(
                             interactionSource = interactionSource,
                             indication = LocalIndication.current
-                        ) { global.playSongInQueue(item.songId) },
+                        ) { global.playSongInQueue(item.displayId) },
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -68,7 +68,7 @@ fun MusicQueue(
                         Spacer(Modifier.weight(1f))
                         Text(formatSongDuration(item.duration), style = MaterialTheme.typography.bodySmall)
                         if (hovered) IconButton(
-                            onClick = { global.removeFromQueue(item.songId) }) {
+                            onClick = { global.removeFromQueue(item.displayId) }) {
                             Icon(Icons.Filled.Delete, contentDescription = "Remove from playlist")
                         }
                     }
