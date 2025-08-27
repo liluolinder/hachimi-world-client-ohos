@@ -65,7 +65,7 @@ class PlayerImpl() : Player {
         clip.close()
 
         ready = false
-        clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
+        val clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
         clip.addLineListener {
             when (it.type) {
                 LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
@@ -100,6 +100,7 @@ class PlayerImpl() : Player {
         if (autoPlay) {
             play()
         }
+        this@PlayerImpl.clip = clip
     }
 
     override fun isReady(): Boolean {
