@@ -29,7 +29,7 @@ class UserModule(
         val username: String,
         val avatarUrl: String?,
         val bio: String?,
-        val gender: Int,
+        val gender: Int?,
         val isBanned: Boolean,
     )
 

@@ -177,12 +177,11 @@ class UserSpaceViewModel(
                     global.alert(err.msg)
                 }
             } catch (e: Exception) {
+                Logger.e("userspace", "Failed to fetch profile", e)
                 global.alert(e.message)
             } finally {
                 loading = false
             }
         }
     }
-
-
 }
