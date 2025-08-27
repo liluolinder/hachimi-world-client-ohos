@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.auth
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.AuthViewModel
 
@@ -26,8 +28,8 @@ fun AuthScreen(
     var isLogin by remember(displayLoginAsInitial) { mutableStateOf(displayLoginAsInitial) }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("欢迎回家")
+        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            Text(text = if (isLogin) "欢迎回家" else "成为神人", style = MaterialTheme.typography.displayLarge)
             Row {
                 if (isLogin) {
                     Button(onClick = {}) {
@@ -59,15 +61,13 @@ fun AuthScreen(
                 }, visualTransformation = PasswordVisualTransformation())
 
                 Button(
-                    onClick = { vm.login() },
+                    onClick = { vm.startLogin() },
                     enabled = !vm.isOperating && vm.email.isNotBlank() && vm.password.isNotBlank(),
                 ) {
                     Text("登录")
                 }
             } else {
                 if (vm.regStep == 0) {
-                    Text("成为神人")
-
                     TextField(vm.regEmail, { vm.regEmail = it }, placeholder = {
                         Text("邮箱")
                     }, singleLine = true)
@@ -150,10 +150,23 @@ fun AuthScreen(
                     }
                 }
             }
-
-            vm.error?.let {
-                Text(it)
-            }
         }
+
+        if (vm.showCaptchaDialog) AlertDialog(
+            onDismissRequest = {},
+            title = {
+                Text("请完成人机验证")
+            },
+            text = {
+                Text("请在打开的浏览器页面中完成人机验证")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.finishCaptcha()
+                }) {
+                    Text("我已完成，继续")
+                }
+            }
+        )
     }
 }

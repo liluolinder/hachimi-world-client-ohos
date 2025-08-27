@@ -11,6 +11,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
@@ -20,6 +21,10 @@ import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.PreferencesKeys
+import java.awt.Desktop
+import java.net.URI
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
 
 class AuthViewModel(
     private val api: ApiClient,
@@ -48,7 +53,7 @@ class AuthViewModel(
     var intro by mutableStateOf("")
     var gender by mutableStateOf<Int?>(null)
 
-    var error by mutableStateOf<String?>(null)
+    var showCaptchaDialog by mutableStateOf(false)
 
     fun mounted() {
         startCountdownJob()
@@ -74,18 +79,17 @@ class AuthViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 isOperating = true
-                clearErrorMessage()
 
                 val result = api.authModule.sendEmailCode(AuthModule.SendEmailCodeReq(email = regEmail))
                 if (!result.ok) {
                     val errData = result.errData<CommonError>()
-                    error = errData.msg
+                    global.alert(errData.msg)
                     return@launch
                 }
                 regCodeRemainSecs = 60
             } catch (e: Exception) {
                 Logger.e("auth", "Failed to send email code", e)
-                error = e.message
+                global.alert(e.message)
             } finally {
                 isOperating = false
             }
@@ -97,9 +101,7 @@ class AuthViewModel(
             regSendEmailCode()
             regStep = 1
         } else if (regStep == 1) {
-            viewModelScope.launch(Dispatchers.IO) {
-                mRegister()
-            }
+            register()
         }
     }
 
@@ -119,10 +121,10 @@ class AuthViewModel(
                     global.setLoginUser(uid.toLong(), name, null)
                     global.nav.replace(Route.Root.Home)
                 } else {
-                    error = resp.errData<CommonError>().msg
+                    global.alert(resp.errData<CommonError>().msg)
                 }
             } catch (e: Exception) {
-                error = e.message
+                global.alert(e.message)
             } finally {
                 isOperating = false
             }
@@ -134,47 +136,44 @@ class AuthViewModel(
         global.nav.replace(Route.Root.Home)
     }
 
-    fun clearErrorMessage() {
-        error = null
-    }
-
-    fun login() {
-        viewModelScope.launch {
-            try {
-                isOperating = true
-                val resp = api.authModule.loginEmail(
-                    AuthModule.LoginReq(
-                        email = email,
-                        password = password,
-                        code = null,
-                        deviceInfo = "Desktop Client"
-                    )
+    private suspend fun doLogin() {
+        try {
+            isOperating = true
+            val resp = api.authModule.loginEmail(
+                AuthModule.LoginReq(
+                    email = email,
+                    password = password,
+                    code = null,
+                    deviceInfo = "Desktop Client",
+                    captchaKey = captchaKey!!
                 )
-                if (resp.ok) {
-                    val data = resp.okData<AuthModule.LoginResp>()
-                    // Set token to the api client
-                    api.setToken(data.token.accessToken, data.token.refreshToken)
+            )
+            if (resp.ok) {
+                val data = resp.okData<AuthModule.LoginResp>()
 
-                    // Save token
-                    dataStore.set(PreferencesKeys.USER_UID, data.uid)
-                    dataStore.set(PreferencesKeys.USER_NAME, data.username)
-                    dataStore.set(PreferencesKeys.AUTH_ACCESS_TOKEN, data.token.accessToken)
-                    dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, data.token.refreshToken)
+                // Set token
+                api.setToken(data.token.accessToken, data.token.refreshToken)
+                dataStore.set(PreferencesKeys.AUTH_ACCESS_TOKEN, data.token.accessToken)
+                dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, data.token.refreshToken)
 
-                    global.setLoginUser(data.uid, data.username, null)
-                    global.nav.replace(Route.Root.Home)
-                } else {
-                    error = resp.errData<CommonError>().msg
-                }
-            } catch (e: Exception) {
-                error = e.message
-            } finally {
-                isOperating = false
+                // Save login status
+                dataStore.set(PreferencesKeys.USER_UID, data.uid)
+                dataStore.set(PreferencesKeys.USER_NAME, data.username)
+                global.setLoginUser(data.uid, data.username, null)
+
+                global.nav.replace(Route.Root.Home)
+            } else {
+                global.alert(resp.errData<CommonError>().msg)
             }
+        } catch (e: Exception) {
+            Logger.e("auth", "Failed to login", e)
+            global.alert(e.message)
+        } finally {
+            isOperating = false
         }
     }
 
-    private suspend fun mRegister() = withContext(Dispatchers.IO) {
+    private suspend fun doRegister() = withContext(Dispatchers.IO) {
         try {
             isOperating = true
             val resp = api.authModule.registerEmail(
@@ -182,7 +181,8 @@ class AuthViewModel(
                     email = regEmail,
                     password = regPassword,
                     code = regCode,
-                    deviceInfo = "Desktop Client" // TODO
+                    deviceInfo = "Desktop Client", // TODO
+                    captchaKey = captchaKey!!
                 )
             )
             if (resp.ok) {
@@ -196,17 +196,82 @@ class AuthViewModel(
                 api.setToken(data.token.accessToken, data.token.refreshToken)
 
                 // Save token
-                dataStore.set(PreferencesKeys.USER_UID, data.uid)
-                dataStore.set(PreferencesKeys.USER_NAME, data.generatedUsername)
                 dataStore.set(PreferencesKeys.AUTH_ACCESS_TOKEN, data.token.accessToken)
                 dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, data.token.refreshToken)
+
+                // Set login user status
+                dataStore.set(PreferencesKeys.USER_UID, data.uid)
+                dataStore.set(PreferencesKeys.USER_NAME, data.generatedUsername)
+                global.setLoginUser(data.uid, data.generatedUsername, null)
             } else {
-                error = resp.errData<CommonError>().msg
+                global.alert(resp.errData<CommonError>().msg)
             }
         } catch (e: Exception) {
-            error = e.message
+            Logger.e("auth", "Failed to register", e)
+            global.alert(e.message)
         } finally {
             isOperating = false
+        }
+    }
+
+    private var captchaKey: String? = null
+
+    private suspend fun generateCaptcha() {
+        isOperating = true
+        captchaKey = null
+
+        try {
+            val resp = api.authModule.generateCaptcha()
+            if (resp.ok) {
+                val data = resp.okData<AuthModule.GenerateCaptchaResp>()
+                captchaKey = data.captchaKey
+                // Open uri with java desktop
+                try {
+                    val desktop = Desktop.getDesktop()
+                    desktop.browse(URI(data.url))
+                } catch (e: Exception) {
+                    Logger.e("auth", "Failed to open captcha url", e)
+                    return
+                }
+            } else {
+                val err = resp.errData<CommonError>()
+                global.alert(err.msg)
+            }
+        } catch (e: Exception) {
+            Logger.e("auth", "Failed to generate captcha captcha", e)
+            global.alert(e.message)
+        } finally {
+            isOperating = false
+        }
+    }
+
+    private var captchaCont: Continuation<Unit>? = null
+
+    private suspend fun waitForCaptcha() {
+        suspendCancellableCoroutine<Unit> { cont ->
+            showCaptchaDialog = true
+            captchaCont = cont
+        }
+    }
+
+    fun finishCaptcha() {
+        showCaptchaDialog = false
+        captchaCont?.resume(Unit)
+    }
+
+    fun startLogin() {
+        viewModelScope.launch {
+            generateCaptcha()
+            waitForCaptcha()
+            doLogin()
+        }
+    }
+
+    private fun register() {
+        viewModelScope.launch {
+            generateCaptcha()
+            waitForCaptcha()
+            doRegister()
         }
     }
 }

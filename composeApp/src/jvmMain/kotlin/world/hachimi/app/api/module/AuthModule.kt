@@ -28,6 +28,7 @@ class AuthModule(
         val password: String,
         val code: String?,
         val deviceInfo: String,
+        val captchaKey: String
     )
 
     @Serializable
@@ -45,7 +46,8 @@ class AuthModule(
         val email: String,
         val password: String,
         val code: String,
-        val deviceInfo: String
+        val deviceInfo: String,
+        val captchaKey: String
     )
 
     @Serializable
@@ -79,4 +81,21 @@ class AuthModule(
         }.body<HttpResponse>()
     }
 
+    @Serializable
+    data class GenerateCaptchaResp(
+        val captchaKey: String,
+        val url: String,
+    )
+
+    suspend fun generateCaptcha(): WebResult<GenerateCaptchaResp>
+        = client.get("/auth/captcha/generate", auth = false)
+
+    @Serializable
+    data class SubmitCaptchaReq(
+        val captchaKey: String,
+        val token: String,
+    )
+
+    suspend fun submitCaptcha(req: SubmitCaptchaReq): WebResult<Unit>
+        = client.post("/auth/captcha/submit", req, auth = false)
 }
