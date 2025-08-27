@@ -37,6 +37,10 @@ class MyDataStore(
     suspend fun <T> set(key: Preferences.Key<T>, value: T) {
         dataStore.edit { preferences -> preferences[key] = value }
     }
+
+    suspend fun <T> delete(key: Preferences.Key<T>) {
+        dataStore.edit { preferences -> preferences.remove(key) }
+    }
 }
 
 object PreferencesKeys {

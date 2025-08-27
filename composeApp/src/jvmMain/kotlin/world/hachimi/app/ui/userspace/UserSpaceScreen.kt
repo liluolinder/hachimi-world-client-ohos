@@ -35,7 +35,9 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.UserSpaceViewModel
 
 @Composable
@@ -46,12 +48,18 @@ fun UserSpaceScreen(vm: UserSpaceViewModel = koinViewModel()) {
             vm.dispose()
         }
     }
+    val global = koinInject<GlobalStore>()
     Column(
         modifier = Modifier.fillMaxSize().wrapContentSize().widthIn(max = 1000.dp).padding(24.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Text(text = "神人空间", style = MaterialTheme.typography.titleLarge)
+        Row(Modifier.fillMaxWidth()) {
+            Text(modifier = Modifier.weight(1f), text = "神人空间", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = { global.logout() }) {
+                Text("退出登录")
+            }
+        }
 
         if (vm.loading) {
             CircularProgressIndicator()

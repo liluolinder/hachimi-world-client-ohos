@@ -145,7 +145,15 @@ class GlobalStore(
     }
 
     fun logout() {
-
+        scope.launch {
+            dataStore.delete(PreferencesKeys.USER_UID)
+            dataStore.delete(PreferencesKeys.USER_NAME)
+            dataStore.delete(PreferencesKeys.USER_AVATAR)
+            dataStore.delete(PreferencesKeys.AUTH_ACCESS_TOKEN)
+            dataStore.delete(PreferencesKeys.AUTH_REFRESH_TOKEN)
+            isLoggedIn = false
+            userInfo = null
+        }
     }
 
     @Deprecated("Use alert with i18n instead")
