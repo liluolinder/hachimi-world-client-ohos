@@ -37,6 +37,7 @@ class SongModule(
         val creationType: Int,
         val originInfos: List<CreationTypeInfo>,
         val uploaderUid: Long,
+        val uploaderName: String,
         val playCount: Long,
         val likeCount: Long,
     )

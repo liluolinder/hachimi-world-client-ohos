@@ -227,7 +227,7 @@ class GlobalStore(
                     val item = MusicQueueItem(
                         songId = data.id,
                         name = data.title,
-                        artist = data.uploaderUid.toString(),
+                        artist = data.uploaderName,
                         duration = data.durationSeconds.seconds
                     )
 
@@ -320,7 +320,7 @@ class GlobalStore(
                     playerState.hasSong = true
                     playerState.songCoverUrl = data.coverUrl
                     playerState.songTitle = data.title
-                    playerState.songAuthor = data.uploaderUid.toString() // TODO: Be user name
+                    playerState.songAuthor = data.uploaderName
                     playerState.songDurationSecs = data.durationSeconds
                     playerState.setLyrics(data.lyrics)
                 }

@@ -41,7 +41,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                         item.coverUrl,
                         item.title,
                         item.subtitle,
-                        item.uploaderUid.toString(),
+                        item.uploaderName,
                         item.tags.map { it.name },
                         item.likeCount,
                         onClick = {
