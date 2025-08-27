@@ -8,12 +8,15 @@ import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
+import world.hachimi.app.ui.committee.CommitteeCenterScreen
+import world.hachimi.app.ui.contributor.ContributorCenterScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
 import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.root.component.FooterPlayer
 import world.hachimi.app.ui.root.component.SideNavigation
 import world.hachimi.app.ui.root.component.TopAppBar
 import world.hachimi.app.ui.search.SearchScreen
+import world.hachimi.app.ui.userspace.UserSpaceScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,8 +39,9 @@ fun RootScreen(content: Route.Root) {
                     Route.Root.MyPlaylist -> {}
                     Route.Root.MySubscribe -> {}
                     is Route.Root.CreationCenter -> CreationCenterScreen(content)
-                    Route.Root.CommitteeCenter -> {}
-                    Route.Root.ContributorCenter -> {}
+                    Route.Root.CommitteeCenter -> CommitteeCenterScreen()
+                    Route.Root.ContributorCenter -> ContributorCenterScreen()
+                    Route.Root.UserSpace -> UserSpaceScreen()
                 }
             }
         }
