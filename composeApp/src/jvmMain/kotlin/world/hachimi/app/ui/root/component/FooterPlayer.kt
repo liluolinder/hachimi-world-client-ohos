@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitDragOrCancellation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -26,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -34,7 +32,6 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -59,7 +57,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -69,7 +66,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.model.PlaylistViewModel
 import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -127,8 +126,11 @@ fun FooterPlayer() {
             }
 
             var queueExpanded by remember { mutableStateOf(false) }
+            var tobeAddedSong by remember { mutableStateOf<Long?>(null) }
 
-            IconButton(onClick = { global.addToPlaylist() }) {
+            IconButton(onClick = {
+                tobeAddedSong = playerState.songId
+            }) {
                 Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
             }
 
@@ -145,8 +147,8 @@ fun FooterPlayer() {
                 })
             }
 
-            if (global.showPlaylistDialog) AddToPlaylistDialog(global)
-            if (global.showCreatePlaylistDialog) CreatePlaylistDialog(global)
+            AddToPlaylistDialog(tobeAddedSong)
+            CreatePlaylistDialog()
         }
     }
 }
@@ -266,12 +268,20 @@ fun formatSongDuration(duration: Duration): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddToPlaylistDialog(
-    global: GlobalStore
+    tobeAddedSongId: Long?,
+    vm: PlaylistViewModel = koinViewModel(),
 ) {
-    BasicAlertDialog(
+    LaunchedEffect(vm, tobeAddedSongId) {
+        if (tobeAddedSongId != null) {
+            vm.toBeAddedSongId = tobeAddedSongId
+            vm.addToPlaylist()
+        }
+    }
+
+    if (vm.showPlaylistDialog) BasicAlertDialog(
         modifier = Modifier.width(400.dp),
         onDismissRequest = {
-            global.cancelAddToPlaylist()
+            vm.cancelAddToPlaylist()
         },
         content = {
             ElevatedCard(elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)) {
@@ -282,7 +292,7 @@ private fun AddToPlaylistDialog(
 
                     Text("请选择一个歌单")
 
-                    if (global.playlistIsLoading) {
+                    if (vm.playlistIsLoading) {
                         LinearProgressIndicator()
                     }
 
@@ -290,7 +300,7 @@ private fun AddToPlaylistDialog(
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { global.createPlaylist() }
+                        onClick = { vm.createPlaylist() }
                     ) {
                         Row(Modifier.padding(16.dp)) {
                             Icon(Icons.Default.Add, contentDescription = null)
@@ -304,11 +314,11 @@ private fun AddToPlaylistDialog(
                     Spacer(Modifier.height(12.dp))
 
                     LazyColumn(Modifier.height(200.dp).fillMaxWidth()) {
-                        itemsIndexed(global.playlists, key = { _, item -> item.id }) { index, item ->
+                        itemsIndexed(vm.playlists, key = { _, item -> item.id }) { index, item ->
                             Card(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 onClick = {
-                                    global.selectedPlaylistId = item.id
+                                    vm.selectedPlaylistId = item.id
                                 }
                             ) {
                                 Row(
@@ -328,7 +338,7 @@ private fun AddToPlaylistDialog(
                                         modifier = Modifier.weight(1f),
                                         text = item.name
                                     )
-                                    if (global.selectedPlaylistId == item.id) {
+                                    if (vm.selectedPlaylistId == item.id) {
                                         Icon(
                                             modifier = Modifier.padding(end = 12.dp),
                                             imageVector = Icons.Default.CheckCircle,
@@ -341,12 +351,12 @@ private fun AddToPlaylistDialog(
                     }
 
                     Row(Modifier.align(Alignment.End)) {
-                        TextButton(onClick = { global.cancelAddToPlaylist() }) {
+                        TextButton(onClick = { vm.cancelAddToPlaylist() }) {
                             Text("取消")
                         }
                         TextButton(
-                            onClick = { global.confirmAddToPlaylist() },
-                            enabled = global.selectedPlaylistId != null && !global.addingToPlaylistOperating
+                            onClick = { vm.confirmAddToPlaylist() },
+                            enabled = vm.selectedPlaylistId != null && !vm.addingToPlaylistOperating
                         ) {
                             Text("确定")
                         }
@@ -358,46 +368,46 @@ private fun AddToPlaylistDialog(
 }
 
 @Composable
-private fun CreatePlaylistDialog(global: GlobalStore) {
-    AlertDialog(
+private fun CreatePlaylistDialog(vm: PlaylistViewModel = koinViewModel()) {
+    if (vm.showCreatePlaylistDialog) AlertDialog(
         title = { Text("新建歌单") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 TextField(
-                    value = global.createPlaylistName,
-                    onValueChange = { global.createPlaylistName = it },
+                    value = vm.createPlaylistName,
+                    onValueChange = { vm.createPlaylistName = it },
                     label = { Text("名称") }
                 )
                 TextField(
-                    value = global.createPlaylistDescription,
-                    onValueChange = { global.createPlaylistDescription = it },
+                    value = vm.createPlaylistDescription,
+                    onValueChange = { vm.createPlaylistDescription = it },
                     label = { Text("描述") }
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("私有歌单")
                     Switch(
                         modifier = Modifier.padding(start = 16.dp),
-                        checked = global.createPlaylistPrivate,
-                        onCheckedChange = { global.createPlaylistPrivate = it }
+                        checked = vm.createPlaylistPrivate,
+                        onCheckedChange = { vm.createPlaylistPrivate = it }
                     )
                 }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { global.confirmCreatePlaylist() },
-                enabled = global.createPlaylistName.isNotBlank() && !global.createPlaylistOperating
+                onClick = { vm.confirmCreatePlaylist() },
+                enabled = vm.createPlaylistName.isNotBlank() && !vm.createPlaylistOperating
             ) {
                 Text("创建")
             }
         },
         dismissButton = {
-            TextButton(onClick = { global.cancelCreatePlaylist() }) {
+            TextButton(onClick = { vm.cancelCreatePlaylist() }) {
                 Text("取消")
             }
         },
         onDismissRequest = {
-            global.cancelCreatePlaylist()
+            vm.cancelCreatePlaylist()
         }
     )
 }
