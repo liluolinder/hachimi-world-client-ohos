@@ -13,6 +13,7 @@ import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.PlaylistModule
 import world.hachimi.app.logging.Logger
+import kotlin.time.Duration.Companion.seconds
 
 class PlaylistDetailViewModel(
     private val api: ApiClient,
@@ -84,7 +85,17 @@ class PlaylistDetailViewModel(
     }
 
     fun playAll() {
-        // TODO
+        viewModelScope.launch {
+            val items = songs.map { GlobalStore.MusicQueueItem(
+                id = it.songId,
+                displayId = it.songDisplayId,
+                name = it.title,
+                artist = it.uploaderName,
+                duration = it.durationSeconds.seconds,
+                coverUrl = it.coverUrl
+            ) }
+            global.playAll(items)
+        }
     }
 
     private suspend fun refresh() {

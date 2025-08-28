@@ -68,7 +68,8 @@ class GlobalStore(
         val displayId: String,
         val name: String,
         val artist: String,
-        val duration: Duration
+        val duration: Duration,
+        val coverUrl: String
     )
 
     fun initialize() {
@@ -182,6 +183,7 @@ class GlobalStore(
         }
     }
 
+    // TODO[refactor](player): Should queue be a builtin feature in player? To make GlobalStore more clear
     fun queuePrevious() {
         if (musicQueue.isNotEmpty()) {
             val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
@@ -240,7 +242,8 @@ class GlobalStore(
                         displayId = data.displayId,
                         name = data.title,
                         artist = data.uploaderName,
-                        duration = data.durationSeconds.seconds
+                        duration = data.durationSeconds.seconds,
+                        coverUrl = data.coverUrl
                     )
 
                     if (append) {
@@ -263,12 +266,27 @@ class GlobalStore(
         }
     }
 
+    fun playAll(items: List<MusicQueueItem>) {
+        scope.launch {
+            player.pause()
+            musicQueue.clear()
+            musicQueue.addAll(items)
+            queueCurrentIndex = -1
+            queueNext()
+        }
+    }
+
     fun removeFromQueue(id: String) {
         val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
         val targetIndex = musicQueue.indexOfFirst { it.displayId == id }
 
         if (currentPlayingIndex == targetIndex) {
-            queueNext()
+            if (musicQueue.size > 1) {
+                queueNext()
+            } else {
+                player.pause()
+                playerState.hasSong = false
+            }
         }
         musicQueue.removeAt(targetIndex)
     }
