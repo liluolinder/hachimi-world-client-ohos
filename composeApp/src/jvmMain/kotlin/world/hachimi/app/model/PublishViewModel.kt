@@ -22,6 +22,7 @@ import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
+import world.hachimi.app.util.LrcParser
 import kotlin.random.Random
 
 class PublishViewModel(
@@ -49,8 +50,6 @@ class PublishViewModel(
     var coverImage by mutableStateOf<PlatformFile?>(null)
         private set
     private var coverTempId: String? = null
-    var error by mutableStateOf<String?>(null)
-        private set
 
     var audioUploadProgress by mutableStateOf(0f)
         private set
@@ -96,8 +95,6 @@ class PublishViewModel(
                 type = FileKitType.File("mp3", "flac")
             )
             if (audio != null) {
-                clearError()
-
                 // 1. Validate
                 val size = audio.size()
                 if (size > 20 * 1024 * 1024) {
@@ -153,8 +150,6 @@ class PublishViewModel(
                 type = FileKitType.Image
             )
             if (image != null) {
-                clearError()
-
                 // 1. Validate image
                 val size = image.size()
                 if (size > 10 * 1024 * 1024) {
@@ -194,10 +189,6 @@ class PublishViewModel(
                 coverTempId = data.tempId
             }
         }
-    }
-
-    fun clearError() {
-        error = null
     }
 
     var tagInput by mutableStateOf("")
@@ -331,90 +322,65 @@ class PublishViewModel(
         externalLinks.removeAt(index)
     }
 
-    val publishEnabled by derivedStateOf {
-        validateInputs()
-    }
+    fun publish() = viewModelScope.launch {
+        if (!validateInputs()) return@launch
 
-    private fun validateInputs(): Boolean {
-        val basic = audioTempId != null
-                && coverTempId != null
-                && title.isNotBlank()
-                && subtitle.isNotBlank()
-                && description.isNotBlank()
-                && lyrics.isNotBlank()
+        try {
+            isOperating = true
 
-        val originCheck = if (creationType > 0) {
-            originId.isNotBlank() || (originTitle.isNotBlank() /*&& originLink.isNotBlank()*/)
-        } else true
-        val derivationCheck = if (creationType > 1) {
-            deriveId.isNotBlank() || (deriveTitle.isNotBlank() /*&& deriveLink.isNotBlank()*/)
-        } else true
+            val creationInfo = SongModule.PublishReq.CreationInfo(
+                creationType = creationType,
+                originInfo = if (creationType > 0) SongModule.CreationTypeInfo(
+                    songDisplayId = originId.takeIf { it.isNotBlank() },
+                    title = originTitle.takeIf { it.isNotBlank() },
+                    url = originLink.takeIf { it.isNotBlank() },
+                    artist = null,
+                    originType = 0
+                ) else null,
+                derivativeInfo = if (creationType > 1) SongModule.CreationTypeInfo(
+                    songDisplayId = deriveId.takeIf { it.isNotBlank() },
+                    title = deriveTitle.takeIf { it.isNotBlank() },
+                    url = deriveLink.takeIf { it.isNotBlank() },
+                    artist = null,
+                    originType = 1
+                ) else null
+            )
 
-        return basic && originCheck && derivationCheck && !isOperating
-    }
-
-    fun publish() {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (validateInputs()) {
-                try {
-                    isOperating = true
-
-                    val creationInfo = SongModule.PublishReq.CreationInfo(
-                        creationType = creationType,
-                        originInfo = if (creationType > 0) SongModule.CreationTypeInfo(
-                            songDisplayId = originId.takeIf { it.isNotBlank() },
-                            title = originTitle.takeIf { it.isNotBlank() },
-                            url = originLink.takeIf { it.isNotBlank() },
-                            artist = null,
-                            originType = 0
-                        ) else null,
-                        derivativeInfo = if (creationType > 1) SongModule.CreationTypeInfo(
-                            songDisplayId = deriveId.takeIf { it.isNotBlank() },
-                            title = deriveTitle.takeIf { it.isNotBlank() },
-                            url = deriveLink.takeIf { it.isNotBlank() },
-                            artist = null,
-                            originType = 1
-                        ) else null
-                    )
-
-
-                    val crew = staffs.map {
-                        SongModule.PublishReq.ProductionItem(
-                            role = it.role,
-                            uid = it.uid,
-                            name = it.name
-                        )
-                    }
-
-                    val resp = api.songModule.publish(
-                        SongModule.PublishReq(
-                            songTempId = audioTempId!!,
-                            coverTempId = coverTempId!!,
-                            title = title,
-                            subtitle = subtitle,
-                            description = description,
-                            lyrics = lyrics,
-                            tagIds = emptyList(), // TODO: Do this later
-                            creationInfo = creationInfo,
-                            productionCrew = crew,
-                            externalLinks = externalLinks
-                        )
-                    )
-                    if (resp.ok) {
-                        val data = resp.okData<SongModule.PublishResp>()
-                        publishedSongId = data.songDisplayId
-                        showSuccessDialog = true
-                    } else {
-                        val data = resp.errData<CommonError>()
-                        global.alert(data.msg)
-                    }
-                } catch (e: Exception) {
-                    Logger.e("creation", "Failed to publish song", e)
-                    global.alert(e.message)
-                } finally {
-                    isOperating = false
-                }
+            val crew = staffs.map {
+                SongModule.PublishReq.ProductionItem(
+                    role = it.role,
+                    uid = it.uid,
+                    name = it.name
+                )
             }
+
+            val resp = api.songModule.publish(
+                SongModule.PublishReq(
+                    songTempId = audioTempId!!,
+                    coverTempId = coverTempId!!,
+                    title = title,
+                    subtitle = subtitle,
+                    description = description,
+                    lyrics = lyrics,
+                    tagIds = emptyList(), // TODO: Do this later
+                    creationInfo = creationInfo,
+                    productionCrew = crew,
+                    externalLinks = externalLinks
+                )
+            )
+            if (resp.ok) {
+                val data = resp.okData<SongModule.PublishResp>()
+                publishedSongId = data.songDisplayId
+                showSuccessDialog = true
+            } else {
+                val data = resp.errData<CommonError>()
+                global.alert(data.msg)
+            }
+        } catch (e: Exception) {
+            Logger.e("creation", "Failed to publish song", e)
+            global.alert(e.message)
+        } finally {
+            isOperating = false
         }
     }
 
@@ -472,5 +438,58 @@ class PublishViewModel(
 
     fun removeStaff(index: Int) {
         staffs.removeAt(index)
+    }
+
+    private fun validateInputs(): Boolean {
+        if (audioTempId == null) {
+            global.alert("请选择音频文件")
+            return false
+        }
+
+        if (coverTempId == null) {
+            global.alert("请上传封面")
+            return false
+        }
+
+        if (title.isBlank()) {
+            global.alert("请填写标题")
+            return false
+        }
+
+        if (subtitle.isBlank()) {
+            // Do nothing
+        }
+
+        if (description.isBlank()) {
+            // Do nothing
+        }
+
+        if (lyrics.isBlank()) {
+            global.alert("请填写歌词")
+            return false
+        }
+
+        try {
+            LrcParser.parse(lyrics)
+        } catch (e: Exception) {
+            global.alert("请填写正确的 LRC 格式歌词，暂不支持歌词元数据")
+            return false
+        }
+
+        if (creationType > 0) {
+            if (originId.isBlank() && originTitle.isBlank()) {
+                global.alert("请填写原作信息")
+                return false
+            }
+        }
+
+        if (creationType > 1) {
+            if (deriveId.isBlank() && deriveTitle.isBlank()) {
+                global.alert("请填写二作信息")
+                return false
+            }
+        }
+
+        return true
     }
 }

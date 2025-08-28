@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import coil3.compose.AsyncImage
@@ -56,10 +57,6 @@ fun PublishScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text("发布作品", style = MaterialTheme.typography.headlineSmall)
-
-            vm.error?.let {
-                Text(it)
-            }
 
             FormItem(header = { Text("上传音频") }) {
                 Row(
@@ -159,7 +156,10 @@ fun PublishScreen(
                     value = vm.lyrics,
                     onValueChange = { vm.lyrics = it },
                     minLines = 8,
-                    maxLines = 8
+                    maxLines = 8,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = FontFamily.Monospace
+                    )
                 )
             }
 
@@ -185,7 +185,8 @@ fun PublishScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originId,
                         onValueChange = { vm.originId = it },
-                        singleLine = true
+                        singleLine = true,
+                        supportingText = { Text("如果原作是站内作品，填写 ID 即可，无需再填写标题与链接")}
                     )
                 }
                 FormItem(header = { Text("原作标题") }) {
@@ -212,7 +213,8 @@ fun PublishScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveId,
                         onValueChange = { vm.deriveId = it },
-                        singleLine = true
+                        singleLine = true,
+                        supportingText = { Text("如果二作是站内作品，填写 ID 即可，则无需再填写标题与链接")}
                     )
                 }
                 FormItem(header = { Text("二作标题") }) {
@@ -306,7 +308,7 @@ fun PublishScreen(
                 }
             }
 
-            Button(onClick = { vm.publish() }, enabled = vm.publishEnabled) {
+            Button(onClick = { vm.publish() }, enabled = !vm.isOperating) {
                 Text("提交作品")
             }
         }
