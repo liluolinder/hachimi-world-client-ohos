@@ -5,10 +5,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.size
+import io.github.vinceglb.filekit.source
 import io.ktor.util.logging.error
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.io.buffered
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.PlaylistModule
@@ -30,6 +37,9 @@ class PlaylistDetailViewModel(
     var editDescription by mutableStateOf("")
     var editOperating by mutableStateOf(false)
     var editPrivate by mutableStateOf(false)
+
+    var coverUploading by mutableStateOf(false)
+    var coverUploadingProgress by mutableStateOf(0f)
 
     fun mounted(playlistId: Long) {
         this.playlistId = playlistId
@@ -54,15 +64,17 @@ class PlaylistDetailViewModel(
 
     fun confirmEdit() {
         viewModelScope.launch {
-            playlistId?.let {id->
+            playlistId?.let { id ->
                 editOperating = false
                 try {
-                    val resp = api.playlistModule.update(PlaylistModule.UpdatePlaylistReq(
-                        id = id,
-                        name = editName,
-                        description = editDescription.takeIf { it.isNotBlank() },
-                        isPublic = !editPrivate
-                    ))
+                    val resp = api.playlistModule.update(
+                        PlaylistModule.UpdatePlaylistReq(
+                            id = id,
+                            name = editName,
+                            description = editDescription.takeIf { it.isNotBlank() },
+                            isPublic = !editPrivate
+                        )
+                    )
                     if (resp.ok) {
                         showEditDialog = false
                         refresh()
@@ -86,14 +98,16 @@ class PlaylistDetailViewModel(
 
     fun playAll() {
         viewModelScope.launch {
-            val items = songs.map { GlobalStore.MusicQueueItem(
-                id = it.songId,
-                displayId = it.songDisplayId,
-                name = it.title,
-                artist = it.uploaderName,
-                duration = it.durationSeconds.seconds,
-                coverUrl = it.coverUrl
-            ) }
+            val items = songs.map {
+                GlobalStore.MusicQueueItem(
+                    id = it.songId,
+                    displayId = it.songDisplayId,
+                    name = it.title,
+                    artist = it.uploaderName,
+                    duration = it.durationSeconds.seconds,
+                    coverUrl = it.coverUrl
+                )
+            }
             global.playAll(items)
         }
     }
@@ -114,6 +128,48 @@ class PlaylistDetailViewModel(
             global.alert(e.message)
         } finally {
             loading = false
+        }
+    }
+
+    fun editCover() {
+        viewModelScope.launch {
+            val image = FileKit.openFilePicker(
+                type = FileKitType.Image
+            )
+            if (image != null) {
+                // 1. Validate image
+                val size = image.size()
+                if (size > 4 * 1024 * 1024) {
+                    global.alert("Image too large")
+                    return@launch
+                }
+                val buffer = image.source().buffered()
+
+                // 2. Upload
+                try {
+                    coverUploading = true
+                    val resp = api.playlistModule.setCover(
+                        req = PlaylistModule.SetCoverReq(playlistId = playlistId!!),
+                        filename = image.name, source = buffer, listener = { sent, total ->
+                            val progress = (sent.toDouble() / size).toFloat()
+                            coverUploadingProgress = progress.coerceIn(0f, 1f)
+                        }
+                    )
+                    if (resp.ok) {
+                        refresh()
+                    } else {
+                        val error = resp.errData<CommonError>()
+                        global.alert(error.msg)
+                        return@launch
+                    }
+                } catch (e: Exception) {
+                    Logger.e("playlist", "Failed to set cover image", e)
+                    global.alert(e.message)
+                    return@launch
+                } finally {
+                    coverUploading = false
+                }
+            }
         }
     }
 }

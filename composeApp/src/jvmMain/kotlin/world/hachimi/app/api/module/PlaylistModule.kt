@@ -1,6 +1,15 @@
 package world.hachimi.app.api.module
 
+import io.ktor.client.content.ProgressListener
+import io.ktor.client.plugins.onUpload
+import io.ktor.client.request.forms.InputProvider
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.setBody
+import io.ktor.http.HttpHeaders
+import io.ktor.http.headersOf
 import kotlinx.datetime.Instant
+import kotlinx.io.Source
 import kotlinx.serialization.Serializable
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.WebResult
@@ -9,7 +18,7 @@ class PlaylistModule(
     private val client: ApiClient
 ) {
     @Serializable
-    data class PlaylistItem (
+    data class PlaylistItem(
         val id: Long,
         val name: String,
         val coverUrl: String?,
@@ -106,4 +115,35 @@ class PlaylistModule(
 
     suspend fun changeOrder(req: ChangeOrderReq): WebResult<Unit> =
         client.post("/playlist/change_order", req)
+
+    @Serializable
+    data class SetCoverReq(
+        val playlistId: Long
+    )
+
+    suspend fun setCover(
+        req: SetCoverReq,
+        filename: String,
+        source: Source,
+        listener: ProgressListener
+    ): WebResult<Unit> =
+        client.postWith("/playlist/set_cover") {
+            setBody(
+                MultiPartFormDataContent(
+                    formData {
+                        append(
+                            "json",
+                            client.json.encodeToString(req),
+                            headersOf(HttpHeaders.ContentType, "application/json")
+                        )
+                        append(
+                            "image",
+                            source,
+                            headersOf(HttpHeaders.ContentDisposition, "filename=\"${filename}\"")
+                        )
+                    }
+                )
+            )
+            onUpload(listener)
+        }
 }

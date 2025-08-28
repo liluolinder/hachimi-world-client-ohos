@@ -32,7 +32,7 @@ private const val TAG = "ApiClient"
  */
 class ApiClient(private val baseUrl: String) {
     @OptIn(ExperimentalSerializationApi::class)
-    private val json = Json {
+    internal val json = Json {
         ignoreUnknownKeys = true
         prettyPrint = false
         namingStrategy = JsonNamingStrategy.SnakeCase

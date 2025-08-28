@@ -38,6 +38,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import coil3.compose.AsyncImage
@@ -72,14 +73,23 @@ fun PlaylistDetailScreen(
         } else {
             vm.playlistInfo?.let { info ->
                 Row {
-                    Card(modifier = Modifier.size(300.dp), onClick = {
-                        // TODO: Update playlist cover image
-                    }) {
-                        AsyncImage(
-                            modifier = Modifier.fillMaxSize(),
-                            model = info.coverUrl,
-                            contentDescription = "Playlist Cover Image"
-                        )
+                    Card(
+                        modifier = Modifier.size(300.dp),
+                        onClick = { vm.editCover() },
+                        enabled = !vm.coverUploading
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            AsyncImage(
+                                modifier = Modifier.fillMaxSize(),
+                                model = info.coverUrl,
+                                contentDescription = "Playlist Cover Image",
+                                contentScale = ContentScale.Crop
+                            )
+                            if (vm.coverUploading) {
+                                if (vm.coverUploadingProgress == 0f || vm.coverUploadingProgress == 1f) CircularProgressIndicator()
+                                else CircularProgressIndicator(progress = { vm.coverUploadingProgress })
+                            }
+                        }
                     }
                     Spacer(Modifier.width(42.dp))
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
