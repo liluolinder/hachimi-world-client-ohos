@@ -16,7 +16,7 @@ class PlaylistModule(
         val description: String?,
         val createTime: Instant,
         val isPublic: Boolean,
-        val songsCount: Long,
+        val songsCount: Int,
     )
 
     @Serializable
@@ -46,6 +46,7 @@ class PlaylistModule(
         val coverUrl: String,
         val uploaderName: String,
         val uploaderUid: Long,
+        val durationSeconds: Int,
         val orderIndex: Int,
         val addTime: Instant,
     )

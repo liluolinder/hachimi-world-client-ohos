@@ -32,8 +32,8 @@ fun SideNavigation(
                     global.nav.push(Route.Root.RecentPlay)
                 })
 
-                NavItem("我的歌单", selected = content == Route.Root.MyPlaylist, onSelectedChange = {
-                    global.nav.push(Route.Root.MyPlaylist)
+                NavItem("我的歌单", selected = content is Route.Root.MyPlaylist, onSelectedChange = {
+                    global.nav.push(Route.Root.MyPlaylist.Default)
                 })
                 NavItem("我的关注", selected = content == Route.Root.MySubscribe, onSelectedChange = {
                     global.nav.push(Route.Root.MySubscribe)

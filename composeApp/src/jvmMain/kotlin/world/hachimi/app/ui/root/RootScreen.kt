@@ -12,6 +12,8 @@ import world.hachimi.app.ui.committee.CommitteeCenterScreen
 import world.hachimi.app.ui.contributor.ContributorCenterScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
 import world.hachimi.app.ui.home.HomeScreen
+import world.hachimi.app.ui.playlist.PlaylistRouteScreen
+import world.hachimi.app.ui.playlist.PlaylistScreen
 import world.hachimi.app.ui.root.component.FooterPlayer
 import world.hachimi.app.ui.root.component.SideNavigation
 import world.hachimi.app.ui.root.component.TopAppBar
@@ -36,7 +38,7 @@ fun RootScreen(content: Route.Root) {
                     Route.Root.Home -> HomeScreen()
                     Route.Root.RecentLike -> {}
                     Route.Root.RecentPlay -> {}
-                    Route.Root.MyPlaylist -> {}
+                    is Route.Root.MyPlaylist -> PlaylistRouteScreen(content)
                     Route.Root.MySubscribe -> {}
                     is Route.Root.CreationCenter -> CreationCenterScreen(content)
                     Route.Root.CommitteeCenter -> CommitteeCenterScreen()

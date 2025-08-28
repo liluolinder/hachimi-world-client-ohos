@@ -376,7 +376,8 @@ private fun CreatePlaylistDialog(vm: PlaylistViewModel = koinViewModel()) {
                 TextField(
                     value = vm.createPlaylistName,
                     onValueChange = { vm.createPlaylistName = it },
-                    label = { Text("名称") }
+                    label = { Text("名称") },
+                    singleLine = true
                 )
                 TextField(
                     value = vm.createPlaylistDescription,

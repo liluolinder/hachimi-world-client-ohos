@@ -9,7 +9,13 @@ sealed class Route {
         data object RecentPlay: Root()
         data object RecentLike: Root()
         data object MySubscribe: Root()
-        data object MyPlaylist: Root()
+        sealed class MyPlaylist: Root() {
+            companion object {
+                val Default = List
+            }
+            data object List: MyPlaylist()
+            data class Detail(val playlistId: Long): MyPlaylist()
+        }
         sealed class CreationCenter: Root() {
             companion object Companion {
                 val Default = MyArtwork
