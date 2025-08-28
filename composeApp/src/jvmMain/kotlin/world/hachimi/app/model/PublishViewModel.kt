@@ -362,7 +362,7 @@ class PublishViewModel(
                     subtitle = subtitle,
                     description = description,
                     lyrics = lyrics,
-                    tagIds = emptyList(), // TODO: Do this later
+                    tagIds = tags.map { it.id },
                     creationInfo = creationInfo,
                     productionCrew = crew,
                     externalLinks = externalLinks
