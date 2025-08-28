@@ -40,6 +40,7 @@ class PlaylistModule(
 
     @Serializable
     data class SongItem(
+        val songId: Long,
         val songDisplayId: String,
         val title: String,
         val subtitle: String,
