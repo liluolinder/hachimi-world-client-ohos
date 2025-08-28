@@ -134,19 +134,7 @@ fun PublishScreen(
                 header = { Text("标签") },
                 subtitle = { Text("使用标签描述你的曲风类型（如古典、流行）、创作类型（如原教旨、原曲不使用）。不建议添加过多的标签") }
             ) {
-                val (value, setValue) = remember { mutableStateOf("") }
-                TagEdit(
-                    tags = vm.tags,
-                    value = value,
-                    onValueChange = setValue,
-                    onAddClick = {
-                        if (value.isNotBlank()) {
-                            vm.addTag(value)
-                            setValue("")
-                        }
-                    },
-                    onRemoveClick = { vm.removeTag(it) }
-                )
+                TagEdit(vm)
             }
 
             FormItem(

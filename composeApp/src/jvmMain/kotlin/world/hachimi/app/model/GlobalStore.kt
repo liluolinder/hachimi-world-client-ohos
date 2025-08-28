@@ -133,7 +133,7 @@ class GlobalStore(
                 }
 
                 override suspend fun onAuthenticationError(err: AuthError) {
-                    // TODO: Ask user to re-login
+                    // TODO[feat](auth): Ask user to re-login when authentication error occur
                     println(err)
                     when (err) {
                         is AuthError.ErrorHttpResponse -> {}

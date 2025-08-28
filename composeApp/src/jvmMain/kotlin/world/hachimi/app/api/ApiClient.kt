@@ -129,6 +129,9 @@ class ApiClient(private val baseUrl: String) {
             data
         }
 
+    // FIXME(api): If any api call triggered refreshing token, and then be canceled manually,
+    //  after refreshing request be sent, before the responded token is set to state and be saved,
+    //  any further requests will take the old used refresh-token, then cause 401 error.
     internal suspend fun refreshToken() = withContext(Dispatchers.IO) {
         // Only execute once at the same time
         if (authLock.isLocked) {
@@ -306,3 +309,12 @@ data class CommonError(
     val code: String,
     val msg: String
 )
+
+// Ohh! I like extension function! :p
+inline fun <reified T> WebResp<T, *>.ok(): T {
+    return okData<T>()
+}
+
+inline fun <reified E> WebResp<*, E>.err(): E {
+    return errData<E>()
+}

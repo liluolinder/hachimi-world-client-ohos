@@ -43,8 +43,7 @@ fun main() {
             state = WindowState(
                 size = DpSize(1200.dp, 800.dp)
             ),
-            icon = painterResource(Res.drawable.icon),
-            alwaysOnTop = BuildKonfig.BUILD_TYPE == "dev"
+            icon = painterResource(Res.drawable.icon)
         ) {
             LaunchedEffect(Unit) {
                 window.minimumSize = Dimension(1000, 700)

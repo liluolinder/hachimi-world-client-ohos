@@ -1,29 +1,28 @@
 package world.hachimi.app.model
 
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.*
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.github.vinceglb.filekit.name
-import io.github.vinceglb.filekit.size
-import io.github.vinceglb.filekit.source
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.buffered
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
+import world.hachimi.app.api.err
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
+import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
+import kotlin.random.Random
 
 class PublishViewModel(
     private val global: GlobalStore,
@@ -31,7 +30,7 @@ class PublishViewModel(
 ) : ViewModel(CoroutineScope(Dispatchers.IO)) {
     var title by mutableStateOf("")
     var subtitle by mutableStateOf("")
-    val tags = mutableStateListOf<String>()
+    val tags = mutableStateListOf<SongModule.TagItem>()
     var description by mutableStateOf("")
     var lyrics by mutableStateOf("")
 
@@ -67,11 +66,11 @@ class PublishViewModel(
 
     val staffs = mutableStateListOf<CrewItem>()
 
-/*    data class TagItem(
-        val id: Long,
-        val label: String
-    )
-    */
+    /*    data class TagItem(
+            val id: Long,
+            val label: String
+        )
+        */
     data class CrewItem(
         val role: String,
         val uid: Long?,
@@ -201,9 +200,123 @@ class PublishViewModel(
         error = null
     }
 
-    fun addTag(name: String) {
-        // TODO: Send add tag request
-        tags.add(name)
+    var tagInput by mutableStateOf("")
+        private set
+
+    private var tagSearchJob: Job? = null
+    private val tagSearchMutex = Mutex()
+    private var tagSearchSign = 0L
+    var tagSearching by mutableStateOf(false)
+        private set
+    var tagCandidates by mutableStateOf<List<SongModule.TagItem>>(emptyList())
+        private set
+    var tagCreating by mutableStateOf(false)
+
+    fun updateTagInput(content: String) {
+        tagInput = content
+
+        viewModelScope.launch {
+            tagSearchMutex.withLock {
+                tagSearchJob?.cancel()
+                tagSearchJob = null
+            }
+
+            val sign = Random.nextLong()
+            tagSearchSign = sign
+            val tagJob = launch {
+                tagSearching = true
+                try {
+                    val resp = api.songModule.tagSearch(SongModule.TagSearchReq(content))
+                    if (resp.ok) {
+                        val data = resp.okData<SongModule.TagSearchResp>()
+                        tagSearchMutex.withLock {
+                            if (tagSearchSign == sign) {
+                                tagCandidates = data.result
+                            }
+                        }
+                    } else {
+                        global.alert(resp.errData<CommonError>().msg)
+                        return@launch
+                    }
+                } catch (_: CancellationException) {
+                    // Do nothing, it's just canceled
+                } catch (e: Exception) {
+                    Logger.e("publish", "Failed to search tag", e)
+                    global.alert(e.message)
+                } finally {
+                    tagSearchMutex.withLock {
+                        if (tagSearchSign == sign) {
+                            tagSearching = false
+                        }
+                    }
+                }
+            }
+            tagSearchMutex.withLock {
+                tagSearchJob = tagJob
+            }
+        }
+    }
+
+    fun clearTagInput() {
+        tagInput = ""
+        viewModelScope.launch {
+            tagSearchMutex.withLock {
+                tagSearchJob?.cancel()
+                tagSearchJob = null
+            }
+            tagCandidates = emptyList()
+        }
+    }
+
+    fun addTag() {
+        val label = tagInput
+        if (label.isBlank()) {
+            global.alert("标签名称不可为空")
+            return
+        }
+        if (tags.any { item -> item.name == label }) {
+            global.alert("标签已存在")
+            return
+        }
+        viewModelScope.launch {
+            val candidate = tagCandidates.find { item -> item.name == label }
+            if (candidate != null) {
+                tags.add(candidate)
+                clearTagInput()
+            } else {
+                // Create new tag
+                tagCreating = true
+                try {
+                    val resp = api.songModule.tagCreate(
+                        SongModule.TagCreateReq(
+                            name = label,
+                            description = null
+                        )
+                    )
+                    if (resp.ok) {
+                        val item = SongModule.TagItem(resp.ok().id, label, null)
+                        tags.add(item)
+                        clearTagInput()
+                    } else {
+                        global.alert(resp.err().msg)
+                    }
+                } catch (e: Exception) {
+                    Logger.e("publish", "Failed to create tag", e)
+                    global.alert(e.message)
+                } finally {
+                    tagCreating = false
+                }
+            }
+        }
+    }
+
+    fun selectTag(item: SongModule.TagItem) {
+        if (tags.any { it -> it.name == item.name }) {
+            global.alert("标签已存在")
+            return
+        }
+        tags.add(item)
+        clearTagInput()
     }
 
     fun removeTag(index: Int) {

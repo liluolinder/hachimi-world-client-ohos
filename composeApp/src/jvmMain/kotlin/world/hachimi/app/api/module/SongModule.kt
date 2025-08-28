@@ -204,4 +204,31 @@ class SongModule(
 
     suspend fun search(req: SearchReq): WebResult<SearchResp> =
         client.get("/song/search", req, false)
+
+    @Serializable
+    data class TagCreateReq (
+        val name: String,
+        val description: String?,
+    )
+
+    @Serializable
+    data class TagCreateResp (
+        val id: Long
+    )
+
+    suspend fun tagCreate(req: TagCreateReq): WebResult<TagCreateResp>
+        = client.post("/song/tag/create", req)
+
+    @Serializable
+    data class TagSearchReq(
+        val query: String
+    )
+
+    @Serializable
+    data class TagSearchResp(
+        val result: List<TagItem>
+    )
+
+    suspend fun tagSearch(req: TagSearchReq): WebResult<TagSearchResp>
+        = client.get("/song/tag/search", req)
 }
