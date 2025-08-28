@@ -26,7 +26,6 @@ import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.AuthError
 import world.hachimi.app.api.AuthenticationListener
 import world.hachimi.app.api.CommonError
-import world.hachimi.app.api.module.PlaylistModule
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
@@ -108,8 +107,10 @@ class GlobalStore(
 
             })
             while (isActive) {
-                val currentPosition = player.currentPosition()
-                playerState.setCurrentSongPosition(currentPosition)
+                if (player.isPlaying()) {
+                    val currentPosition = player.currentPosition()
+                    playerState.updateCurrentMillis(currentPosition)
+                }
                 delay(100)
             }
         }
@@ -256,6 +257,7 @@ class GlobalStore(
                     alert(err.msg)
                 }
             } catch (e: Exception) {
+                Logger.e("player", "Failed to insert song to queue", e)
                 alert(e.message)
             }
         }
@@ -280,10 +282,12 @@ class GlobalStore(
     }
 
     fun setSongProgress(progress: Float) {
-        val targetPositionMs = (progress * (playerState.songDurationSecs * 1000L)).toLong()
-        player.seek(targetPositionMs, true)
+        val millis = (progress * (playerState.songDurationSecs * 1000L)).toLong()
+        player.seek(millis, true)
 
-        playerState.setCurrentSongPosition(targetPositionMs)
+        // Update UI instantly
+        // FIXME(player): This might be overwrite by progress syncing job
+        playerState.updateCurrentMillis(millis)
     }
 
     fun expandPlayer() {
@@ -336,7 +340,7 @@ class GlobalStore(
                     playerState.songDurationSecs = data.durationSeconds
                     playerState.setLyrics(data.lyrics)
                 }
-                playerState.setCurrentSongPosition(0L)
+                playerState.updateCurrentMillis(0L)
 
                 val filename = data.audioUrl.substringAfterLast("/")
                 val cacheFile = JVMPlatform.getCacheDir()
@@ -411,7 +415,7 @@ class PlayerUIState() {
     var songCoverUrl by mutableStateOf<String?>(null)
     var songDurationSecs by mutableStateOf(0)
 
-    var currentSongPositionMs by mutableStateOf(0L)
+    var currentMillis by mutableStateOf(0L)
         private set
     var currentLyricsLine by mutableStateOf(-1)
         private set
@@ -435,8 +439,8 @@ class PlayerUIState() {
         val text: String
     )
 
-    fun setCurrentSongPosition(milliseconds: Long) {
-        currentSongPositionMs = milliseconds
+    fun updateCurrentMillis(milliseconds: Long) {
+        currentMillis = milliseconds
 
         if (timedLyricsEnabled) {
             val currentLineIndex = lrcSegments.indexOfFirst {
@@ -468,6 +472,7 @@ class PlayerUIState() {
             lyricsLines = lrcSegments.map { it.spans.first().text }
             timedLyricsEnabled = true
         } catch (e: Exception) {
+            Logger.e("player", "Failed to parse lyrics", e)
             lyricsLines = content.lines()
             timedLyricsEnabled = false
         }

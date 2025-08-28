@@ -118,7 +118,7 @@ fun FooterPlayer() {
 
                 SongProgress(
                     durationMillis = playerState.songDurationSecs * 1000L,
-                    currentMillis = playerState.currentSongPositionMs,
+                    currentMillis = playerState.currentMillis,
                     onProgressChange = {
                         global.setSongProgress(it)
                     }

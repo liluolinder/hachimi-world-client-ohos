@@ -1,6 +1,8 @@
 package world.hachimi.app.player
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import world.hachimi.app.logging.Logger
 import java.io.ByteArrayInputStream
@@ -61,46 +63,50 @@ class PlayerImpl() : Player {
     @set:Synchronized
     private var pauseByUser = false
 
-    override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
-        clip.close()
+    private val mutex = Mutex()
 
-        ready = false
-        val clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
-        clip.addLineListener {
-            when (it.type) {
-                LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
-                LineEvent.Type.STOP -> {
-                    if (pauseByUser) {
-                        Logger.i("player", "Pause")
-                        pauseByUser = false
-                        listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
-                    } else {
-                        Logger.i("player", "End")
-                        listeners.forEach { listener -> listener.onEvent(PlayEvent.End) }
+    override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            clip.close()
+
+            ready = false
+            val clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
+            clip.addLineListener {
+                when (it.type) {
+                    LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
+                    LineEvent.Type.STOP -> {
+                        if (pauseByUser) {
+                            Logger.i("player", "Pause")
+                            pauseByUser = false
+                            listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
+                        } else {
+                            Logger.i("player", "End")
+                            listeners.forEach { listener -> listener.onEvent(PlayEvent.End) }
+                        }
                     }
                 }
             }
-        }
 
-        val defaultFormat = clip.format
+            val defaultFormat = clip.format
 
-        val stream = AudioSystem.getAudioInputStream(ByteArrayInputStream(bytes))
-        val baseFormat = stream.format
+            val stream = AudioSystem.getAudioInputStream(ByteArrayInputStream(bytes))
+            val baseFormat = stream.format
 //        val sampleSizeInBites = baseFormat.sampleSizeInBits.takeIf { it > 0 } ?: 32 // Defaults to fltp(32bits)
 
-        val decodedStream = AudioSystem.getAudioInputStream(defaultFormat, stream)
-        clip.open(decodedStream)
-        if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
-            volumeControl = clip.getControl(FloatControl.Type.VOLUME) as FloatControl
-        } else {
-            volumeControl = null
-        }
-        ready = true
+            val decodedStream = AudioSystem.getAudioInputStream(defaultFormat, stream)
+            clip.open(decodedStream)
+            if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
+                volumeControl = clip.getControl(FloatControl.Type.VOLUME) as FloatControl
+            } else {
+                volumeControl = null
+            }
+            ready = true
+            this@PlayerImpl.clip = clip
 
-        if (autoPlay) {
-            play()
+            if (autoPlay) {
+                play()
+            }
         }
-        this@PlayerImpl.clip = clip
     }
 
     override fun isReady(): Boolean {
