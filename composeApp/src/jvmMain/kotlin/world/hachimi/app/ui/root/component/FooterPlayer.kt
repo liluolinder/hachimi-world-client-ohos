@@ -43,6 +43,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -89,13 +90,12 @@ fun FooterPlayer() {
             Card(modifier = Modifier.aspectRatio(1f), onClick = {
                 global.expandPlayer()
             }, colors = CardDefaults.outlinedCardColors(), elevation = CardDefaults.outlinedCardElevation()) {
-                playerState.songCoverUrl?.let {
-                    AsyncImage(
-                        modifier = Modifier.fillMaxSize(),
-                        model = playerState.songCoverUrl,
-                        contentDescription = "Cover",
-                    )
-                }
+                AsyncImage(
+                    modifier = Modifier.fillMaxSize(),
+                    model = playerState.songCoverUrl,
+                    contentDescription = "Cover",
+                    contentScale = ContentScale.Crop
+                )
             }
 
             Column(Modifier.padding(start = 16.dp).width(200.dp)) {
@@ -325,14 +325,14 @@ private fun AddToPlaylistDialog(
                                     modifier = Modifier,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    AsyncImage(
-                                        modifier = Modifier.size(64.dp),
-                                        model = item.coverUrl,
-                                        contentDescription = "Playlist Cover",
-                                        contentScale = ContentScale.Crop,
-                                        placeholder = ColorPainter(LocalContentColor.current.copy(0.12f)),
-                                        fallback = ColorPainter(LocalContentColor.current.copy(0.12f))
-                                    )
+                                    Surface(Modifier.size(64.dp), MaterialTheme.shapes.medium, LocalContentColor.current.copy(0.12f)) {
+                                        AsyncImage(
+                                            modifier = Modifier.fillMaxSize(),
+                                            model = item.coverUrl,
+                                            contentDescription = "Playlist Cover",
+                                            contentScale = ContentScale.Crop,
+                                        )
+                                    }
                                     Spacer(Modifier.width(16.dp))
                                     Text(
                                         modifier = Modifier.weight(1f),

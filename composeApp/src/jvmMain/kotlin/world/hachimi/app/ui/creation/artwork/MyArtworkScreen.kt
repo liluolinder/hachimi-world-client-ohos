@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.creation.artwork
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import kotlinx.datetime.Clock
@@ -91,13 +95,14 @@ private fun ArtworkItem(
     modifier: Modifier = Modifier,
 ) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        AsyncImage(
-            model = coverUrl, null,
-            modifier = Modifier.size(42.dp).clip(MaterialTheme.shapes.small),
-            placeholder = ColorPainter(Color.LightGray),
-            error = ColorPainter(Color.LightGray),
-            fallback = ColorPainter(Color.LightGray),
-        )
+        Surface(Modifier.size(42.dp), MaterialTheme.shapes.small, LocalContentColor.current.copy(0.12f)) {
+            AsyncImage(
+                modifier = Modifier.size(42.dp).clip(MaterialTheme.shapes.small),
+                model = coverUrl,
+                contentDescription = "Cover Image",
+                contentScale = ContentScale.Crop
+            )
+        }
 
         Column(Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyMedium)

@@ -15,6 +15,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import kotlinx.datetime.Instant
@@ -70,13 +71,14 @@ private fun PlaylistItem(
     Card(modifier = modifier, onClick = onEnter) {
         Column {
             Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
-                AsyncImage(
-                    modifier = Modifier.fillMaxSize(),
-                    model = coverUrl,
-                    contentDescription = "Playlist Cover Image",
-                    fallback = ColorPainter(LocalContentColor.current.copy(0.12f))
-
-                )
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {
+                    AsyncImage(
+                        modifier = Modifier.fillMaxSize(),
+                        model = coverUrl,
+                        contentDescription = "Playlist Cover Image",
+                        contentScale = ContentScale.Crop
+                    )
+                }
                 Row(
                     Modifier.align(Alignment.BottomStart).padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

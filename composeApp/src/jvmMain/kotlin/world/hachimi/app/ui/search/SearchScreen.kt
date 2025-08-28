@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
@@ -92,7 +93,10 @@ private fun SearchSongItem(
     ) {
         Row {
             AsyncImage(
-                data.coverArtUrl, null, modifier = Modifier.aspectRatio(1f).fillMaxWidth().padding(12.dp),
+                model = data.coverArtUrl,
+                contentDescription = null,
+                modifier = Modifier.aspectRatio(1f).fillMaxWidth().padding(12.dp),
+                contentScale = ContentScale.Crop
             )
             Column(Modifier.weight(1f).padding(start = 12.dp, top = 12.dp)) {
                 Text(data.title, style = MaterialTheme.typography.titleMedium)

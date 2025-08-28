@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
@@ -76,10 +77,8 @@ fun UserSpaceScreen(vm: UserSpaceViewModel = koinViewModel()) {
                                 model = profile.avatarUrl,
                                 contentDescription = "User Avatar",
                                 modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.small),
-                                placeholder = ColorPainter(Color.LightGray),
-                                error = ColorPainter(Color.LightGray),
-                                fallback = ColorPainter(Color.LightGray),
-                                filterQuality = FilterQuality.High
+                                filterQuality = FilterQuality.High,
+                                contentScale = ContentScale.Crop
                             )
 
                             if (vm.avatarUploading) {

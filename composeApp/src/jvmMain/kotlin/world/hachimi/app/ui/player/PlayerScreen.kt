@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import coil3.compose.AsyncImage
@@ -38,7 +39,12 @@ fun PlayerScreen() {
                                 modifier = Modifier.size(size),
                                 elevation = CardDefaults.cardElevation(12.dp)
                             ) {
-                                AsyncImage(global.playerState.songCoverUrl, null, Modifier.fillMaxSize())
+                                AsyncImage(
+                                    model = global.playerState.songCoverUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
                             }
                         }
 

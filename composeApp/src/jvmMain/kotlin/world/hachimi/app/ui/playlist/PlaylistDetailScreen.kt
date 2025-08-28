@@ -173,7 +173,11 @@ private fun SongItem(
             )
 
             Box(Modifier.size(48.dp).clip(MaterialTheme.shapes.small)) {
-                AsyncImage(model = coverUrl, contentDescription = "Song Cover Image")
+                AsyncImage(
+                    model = coverUrl,
+                    contentDescription = "Song Cover Image",
+                    contentScale = ContentScale.Crop
+                )
             }
 
             Column(Modifier.weight(1f)) {
