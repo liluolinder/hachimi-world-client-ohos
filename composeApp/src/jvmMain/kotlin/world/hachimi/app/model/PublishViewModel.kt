@@ -22,6 +22,7 @@ import kotlinx.io.buffered
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.SongModule
+import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.logging.Logger
 
 class PublishViewModel(
@@ -64,12 +65,17 @@ class PublishViewModel(
 
     var isOperating by mutableStateOf(false)
 
-    val crews = mutableStateListOf<CrewItem>()
+    val staffs = mutableStateListOf<CrewItem>()
 
+/*    data class TagItem(
+        val id: Long,
+        val label: String
+    )
+    */
     data class CrewItem(
-        val uid: String,
-        val name: String,
-        val role: String
+        val role: String,
+        val uid: Long?,
+        val name: String?,
     )
 
     val externalLinks = mutableStateListOf<SongModule.PublishReq.ExternalLink>()
@@ -77,6 +83,13 @@ class PublishViewModel(
         private set
     var showSuccessDialog by mutableStateOf(false)
         private set
+
+    var showAddStaffDialog by mutableStateOf(false)
+        private set
+    var addStaffUid by mutableStateOf("")
+    var addStaffName by mutableStateOf("")
+    var addStaffRole by mutableStateOf("")
+    var addStaffOperating by mutableStateOf(false)
 
     fun setAudioFile() {
         viewModelScope.launch(Dispatchers.Default) {
@@ -89,7 +102,7 @@ class PublishViewModel(
                 // 1. Validate
                 val size = audio.size()
                 if (size > 20 * 1024 * 1024) {
-                    error = "Audio too large"
+                    global.alert("音频文件过大，最大支持20MB")
                     return@launch
                 }
                 val buffer = audio.source().buffered()
@@ -103,18 +116,18 @@ class PublishViewModel(
                         filename = audio.name,
                         source = buffer,
                         listener = { sent, total ->
-                            audioUploadProgress = (sent.toDouble() / size).toFloat()
+                            audioUploadProgress = (sent.toDouble() / size).toFloat().coerceIn(0f, 1f)
                         }
                     )
                     if (!resp.ok) {
-                        error = resp.errData<CommonError>().msg
+                        global.alert(resp.errData<CommonError>().msg)
                         return@launch
                     }
 
                     resp.okData<SongModule.UploadAudioFileResp>()
                 } catch (e: Exception) {
                     Logger.e("creation", "Failed to upload audio file", e)
-                    error = e.message
+                    global.alert(e.message)
                     return@launch
                 } finally {
                     audioUploading = false
@@ -146,7 +159,7 @@ class PublishViewModel(
                 // 1. Validate image
                 val size = image.size()
                 if (size > 10 * 1024 * 1024) {
-                    error = "Image too large"
+                    global.alert("图片过大，最大支持 10MB")
                     return@launch
                 }
                 val buffer = image.source().buffered()
@@ -161,18 +174,18 @@ class PublishViewModel(
                         filename = image.name,
                         source = buffer,
                         listener = { sent, total ->
-                            coverImageUploadProgress = (sent.toDouble() / size).toFloat()
+                            coverImageUploadProgress = (sent.toDouble() / size).toFloat().coerceIn(0f, 1f)
                         }
                     )
                     if (!resp.ok) {
-                        error = resp.errData<CommonError>().msg
+                        global.alert(resp.errData<CommonError>().msg)
                         return@launch
                     }
 
                     resp.okData<SongModule.UploadImageResp>()
                 } catch (e: Exception) {
                     Logger.e("creation", "Failed to upload cover image", e)
-                    error = e.message
+                    global.alert(e.message)
                     return@launch
                 } finally {
                     coverImageUploading = false
@@ -182,18 +195,6 @@ class PublishViewModel(
                 coverTempId = data.tempId
             }
         }
-    }
-
-    fun addCrewMember(
-        uid: String,
-        name: String,
-        role: String
-    ) {
-        crews.add(CrewItem(uid, name, role))
-    }
-
-    fun removeCrewMember(index: Int) {
-        crews.removeAt(index)
     }
 
     fun clearError() {
@@ -218,10 +219,10 @@ class PublishViewModel(
     }
 
     val publishEnabled by derivedStateOf {
-        checkPublishEnabled()
+        validateInputs()
     }
 
-    private fun checkPublishEnabled(): Boolean {
+    private fun validateInputs(): Boolean {
         val basic = audioTempId != null
                 && coverTempId != null
                 && title.isNotBlank()
@@ -241,7 +242,7 @@ class PublishViewModel(
 
     fun publish() {
         viewModelScope.launch(Dispatchers.IO) {
-            if (checkPublishEnabled()) {
+            if (validateInputs()) {
                 try {
                     isOperating = true
 
@@ -255,19 +256,19 @@ class PublishViewModel(
                             originType = 0
                         ) else null,
                         derivativeInfo = if (creationType > 1) SongModule.CreationTypeInfo(
-                            songDisplayId = deriveId.takeIf {  it.isNotBlank() },
-                            title = deriveTitle.takeIf {  it.isNotBlank() },
-                            url = deriveLink.takeIf {  it.isNotBlank() },
+                            songDisplayId = deriveId.takeIf { it.isNotBlank() },
+                            title = deriveTitle.takeIf { it.isNotBlank() },
+                            url = deriveLink.takeIf { it.isNotBlank() },
                             artist = null,
                             originType = 1
                         ) else null
                     )
 
 
-                    val crew = crews.map {
+                    val crew = staffs.map {
                         SongModule.PublishReq.ProductionItem(
                             role = it.role,
-                            uid = it.uid.toLong(),
+                            uid = it.uid,
                             name = it.name
                         )
                     }
@@ -291,11 +292,12 @@ class PublishViewModel(
                         publishedSongId = data.songDisplayId
                         showSuccessDialog = true
                     } else {
-                        error = resp.errData<CommonError>().msg
+                        val data = resp.errData<CommonError>()
+                        global.alert(data.msg)
                     }
                 } catch (e: Exception) {
                     Logger.e("creation", "Failed to publish song", e)
-                    error = e.message
+                    global.alert(e.message)
                 } finally {
                     isOperating = false
                 }
@@ -306,5 +308,56 @@ class PublishViewModel(
     fun closeDialog() {
         showSuccessDialog = false
         global.nav.back()
+    }
+
+    fun addStaff() {
+        addStaffUid = ""
+        addStaffName = ""
+        addStaffRole = ""
+        showAddStaffDialog = true
+    }
+
+    fun cancelAddStaff() {
+        showAddStaffDialog = false
+    }
+
+    fun confirmAddStaff() {
+        viewModelScope.launch {
+            addStaffOperating = true
+
+            // Check uid and get name
+            if (addStaffUid.isNotBlank()) {
+                val uid = addStaffUid.toLongOrNull()
+                if (uid == null) {
+                    global.alert("请输入正确的 UID")
+                    return@launch
+                }
+                try {
+                    val resp = api.userModule.profile(uid)
+                    if (resp.ok) {
+                        val data = resp.okData<UserModule.ProfileResp>()
+                        addStaffName = data.username
+                    } else {
+                        val data = resp.errData<CommonError>()
+                        global.alert(data.msg)
+                        return@launch
+                    }
+                } catch (e: Exception) {
+                    Logger.e("publish", "Failed to get user info", e)
+                    global.alert("获取用户信息失败")
+                    return@launch
+                } finally {
+                    addStaffOperating = false
+                }
+            }
+
+            staffs.add(CrewItem(addStaffRole, addStaffUid.toLongOrNull(), addStaffName))
+            addStaffOperating = false
+            showAddStaffDialog = false
+        }
+    }
+
+    fun removeStaff(index: Int) {
+        staffs.removeAt(index)
     }
 }
