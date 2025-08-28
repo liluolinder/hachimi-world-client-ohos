@@ -382,7 +382,9 @@ private fun CreatePlaylistDialog(vm: PlaylistViewModel = koinViewModel()) {
                 TextField(
                     value = vm.createPlaylistDescription,
                     onValueChange = { vm.createPlaylistDescription = it },
-                    label = { Text("描述") }
+                    label = { Text("描述") },
+                    minLines = 3,
+                    maxLines = 3
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("私有歌单")

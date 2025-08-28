@@ -212,7 +212,9 @@ private fun EditDialog(vm: PlaylistDetailViewModel) {
                 TextField(
                     value = vm.editDescription,
                     onValueChange = { vm.editDescription = it },
-                    label = { Text("描述") }
+                    label = { Text("描述") },
+                    minLines = 3,
+                    maxLines = 3
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("私有歌单")
