@@ -1,14 +1,9 @@
 package world.hachimi.app.logging
 
-import java.util.logging.Level
-import java.util.logging.Logger as JavaLogger
+import org.slf4j.LoggerFactory
 
 actual object Logger {
-    val logger: JavaLogger = JavaLogger.getLogger(Logger::class.java.name)
-
-    init {
-        logger.level = Level.FINE
-    }
+    val logger = LoggerFactory.getLogger(Logger::class.java)!!
 
     actual inline fun e(
         tag: String,
@@ -16,25 +11,25 @@ actual object Logger {
         throwable: Throwable?
     ) {
         if (throwable != null) {
-            logger.log(Level.SEVERE, "ERROR: [$tag] $message", throwable)
+            logger.error("[$tag] $message", throwable)
         } else {
-            logger.severe("ERROR: [$tag] $message")
+            logger.error("[$tag] $message")
         }
     }
 
-    actual inline fun w(tag: String, message: String, throwable: Throwable?) {
+    actual  inline fun w(tag: String, message: String, throwable: Throwable?) {
         if (throwable != null) {
-            logger.log(Level.WARNING, "WARNING: [$tag] $message", throwable)
+            logger.warn("[$tag] $message", throwable)
         } else {
-            logger.warning("WARNING: [$tag] $message")
+            logger.warn("[$tag] $message")
         }
     }
 
-    actual inline  fun d(tag: String, message: String) {
-        logger.info("DEBUG: [$tag] $message")
+    actual inline fun d(tag: String, message: String) {
+        logger.debug("[$tag] $message")
     }
 
     actual inline fun i(tag: String, message: String) {
-        logger.info("INFO: [$tag] $message")
+        logger.info("[$tag] $message")
     }
 }
