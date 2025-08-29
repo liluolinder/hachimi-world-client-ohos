@@ -9,6 +9,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -132,7 +133,8 @@ class ApiClient(private val baseUrl: String) {
     // FIXME(api): If any api call triggered refreshing token, and then be canceled manually,
     //  after refreshing request be sent, before the responded token is set to state and be saved,
     //  any further requests will take the old used refresh-token, then cause 401 error.
-    internal suspend fun refreshToken() = withContext(Dispatchers.IO) {
+    //  Update: This issue might be fixed by using `NonCancellable` context
+    internal suspend fun refreshToken() = withContext(Dispatchers.IO + NonCancellable) {
         // Only execute once at the same time
         if (authLock.isLocked) {
             authLock.withLock { }
