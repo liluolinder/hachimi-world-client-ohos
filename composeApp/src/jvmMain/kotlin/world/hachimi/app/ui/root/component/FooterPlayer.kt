@@ -159,7 +159,7 @@ fun FooterPlayer() {
 }
 
 @Composable
-private fun SongControl(
+fun SongControl(
     modifier: Modifier = Modifier,
     isPlaying: Boolean,
     isLoading: Boolean,
@@ -204,7 +204,7 @@ private fun SongControl(
 }
 
 @Composable
-private fun SongProgress(
+fun SongProgress(
     durationMillis: Long,
     currentMillis: Long,
     onProgressChange: (Float) -> Unit,
