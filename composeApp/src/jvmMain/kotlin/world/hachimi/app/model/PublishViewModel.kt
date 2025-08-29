@@ -11,9 +11,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.io.buffered
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
@@ -207,16 +211,14 @@ class PublishViewModel(
         tagInput = content
 
         viewModelScope.launch {
-            tagSearchMutex.withLock {
-                tagSearchJob?.cancel()
-                tagSearchJob = null
-            }
-
             val sign = Random.nextLong()
-            tagSearchSign = sign
             val tagJob = launch {
+                tagSearchMutex.withLock {
+                    tagSearchSign = sign
+                }
                 tagSearching = true
                 try {
+                    delay(500) // delay to avoid too many requests
                     val resp = api.songModule.tagSearch(SongModule.TagSearchReq(content))
                     if (resp.ok) {
                         val data = resp.okData<SongModule.TagSearchResp>()
@@ -242,7 +244,9 @@ class PublishViewModel(
                     }
                 }
             }
+
             tagSearchMutex.withLock {
+                tagSearchJob?.cancel()
                 tagSearchJob = tagJob
             }
         }
