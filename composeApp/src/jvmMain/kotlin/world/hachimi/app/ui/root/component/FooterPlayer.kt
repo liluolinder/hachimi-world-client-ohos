@@ -54,6 +54,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +72,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlaylistViewModel
 import java.util.Locale
+import kotlin.random.Random
+import kotlin.random.nextLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -126,10 +129,12 @@ fun FooterPlayer() {
             }
 
             var queueExpanded by remember { mutableStateOf(false) }
-            var tobeAddedSong by remember { mutableStateOf<Long?>(null) }
+
+            // TODO[refactor](footer): I really should not write this garbage. Refactor later.
+            var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
             IconButton(onClick = {
-                tobeAddedSong = playerState.songId
+                tobeAddedSong = playerState.songId?.let { it to Random.nextLong() }
             }) {
                 Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
             }
@@ -147,7 +152,7 @@ fun FooterPlayer() {
                 })
             }
 
-            AddToPlaylistDialog(tobeAddedSong)
+            AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
             CreatePlaylistDialog()
         }
     }
@@ -269,9 +274,10 @@ fun formatSongDuration(duration: Duration): String {
 @Composable
 private fun AddToPlaylistDialog(
     tobeAddedSongId: Long?,
+    random: Long?,
     vm: PlaylistViewModel = koinViewModel(),
 ) {
-    LaunchedEffect(vm, tobeAddedSongId) {
+    LaunchedEffect(vm, tobeAddedSongId, random) {
         if (tobeAddedSongId != null) {
             vm.toBeAddedSongId = tobeAddedSongId
             vm.addToPlaylist()
