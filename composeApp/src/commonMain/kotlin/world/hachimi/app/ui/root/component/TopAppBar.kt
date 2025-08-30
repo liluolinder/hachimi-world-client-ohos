@@ -129,6 +129,7 @@ private fun SearchBox(
     onSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
     BasicTextField(
         modifier = modifier.defaultMinSize(300.dp),
         value = searchText,
@@ -147,8 +148,11 @@ private fun SearchBox(
                     Spacer(Modifier.width(8.dp))
                     IconButton(
                         modifier = Modifier.align(Alignment.CenterVertically),
-                        onClick = onSearch,
-                        enabled = remember(searchText) { searchText.isNotBlank() }
+                        onClick = {
+                            focusManager.clearFocus()
+                            onSearch()
+                        },
+                        enabled = searchText.isNotBlank()
                     ) {
                         Icon(Icons.Default.Search, "Search")
                     }
@@ -159,6 +163,7 @@ private fun SearchBox(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = {
             if (searchText.isNotBlank()) {
+                focusManager.clearFocus()
                 onSearch()
             }
         })
