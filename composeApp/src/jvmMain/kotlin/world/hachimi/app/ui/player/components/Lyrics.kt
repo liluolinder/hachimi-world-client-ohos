@@ -16,8 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -37,7 +43,32 @@ fun Lyrics(
             }
         }
 
-        LazyColumn(Modifier.fillMaxSize(), lazyListState, contentPadding = PaddingValues(
+        val fadeHeight = 64.dp
+        val color = MaterialTheme.colorScheme.surface
+        LazyColumn(Modifier.fillMaxSize().drawWithContent {
+            drawContent()
+            drawRect(
+                brush = Brush.verticalGradient(
+                    listOf(color, Color.Transparent),
+                    startY = 0f,
+                    endY = fadeHeight.toPx()
+                ),
+                size = size.copy(height = fadeHeight.toPx())
+            )
+            drawRect(
+                brush = Brush.verticalGradient(
+                    listOf(Color.Transparent, color),
+                    startY = size.height - fadeHeight.toPx(),
+                    endY = size.height
+                ),
+                size = size.copy(height = fadeHeight.toPx()),
+                topLeft = Offset(
+                    x = 0f,
+                    y = size.height - fadeHeight.toPx()
+                )
+            )
+        }, lazyListState, contentPadding = PaddingValues(
+            top = 64.dp,
             bottom = maxHeight,
         )) {
             itemsIndexed(lines) { index, line ->
