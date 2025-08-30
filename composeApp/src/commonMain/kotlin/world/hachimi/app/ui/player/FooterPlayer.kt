@@ -28,18 +28,68 @@ import world.hachimi.app.ui.player.components.SongProgress
 import world.hachimi.app.ui.root.component.MusicQueue
 import kotlin.random.Random
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FooterPlayer() {
     val global = koinInject<GlobalStore>()
     val playerState = global.playerState
+    BoxWithConstraints {
+        AnimatedVisibility(
+            visible = playerState.hasSong,
+            modifier = Modifier.fillMaxWidth(),
+            enter = expandVertically(expandFrom = Alignment.Top),
+            exit = shrinkVertically()
+        ) {
+            if (maxWidth < 600.dp) {
+                CompactFooterPlayer(Modifier.fillMaxWidth())
+            } else {
+                ExpandedFooterPlayer()
+            }
+        }
+    }
+}
 
-    AnimatedVisibility(
-        visible = playerState.hasSong,
-        modifier = Modifier.fillMaxWidth(),
-        enter = expandVertically(),
-        exit = shrinkVertically()
-    ) {
+@Composable
+fun CompactFooterPlayer(modifier: Modifier) {
+    val global = koinInject<GlobalStore>()
+    val playerState = global.playerState
+    Column(modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
+        Row(Modifier.height(60.dp), verticalAlignment = Alignment.CenterVertically) {
+            Card(modifier = Modifier.aspectRatio(1f), onClick = {
+                global.expandPlayer()
+            }, colors = CardDefaults.outlinedCardColors(), elevation = CardDefaults.outlinedCardElevation()) {
+                AsyncImage(
+                    modifier = Modifier.fillMaxSize(),
+                    model = playerState.songCoverUrl,
+                    contentDescription = "Cover",
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Column(Modifier.padding(start = 16.dp).width(200.dp)) {
+                Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(8.dp))
+                Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+
+        SongProgress(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            durationMillis = playerState.songDurationSecs * 1000L,
+            currentMillis = playerState.currentMillis,
+            onProgressChange = {
+                global.setSongProgress(it)
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExpandedFooterPlayer() {
+    val global = koinInject<GlobalStore>()
+    val playerState = global.playerState
+
+
         Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
             Card(modifier = Modifier.aspectRatio(1f), onClick = {
                 global.expandPlayer()
@@ -53,8 +103,8 @@ fun FooterPlayer() {
             }
 
             Column(Modifier.padding(start = 16.dp).width(200.dp)) {
-                Text(playerState.songTitle, style = MaterialTheme.typography.titleMedium)
-                Text(playerState.songAuthor, style = MaterialTheme.typography.titleMedium)
+                Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
+                Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
             }
 
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -106,10 +156,7 @@ fun FooterPlayer() {
             AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
             CreatePlaylistDialog()
         }
-    }
 }
-
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -173,7 +220,11 @@ private fun AddToPlaylistDialog(
                                     modifier = Modifier,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Surface(Modifier.size(64.dp), MaterialTheme.shapes.medium, LocalContentColor.current.copy(0.12f)) {
+                                    Surface(
+                                        Modifier.size(64.dp),
+                                        MaterialTheme.shapes.medium,
+                                        LocalContentColor.current.copy(0.12f)
+                                    ) {
                                         AsyncImage(
                                             modifier = Modifier.fillMaxSize(),
                                             model = item.coverUrl,

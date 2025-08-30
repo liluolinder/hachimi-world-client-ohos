@@ -49,6 +49,7 @@ fun main() {
             }
             if (global.initialized) {
                 CompositionLocalProvider(LocalDensity provides LocalDensity.current.let {
+                    // TODO: Remove this later
                     Density(it.density * 0.9f, it.fontScale)
                 }) {
                     App()

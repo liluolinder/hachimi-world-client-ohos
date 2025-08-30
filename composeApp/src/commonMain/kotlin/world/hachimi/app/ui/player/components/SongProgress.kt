@@ -4,20 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitDragOrCancellation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -32,6 +22,7 @@ fun SongProgress(
     durationMillis: Long,
     currentMillis: Long,
     onProgressChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var isDragging by remember { mutableStateOf(false) }
     val playingProgress by derivedStateOf {
@@ -41,47 +32,49 @@ fun SongProgress(
     var offsetX by remember { mutableStateOf(0f) }
 
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = formatSongDuration(currentMillis.milliseconds),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-        )
-        Box(
-            Modifier.width(500.dp).height(6.dp).background(MaterialTheme.colorScheme.primaryContainer)
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        offsetX = down.position.x
-                        draggingProgress = down.position.x / size.width
-                        isDragging = true
-
-                        while (true) {
-                            val change = awaitDragOrCancellation(down.id)
-                            if (change != null && change.pressed) {
-                                val summed = offsetX + change.positionChange().x
-                                change.consume()
-                                offsetX = summed
-                                draggingProgress = summed / size.width
-                            } else {
-                                break
-                            }
-                        }
-                        isDragging = false
-                        onProgressChange(draggingProgress)
-                    }
-                }
+    Box(modifier = modifier, propagateMinConstraints = true) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val progress = if (isDragging) draggingProgress else playingProgress
-            Box(Modifier.fillMaxWidth(progress).height(6.dp).background(MaterialTheme.colorScheme.primary))
+            Text(
+                text = formatSongDuration(currentMillis.milliseconds),
+                style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
+            )
+            Box(
+                Modifier.weight(1f).height(6.dp).background(MaterialTheme.colorScheme.primaryContainer)
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            offsetX = down.position.x
+                            draggingProgress = down.position.x / size.width
+                            isDragging = true
+
+                            while (true) {
+                                val change = awaitDragOrCancellation(down.id)
+                                if (change != null && change.pressed) {
+                                    val summed = offsetX + change.positionChange().x
+                                    change.consume()
+                                    offsetX = summed
+                                    draggingProgress = summed / size.width
+                                } else {
+                                    break
+                                }
+                            }
+                            isDragging = false
+                            onProgressChange(draggingProgress)
+                        }
+                    }
+            ) {
+                val progress = if (isDragging) draggingProgress else playingProgress
+                Box(Modifier.fillMaxWidth(progress).height(6.dp).background(MaterialTheme.colorScheme.primary))
+            }
+            Text(
+                text = formatSongDuration(durationMillis.milliseconds),
+                style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
+            )
         }
-        Text(
-            text = formatSongDuration(durationMillis.milliseconds),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-        )
     }
 }
