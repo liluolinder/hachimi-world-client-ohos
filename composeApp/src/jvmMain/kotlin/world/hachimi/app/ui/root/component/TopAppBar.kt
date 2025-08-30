@@ -56,13 +56,28 @@ fun TopAppBar(global: GlobalStore) {
             if (global.isLoggedIn) {
                 val userInfo = global.userInfo!!
                 Row(
-                    modifier = Modifier.clickable {
-                        global.nav.push(Route.Root.UserSpace)
-                    },
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.clip(MaterialTheme.shapes.small)
+                        .clickable { global.nav.push(Route.Root.UserSpace) }
+                        .padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
                 ) {
+                    Column {
+                        Text(
+                            text = userInfo.name,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        /*Text(
+                            text = "Lv.4",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )*/
+                    }
                     Box(
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.onSurface.copy(0.12f))
                     ) {
@@ -71,17 +86,6 @@ fun TopAppBar(global: GlobalStore) {
                             contentDescription = "User Avatar",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
-                        )
-                    }
-                    Column(Modifier.padding(start = 8.dp)) {
-                        Text(
-                            text = userInfo.name,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "Lv.4",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
                 }
