@@ -45,7 +45,7 @@ fun main() {
             icon = painterResource(Res.drawable.icon)
         ) {
             LaunchedEffect(Unit) {
-                window.minimumSize = Dimension(1000, 700)
+                window.minimumSize = Dimension(360, 700)
             }
             if (global.initialized) {
                 CompositionLocalProvider(LocalDensity provides LocalDensity.current.let {
