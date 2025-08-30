@@ -1,7 +1,14 @@
 package world.hachimi.app.ui.root
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,30 +28,90 @@ import world.hachimi.app.ui.userspace.UserSpaceScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RootScreen(content: Route.Root) {
+fun RootScreen(routeContent: Route.Root) {
     val global = koinInject<GlobalStore>()
+    AdaptiveScreen(
+        navigationContent = {
+            SideNavigation(global, routeContent)
+        },
+        content = {
+            when (routeContent) {
+                is Route.Root.Search -> SearchScreen(routeContent.query)
+                Route.Root.Home -> HomeScreen()
+                Route.Root.RecentLike -> {}
+                Route.Root.RecentPlay -> {}
+                is Route.Root.MyPlaylist -> PlaylistRouteScreen(routeContent)
+                Route.Root.MySubscribe -> {}
+                is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)
+                Route.Root.CommitteeCenter -> CommitteeCenterScreen()
+                Route.Root.ContributorCenter -> ContributorCenterScreen()
+                Route.Root.UserSpace -> UserSpaceScreen()
+            }
+        }
+    )
+
+}
+
+@Composable
+private fun AdaptiveScreen(
+    navigationContent: @Composable () -> Unit,
+    content: @Composable () -> Unit
+) {
+    BoxWithConstraints {
+        if (maxWidth < 600.dp) { // Compact
+            CompactScreen(navigationContent, content)
+        } else {
+            ExpandedScreen(navigationContent, content)
+        }
+    }
+}
+
+@Composable
+private fun CompactScreen(
+    navigationContent: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+    global: GlobalStore = koinInject()
+) {
+    ModalNavigationDrawer(
+        drawerContent = {
+            ModalDrawerSheet(Modifier.width(300.dp)) {
+                Text(text = "基米天堂", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+                Box(Modifier.padding(horizontal = 12.dp)) {
+                    navigationContent()
+                }
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = { TopAppBar(global) },
+            bottomBar = { FooterPlayer() }
+        ) {
+            Box(Modifier.padding(it)) {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpandedScreen(
+    navigationContent: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+    global: GlobalStore = koinInject()
+) {
     Column(Modifier.fillMaxSize()) {
         TopAppBar(global)
 
         Row(Modifier.weight(1f).fillMaxWidth()) {
-            SideNavigation(global, content)
-
-            Spacer(Modifier.width(24.dp))
-
-            Box(Modifier.weight(1f).fillMaxHeight()) {
-                when (content) {
-                    is Route.Root.Search -> SearchScreen(content.query)
-                    Route.Root.Home -> HomeScreen()
-                    Route.Root.RecentLike -> {}
-                    Route.Root.RecentPlay -> {}
-                    is Route.Root.MyPlaylist -> PlaylistRouteScreen(content)
-                    Route.Root.MySubscribe -> {}
-                    is Route.Root.CreationCenter -> CreationCenterScreen(content)
-                    Route.Root.CommitteeCenter -> CommitteeCenterScreen()
-                    Route.Root.ContributorCenter -> ContributorCenterScreen()
-                    Route.Root.UserSpace -> UserSpaceScreen()
-                }
+            Card(
+                Modifier.padding(start = 24.dp, top = 24.dp).width(300.dp),
+                colors = CardDefaults.outlinedCardColors(),
+                shape = CardDefaults.outlinedShape
+            ) {
+                navigationContent()
             }
+            Spacer(Modifier.width(24.dp))
+            Box(Modifier.weight(1f).fillMaxHeight()) { content() }
         }
 
         FooterPlayer()

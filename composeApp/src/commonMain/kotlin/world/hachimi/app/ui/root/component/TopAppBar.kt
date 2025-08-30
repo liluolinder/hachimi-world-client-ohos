@@ -28,10 +28,55 @@ import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.theme.PreviewTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(global: GlobalStore) {
-    Surface(Modifier.fillMaxWidth().height(64.dp), shadowElevation = 2.dp) {
+    BoxWithConstraints {
+        if (maxWidth < 600.dp) {
+            CompactTopAppBar(global)
+        } else {
+            ExpandedTopAppBar(global)
+        }
+    }
+}
+
+@Composable
+fun CompactTopAppBar(global: GlobalStore) {
+    Surface(Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp).statusBarsPadding(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            var searchText by remember { mutableStateOf("") }
+            SearchBox(
+                modifier = Modifier.weight(1f),
+                searchText = searchText,
+                onSearchTextChange = { searchText = it },
+                onSearch = {
+                    global.nav.push(Route.Root.Search(searchText))
+                }
+            )
+            if (global.isLoggedIn) {
+                val userInfo = global.userInfo!!
+                NameAvatar(
+                    name = userInfo.name,
+                    avatarUrl = userInfo.avatarUrl,
+                    onClick = { global.nav.push(Route.Root.UserSpace) }
+                )
+            } else {
+                NameAvatar(
+                    name = "未登录",
+                    avatarUrl = null,
+                    onClick = { global.nav.push(Route.Auth()) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExpandedTopAppBar(global: GlobalStore) {
+    Surface(Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
         Row(
             modifier = Modifier.statusBarsPadding().padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -56,40 +101,11 @@ fun TopAppBar(global: GlobalStore) {
 
             if (global.isLoggedIn) {
                 val userInfo = global.userInfo!!
-                Row(
-                    modifier = Modifier.clip(MaterialTheme.shapes.small)
-                        .clickable { global.nav.push(Route.Root.UserSpace) }
-                        .padding(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Column {
-                        Text(
-                            text = userInfo.name,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        /*Text(
-                            text = "Lv.4",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )*/
-                    }
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(0.12f))
-                    ) {
-                        AsyncImage(
-                            model = userInfo.avatarUrl,
-                            contentDescription = "User Avatar",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                }
+                NameAvatar(
+                    name = userInfo.name,
+                    avatarUrl = userInfo.avatarUrl,
+                    onClick = { global.nav.push(Route.Root.UserSpace) }
+                )
             } else {
                 Button(onClick = {
                     global.nav.push(Route.Auth())
@@ -147,6 +163,48 @@ private fun SearchBox(
             }
         })
     )
+}
+
+@Composable
+private fun NameAvatar(
+    name: String,
+    avatarUrl: String?,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        Column {
+            Text(
+                text = name,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            /*Text(
+                text = "Lv.4",
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )*/
+        }
+        Box(
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.onSurface.copy(0.12f))
+        ) {
+            AsyncImage(
+                model = avatarUrl,
+                contentDescription = "User Avatar",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
 }
 
 @Preview

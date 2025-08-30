@@ -1,11 +1,8 @@
 package world.hachimi.app.ui.root.component
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,37 +16,35 @@ fun SideNavigation(
     global: GlobalStore,
     content: Route
 ) {
-    Card(Modifier.padding(start = 24.dp, top = 24.dp).width(300.dp), colors = CardDefaults.outlinedCardColors(), shape = CardDefaults.outlinedShape) {
-        Column() {
-            NavItem("首页", selected = content == Route.Root.Home, onSelectedChange = {
-                global.nav.push(Route.Root.Home)
+    Column(Modifier.defaultMinSize(minWidth = 300.dp)) {
+        NavItem("首页", selected = content == Route.Root.Home, onSelectedChange = {
+            global.nav.push(Route.Root.Home)
+        })
+        if (global.isLoggedIn) {
+            NavItem("最近点赞", selected = content == Route.Root.RecentLike, onSelectedChange = {
+                global.nav.push(Route.Root.RecentLike)
             })
-            if (global.isLoggedIn) {
-                NavItem("最近点赞", selected = content == Route.Root.RecentLike, onSelectedChange = {
-                    global.nav.push(Route.Root.RecentLike)
-                })
-                NavItem("最近播放", selected = content == Route.Root.RecentPlay, onSelectedChange = {
-                    global.nav.push(Route.Root.RecentPlay)
-                })
+            NavItem("最近播放", selected = content == Route.Root.RecentPlay, onSelectedChange = {
+                global.nav.push(Route.Root.RecentPlay)
+            })
 
-                NavItem("我的歌单", selected = content is Route.Root.MyPlaylist, onSelectedChange = {
-                    global.nav.push(Route.Root.MyPlaylist.Default)
-                })
-                NavItem("我的关注", selected = content == Route.Root.MySubscribe, onSelectedChange = {
-                    global.nav.push(Route.Root.MySubscribe)
-                })
+            NavItem("我的歌单", selected = content is Route.Root.MyPlaylist, onSelectedChange = {
+                global.nav.push(Route.Root.MyPlaylist.Default)
+            })
+            NavItem("我的关注", selected = content == Route.Root.MySubscribe, onSelectedChange = {
+                global.nav.push(Route.Root.MySubscribe)
+            })
 
-                NavItem("创作中心", selected = content is Route.Root.CreationCenter, onSelectedChange = {
-                    global.nav.push(Route.Root.CreationCenter.Default)
-                })
+            NavItem("创作中心", selected = content is Route.Root.CreationCenter, onSelectedChange = {
+                global.nav.push(Route.Root.CreationCenter.Default)
+            })
 
-                NavItem("委员会中心", selected = content == Route.Root.CommitteeCenter, onSelectedChange = {
-                    global.nav.push(Route.Root.CommitteeCenter)
-                })
-                NavItem("维护者中心", selected = content == Route.Root.ContributorCenter, onSelectedChange = {
-                    global.nav.push(Route.Root.ContributorCenter)
-                })
-            }
+            NavItem("委员会中心", selected = content == Route.Root.CommitteeCenter, onSelectedChange = {
+                global.nav.push(Route.Root.CommitteeCenter)
+            })
+            NavItem("维护者中心", selected = content == Route.Root.ContributorCenter, onSelectedChange = {
+                global.nav.push(Route.Root.ContributorCenter)
+            })
         }
     }
 }
