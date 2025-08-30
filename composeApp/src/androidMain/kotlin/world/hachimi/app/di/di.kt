@@ -8,19 +8,19 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import world.hachimi.app.BuildKonfig
-import world.hachimi.app.JVMPlatform
 import world.hachimi.app.api.ApiClient
+import world.hachimi.app.getPlatform
 import world.hachimi.app.model.AuthViewModel
-import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MainViewModel
 import world.hachimi.app.model.MyArtworkViewModel
 import world.hachimi.app.model.PlaylistDetailViewModel
 import world.hachimi.app.model.PlaylistViewModel
+import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.model.SearchViewModel
 import world.hachimi.app.model.UserSpaceViewModel
+import world.hachimi.app.player.AndroidPlayer
 import world.hachimi.app.player.Player
-import world.hachimi.app.player.JVMPlayer
 import world.hachimi.app.storage.MyDataStore
 
 val appModule = module {
@@ -29,7 +29,7 @@ val appModule = module {
     }
     single { getPreferencesDataStore() }
     single { MyDataStore(get()) }
-    single<Player> { JVMPlayer() }
+    single<Player> { AndroidPlayer() }
 
     singleOf(::GlobalStore)
 
@@ -44,7 +44,7 @@ val appModule = module {
 }
 
 private fun getPreferencesDataStore(): DataStore<Preferences> {
-    val file = JVMPlatform.getDataDir().resolve("settings.preferences_pb")
+    val file = getPlatform().getDataDir().resolve("settings.preferences_pb")
 
     return PreferenceDataStoreFactory.createWithPath { file.toOkioPath() }
 }

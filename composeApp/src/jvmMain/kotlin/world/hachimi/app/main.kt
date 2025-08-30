@@ -31,7 +31,6 @@ fun main() {
     }
 
     application {
-        setupCoil()
         val global = koinInject<GlobalStore>()
         LaunchedEffect(global) {
             global.initialize()
@@ -64,14 +63,3 @@ fun main() {
     }
 }
 
-@Composable
-fun setupCoil() {
-    // Let coil support PlatformFile
-    setSingletonImageLoaderFactory { context ->
-        ImageLoader.Builder(context)
-            .components {
-                addPlatformFileSupport()
-            }
-            .build()
-    }
-}

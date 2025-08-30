@@ -2,14 +2,17 @@ package world.hachimi.app
 
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
+import java.awt.Desktop
 import java.io.File
+import java.net.URI
 
 object JVMPlatform : Platform {
-    override val name: String = "Java ${System.getProperty("java.version")}"
+    override val name: String = "Java"
+    override val platformVersion: String = System.getProperty("java.version")
 
     private val appName = BuildKonfig.APP_PACKAGE_NAME
 
-    fun getCacheDir(): File {
+    override fun getCacheDir(): File {
         return when (hostOs) {
             OS.Windows -> File(System.getenv("LOCALAPPDATA"), "/Cache")
             OS.MacOS -> File(System.getProperty("user.home"), "/Library/Caches")
@@ -19,7 +22,7 @@ object JVMPlatform : Platform {
         }.resolve(appName).also { if (!it.exists()) it.mkdirs() }
     }
 
-    fun getDataDir(): File {
+    override fun getDataDir(): File {
         return when (hostOs) {
             OS.Windows -> File(System.getenv("APPDATA"))
             OS.MacOS -> File(System.getProperty("user.home"), "/Library/Application Support")
@@ -27,6 +30,11 @@ object JVMPlatform : Platform {
                 ?: File(System.getProperty("user.home"), "/.local/share")
             else -> error("Unsupported os: $hostOs")
         }.resolve(appName).also { if (!it.exists()) it.mkdirs() }
+    }
+
+    override fun openUrl(url: String) {
+        val desktop = Desktop.getDesktop()
+        desktop.browse(URI(url))
     }
 }
 

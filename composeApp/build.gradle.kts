@@ -28,7 +28,7 @@ kotlin {
         }
     }
 
-    listOf(
+    /*listOf(
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
@@ -37,11 +37,11 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
-    }
+    }*/
 
     jvm()
 
-    @OptIn(ExperimentalWasmDsl::class)
+    /*@OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         outputModuleName.set("composeApp")
         browser {
@@ -59,13 +59,13 @@ kotlin {
             }
         }
         binaries.executable()
-    }
+    }*/
 
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-
+            implementation(libs.androidx.browser)
             implementation(libs.androidx.core.ktx)
 
             implementation(libs.koin.android)
@@ -103,6 +103,8 @@ kotlin {
             implementation(libs.filekit.dialogs)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.filekit.coil)
+
+            implementation(libs.androidx.datastore.preferences)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -118,7 +120,6 @@ kotlin {
 
             implementation(libs.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
-            implementation(libs.androidx.datastore.preferences)
             implementation(libs.mp3spi)
             implementation(libs.jflac)
 
@@ -133,9 +134,9 @@ ksp {
 dependencies {
     add("kspJvm", libs.room.compiler)
     add("kspAndroid", libs.room.compiler)
-    add("kspIosSimulatorArm64", libs.room.compiler)
-    add("kspIosX64", libs.room.compiler)
-    add("kspIosArm64", libs.room.compiler)
+//    add("kspIosSimulatorArm64", libs.room.compiler)
+//    add("kspIosX64", libs.room.compiler)
+//    add("kspIosArm64", libs.room.compiler)
 }
 
 val gitVersionCode = providers.exec {
