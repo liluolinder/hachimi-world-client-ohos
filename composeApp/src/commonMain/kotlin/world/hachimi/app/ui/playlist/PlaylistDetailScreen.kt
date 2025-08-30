@@ -44,7 +44,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlaylistDetailViewModel
-import world.hachimi.app.ui.root.component.formatSongDuration
+import world.hachimi.app.util.formatSongDuration
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

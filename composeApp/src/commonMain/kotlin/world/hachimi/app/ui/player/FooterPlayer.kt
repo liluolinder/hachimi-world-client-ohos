@@ -1,24 +1,9 @@
-package world.hachimi.app.ui.root.component
+package world.hachimi.app.ui.player
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitDragOrCancellation
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -26,42 +11,11 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import coil3.compose.AsyncImage
@@ -69,10 +23,10 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlaylistViewModel
-import java.util.Locale
+import world.hachimi.app.ui.player.components.SongControl
+import world.hachimi.app.ui.player.components.SongProgress
+import world.hachimi.app.ui.root.component.MusicQueue
 import kotlin.random.Random
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,117 +109,8 @@ fun FooterPlayer() {
     }
 }
 
-@Composable
-fun SongControl(
-    modifier: Modifier = Modifier,
-    isPlaying: Boolean,
-    isLoading: Boolean,
-    loadingProgress: Float,
-    onPlayPauseClick: () -> Unit,
-    onPreviousClick: () -> Unit,
-    onNextClick: () -> Unit,
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier
-    ) {
-        IconButton(onClick = onPreviousClick) {
-            Icon(Icons.Default.SkipPrevious, "Skip Previous")
-        }
-        IconButton(onClick = onPlayPauseClick, colors = IconButtonDefaults.filledIconButtonColors()) {
-            if (isLoading) {
-                if (loadingProgress == 0f) CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = LocalContentColor.current,
-                    strokeWidth = 2.dp
-                ) else {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = LocalContentColor.current,
-                        strokeWidth = 2.dp,
-                        progress = { loadingProgress }
-                    )
-                }
-            } else {
-                if (isPlaying) {
-                    Icon(Icons.Default.Pause, "Pause")
-                } else {
-                    Icon(Icons.Default.PlayArrow, "Play")
-                }
-            }
-        }
-        IconButton(onClick = onNextClick) {
-            Icon(Icons.Default.SkipNext, "Skip Next")
-        }
-    }
-}
-
-@Composable
-fun SongProgress(
-    durationMillis: Long,
-    currentMillis: Long,
-    onProgressChange: (Float) -> Unit,
-) {
-    var isDragging by remember { mutableStateOf(false) }
-    val playingProgress by derivedStateOf {
-        (currentMillis.toDouble() / durationMillis).toFloat()
-    }
-    var draggingProgress by remember { mutableStateOf(0f) }
-    var offsetX by remember { mutableStateOf(0f) }
 
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = formatSongDuration(currentMillis.milliseconds),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-        )
-        Box(
-            Modifier.width(500.dp).height(6.dp).background(MaterialTheme.colorScheme.primaryContainer)
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        offsetX = down.position.x
-                        draggingProgress = down.position.x / size.width
-                        isDragging = true
-
-                        while (true) {
-                            val change = awaitDragOrCancellation(down.id)
-                            if (change != null && change.pressed) {
-                                val summed = offsetX + change.positionChange().x
-                                change.consume()
-                                offsetX = summed
-                                draggingProgress = summed / size.width
-                            } else {
-                                break
-                            }
-                        }
-                        isDragging = false
-                        onProgressChange(draggingProgress)
-                    }
-                }
-        ) {
-            val progress = if (isDragging) draggingProgress else playingProgress
-            Box(Modifier.fillMaxWidth(progress).height(6.dp).background(MaterialTheme.colorScheme.primary))
-        }
-        Text(
-            text = formatSongDuration(durationMillis.milliseconds),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-        )
-    }
-}
-
-@Stable
-fun formatSongDuration(duration: Duration): String {
-    val seconds = duration.inWholeSeconds
-    val minutesPart = seconds / 60
-    val secondsPart = seconds % 60
-    return "${minutesPart}:${String.format(Locale.US, "%02d", secondsPart)}"
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

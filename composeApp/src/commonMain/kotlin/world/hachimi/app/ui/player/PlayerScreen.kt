@@ -14,8 +14,8 @@ import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.ui.player.components.Lyrics
-import world.hachimi.app.ui.root.component.SongControl
-import world.hachimi.app.ui.root.component.SongProgress
+import world.hachimi.app.ui.player.components.SongControl
+import world.hachimi.app.ui.player.components.SongProgress
 
 @Composable
 fun PlayerScreen() {

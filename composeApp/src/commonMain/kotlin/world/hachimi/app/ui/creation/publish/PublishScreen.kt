@@ -44,7 +44,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.ui.creation.publish.components.FormItem
 import world.hachimi.app.ui.creation.publish.components.TagEdit
-import world.hachimi.app.ui.root.component.formatSongDuration
+import world.hachimi.app.util.formatSongDuration
 import kotlin.time.Duration.Companion.seconds
 
 @Composable

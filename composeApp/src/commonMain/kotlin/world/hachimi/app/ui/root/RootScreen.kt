@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.root
 
+import world.hachimi.app.ui.player.FooterPlayer
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,7 +21,6 @@ import world.hachimi.app.ui.contributor.ContributorCenterScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
 import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.playlist.PlaylistRouteScreen
-import world.hachimi.app.ui.root.component.FooterPlayer
 import world.hachimi.app.ui.root.component.SideNavigation
 import world.hachimi.app.ui.root.component.TopAppBar
 import world.hachimi.app.ui.search.SearchScreen

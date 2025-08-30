@@ -35,7 +35,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MyArtworkViewModel
 import world.hachimi.app.nav.Route
-import world.hachimi.app.ui.root.component.formatSongDuration
+import world.hachimi.app.util.formatSongDuration
 import world.hachimi.app.util.formatTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

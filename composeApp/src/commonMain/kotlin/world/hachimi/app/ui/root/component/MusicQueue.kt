@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.util.formatSongDuration
 
 @Composable
 fun MusicQueue(

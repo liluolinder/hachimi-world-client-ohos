@@ -7,6 +7,7 @@ import kotlinx.datetime.*
 import kotlinx.datetime.format
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.ranges.coerceIn
 import kotlin.text.format
@@ -193,4 +194,12 @@ fun formatDateRange(
         val b = hms.format(endDateTime)
         return "$a ~ $b"
     }
+}
+
+@Stable
+fun formatSongDuration(duration: Duration): String {
+    val seconds = duration.inWholeSeconds
+    val minutesPart = seconds / 60
+    val secondsPart = seconds % 60
+    return "${minutesPart}:${String.format(Locale.US, "%02d", secondsPart)}"
 }
