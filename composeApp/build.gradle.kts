@@ -191,7 +191,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "world.hachimi.app"
             packageVersion = gitVersionNameShort.get()
-            modules("jdk.unsupported")
+            modules("jdk.unsupported", "java.naming")
         }
     }
 }
