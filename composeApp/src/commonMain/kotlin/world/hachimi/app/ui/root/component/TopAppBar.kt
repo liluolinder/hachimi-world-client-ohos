@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -29,10 +31,13 @@ import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.theme.PreviewTheme
 
 @Composable
-fun TopAppBar(global: GlobalStore) {
+fun TopAppBar(
+    global: GlobalStore,
+    onExpandNavClick: () -> Unit
+) {
     BoxWithConstraints {
         if (maxWidth < 600.dp) {
-            CompactTopAppBar(global)
+            CompactTopAppBar(global, onExpandNavClick)
         } else {
             ExpandedTopAppBar(global)
         }
@@ -40,12 +45,18 @@ fun TopAppBar(global: GlobalStore) {
 }
 
 @Composable
-fun CompactTopAppBar(global: GlobalStore) {
+fun CompactTopAppBar(
+    global: GlobalStore,
+    onExpandNavClick: () -> Unit
+) {
     Surface(Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).statusBarsPadding(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            IconButton(onClick = onExpandNavClick) {
+                Icon(Icons.Default.Menu, contentDescription = "Menu")
+            }
             var searchText by remember { mutableStateOf("") }
             SearchBox(
                 modifier = Modifier.weight(1f),
@@ -57,14 +68,12 @@ fun CompactTopAppBar(global: GlobalStore) {
             )
             if (global.isLoggedIn) {
                 val userInfo = global.userInfo!!
-                NameAvatar(
-                    name = userInfo.name,
+                AvatarOnly(
                     avatarUrl = userInfo.avatarUrl,
                     onClick = { global.nav.push(Route.Root.UserSpace) }
                 )
             } else {
-                NameAvatar(
-                    name = "未登录",
+                AvatarOnly(
                     avatarUrl = null,
                     onClick = { global.nav.push(Route.Auth()) }
                 )
@@ -209,6 +218,25 @@ private fun NameAvatar(
                 contentScale = ContentScale.Crop
             )
         }
+    }
+}
+
+@Composable
+private fun AvatarOnly(avatarUrl: String?, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.onSurface.copy(0.12f))
+            .clickable(onClick = onClick)
+    ) {
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = "User Avatar",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 
