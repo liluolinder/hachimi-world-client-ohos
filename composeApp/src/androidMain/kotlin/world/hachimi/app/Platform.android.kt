@@ -16,7 +16,7 @@ class AndroidPlatform : Platform {
     }
 
     override fun getDataDir(): File {
-        return applicationContext.dataDir
+        return applicationContext.filesDir
     }
 
     override fun openUrl(url: String) {
