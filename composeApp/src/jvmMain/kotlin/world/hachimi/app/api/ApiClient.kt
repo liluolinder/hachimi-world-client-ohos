@@ -25,6 +25,8 @@ import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.logging.Logger
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private const val TAG = "ApiClient"
 
@@ -67,18 +69,27 @@ class ApiClient(private val baseUrl: String) {
         return baseUrl + path
     }
 
+    @OptIn(ExperimentalUuidApi::class)
+    private fun generateRequestId(): String = Uuid.random().toHexDashString()
+
+    private fun HttpRequestBuilder.applyRequestId(id: String) {
+        header("X-Request-Id", id)
+    }
+
     internal suspend inline fun <reified T> postWith(path: String, auth: Boolean = true, crossinline block: HttpRequestBuilder.() -> Unit): WebResult<T> {
         return withContext(Dispatchers.IO) {
             if (auth) refreshToken()
 
             val url = buildUrl(path)
-            Logger.d(TAG, "POST $path")
+            val requestId = generateRequestId()
+            Logger.d(TAG, "POST(requestId=$requestId) to $path")
             val resp = httpClient.post(url) {
                 applyAuth()
+                applyRequestId(requestId)
                 block()
             }.body<HttpResponse>()
 
-            val data = checkAndDecode<T>(resp, path)
+            val data = checkAndDecode<T>(resp, path, requestId)
             data
         }
     }
@@ -88,14 +99,16 @@ class ApiClient(private val baseUrl: String) {
             if (auth) refreshToken()
 
             val url = buildUrl(path)
-            Logger.d(TAG, "POST $path")
+            val requestId = generateRequestId()
+            Logger.d(TAG, "POST(requestId=$requestId) to $path")
             val resp = httpClient.post(url) {
                 applyAuth()
+                applyRequestId(requestId)
                 contentType(ContentType.Application.Json)
                 setBody(body)
             }.body<HttpResponse>()
 
-            val data = checkAndDecode<T>(resp, path)
+            val data = checkAndDecode<T>(resp, path, requestId)
             data
         }
 
@@ -103,11 +116,13 @@ class ApiClient(private val baseUrl: String) {
         withContext(Dispatchers.IO) {
             if (auth) refreshToken()
             val url = buildUrl(path)
-            Logger.d(TAG, "GET $path")
+            val requestId = generateRequestId()
+            Logger.d(TAG, "GET(requestId=${requestId}) to $path")
             val resp = httpClient.get(url) {
                 if (auth) applyAuth()
+                applyRequestId(requestId)
             }.body<HttpResponse>()
-            val data = checkAndDecode<T>(resp, path)
+            val data = checkAndDecode<T>(resp, path, requestId)
             data
         }
 
@@ -115,18 +130,19 @@ class ApiClient(private val baseUrl: String) {
         withContext(Dispatchers.IO) {
             if (auth) refreshToken()
             val url = buildUrl(path)
-            Logger.d(TAG, "GET $path")
+            val requestId = generateRequestId()
+            Logger.d(TAG, "GET(requestId=${requestId}) $path")
             val resp = httpClient.get(url) {
                 if (auth) applyAuth()
+                applyRequestId(requestId)
 
                 val encoded = json.encodeToJsonElement(query)
                 encoded.jsonObject.forEach { (key, value) ->
                     if (value is JsonNull) return@forEach
                     parameter(key, value.jsonPrimitive.content)
                 }
-                header("X-Real-IP", "127.0.0.1")
             }.body<HttpResponse>()
-            val data = checkAndDecode<T>(resp, path)
+            val data = checkAndDecode<T>(resp, path, requestId)
             data
         }
 
@@ -164,8 +180,9 @@ class ApiClient(private val baseUrl: String) {
                             error("Error requesting to refreshing token: ${e.message}")
                         }
 
+                        val requestId = resp.headers["X-Request-Id"] ?: "unknown"
                         if (resp.status == HttpStatusCode.OK) {
-                            val result = checkAndDecode<AuthModule.TokenPair>(resp, "refresh_token")
+                            val result = checkAndDecode<AuthModule.TokenPair>(resp, "refresh_token", requestId)
 
                             if (result.ok) {
                                 val data = result.okData<AuthModule.TokenPair>()
@@ -177,8 +194,9 @@ class ApiClient(private val baseUrl: String) {
                                 val data = result.errData<CommonError>()
                                 authListener.onAuthenticationError(
                                     AuthError.RefreshTokenError(
+                                        requestId,
                                         "refresh_token",
-                                        data
+                                        data,
                                     )
                                 )
                             }
@@ -186,8 +204,9 @@ class ApiClient(private val baseUrl: String) {
                             Logger.w(TAG, "refreshToken: Refreshing token failed")
                             authListener.onAuthenticationError(
                                 AuthError.ErrorHttpResponse(
+                                    requestId,
                                     "refresh_token",
-                                    resp
+                                    resp,
                                 )
                             )
                         }
@@ -197,14 +216,14 @@ class ApiClient(private val baseUrl: String) {
         }
     }
 
-    internal suspend inline fun <reified T> checkAndDecode(resp: HttpResponse, endpoint: String): WebResult<T> {
+    internal suspend inline fun <reified T> checkAndDecode(resp: HttpResponse, endpoint: String, requestId: String): WebResult<T> {
         if (resp.status == HttpStatusCode.OK) {
             return resp.body<WebResult<T>>()
         } else if (resp.status == HttpStatusCode.Unauthorized) {
-            authListener.onAuthenticationError(AuthError.UnauthorizedDuringRequest(endpoint, resp))
+            authListener.onAuthenticationError(AuthError.UnauthorizedDuringRequest(requestId, endpoint, resp))
         }
         val content = resp.bodyAsText()
-        error("Error response: ${resp.status} $content")
+        error("Error response for request[${requestId}]: ${resp.status} $content")
     }
 
     internal fun HttpRequestBuilder.applyAuth() {
@@ -247,14 +266,14 @@ sealed class AuthError {
      *
      * But could happen when Api Client access a protected endpoint without setting `auth` to `true`
      */
-    data class UnauthorizedDuringRequest(val endpoint: String, val response: HttpResponse) : AuthError()
+    data class UnauthorizedDuringRequest(val requestId: String, val endpoint: String, val response: HttpResponse) : AuthError()
 
     /**
      * If server returns HTTP status error during refreshing token
      *
      * When this occurs, it's better to report to backend, or retry.
      */
-    data class ErrorHttpResponse(val endpoint: String, val response: HttpResponse) : AuthError()
+    data class ErrorHttpResponse(val requestId: String, val endpoint: String, val response: HttpResponse) : AuthError()
 
     /**
      * If the refresh token request returns an error, such as
@@ -264,12 +283,12 @@ sealed class AuthError {
      *
      * When this occurs, should let the user to re-log in
      */
-    data class RefreshTokenError(val endpoint: String, val error: CommonError) : AuthError()
+    data class RefreshTokenError(val requestId: String, val endpoint: String, val error: CommonError) : AuthError()
 
     /**
      * Unknown exception during authentication procedure
      */
-    data class UnknownError(val endpoint: String, val exception: Exception) : AuthError()
+    data class UnknownError(val requestId: String, val endpoint: String, val exception: Exception) : AuthError()
 }
 
 object DefaultAuthenticationListener : AuthenticationListener {
