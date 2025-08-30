@@ -43,7 +43,7 @@ fun TopAppBar(global: GlobalStore) {
 fun CompactTopAppBar(global: GlobalStore) {
     Surface(Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp).statusBarsPadding(),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).statusBarsPadding(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             var searchText by remember { mutableStateOf("") }
@@ -78,7 +78,7 @@ fun CompactTopAppBar(global: GlobalStore) {
 fun ExpandedTopAppBar(global: GlobalStore) {
     Surface(Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
         Row(
-            modifier = Modifier.statusBarsPadding().padding(horizontal = 12.dp),
+            modifier = Modifier.statusBarsPadding().padding(start = 24.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {

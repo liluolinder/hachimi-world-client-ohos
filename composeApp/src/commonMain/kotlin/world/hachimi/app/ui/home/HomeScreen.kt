@@ -29,7 +29,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Text(
-                modifier = Modifier.padding(top = 24.dp),
+                modifier = Modifier.padding(top = 24.dp, start = 16.dp),
                 text ="推荐音乐", style = MaterialTheme.typography.titleLarge
             )
 
