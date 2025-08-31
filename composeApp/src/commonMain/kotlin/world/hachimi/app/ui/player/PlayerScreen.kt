@@ -24,10 +24,14 @@ import world.hachimi.app.ui.player.components.Lyrics
 import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
 import world.hachimi.app.ui.theme.PreviewTheme
+import world.hachimi.app.util.PlatformBackHandler
 
 @Composable
 fun PlayerScreen() {
     val global: GlobalStore = koinInject()
+    PlatformBackHandler {
+        global.shrinkPlayer()
+    }
     BoxWithConstraints {
         if (maxWidth < 600.dp) {
             CompactPlayerScreen(
