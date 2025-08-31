@@ -22,6 +22,7 @@ import world.hachimi.app.api.module.AuthModule
 import world.hachimi.app.api.module.PlaylistModule
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
+import world.hachimi.app.api.module.VersionModule
 import world.hachimi.app.logging.Logger
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -34,6 +35,8 @@ private const val TAG = "ApiClient"
  * Auto get refresh token
  */
 class ApiClient(private val baseUrl: String) {
+    val version: Int = 250901
+
     @OptIn(ExperimentalSerializationApi::class)
     internal val json = Json {
         ignoreUnknownKeys = true
@@ -237,6 +240,7 @@ class ApiClient(private val baseUrl: String) {
     val userModule by lazy { UserModule(this) }
     val songModule by lazy { SongModule(this) }
     val playlistModule by lazy { PlaylistModule(this) }
+    val versionModule by lazy { VersionModule(this) }
 }
 
 interface AuthenticationListener {
