@@ -29,14 +29,14 @@ class JVMPlayer() : Player {
     private val mutex = Mutex()
 
     suspend fun prepare(uri: String, autoPlay: Boolean) {
-        val bytes = withContext(Dispatchers.IO) {
+        /*val bytes = withContext(Dispatchers.IO) {
             val uri = URI.create(uri).toURL()
             uri.readBytes()
         }
-        prepare(bytes, autoPlay)
+        prepare(bytes, autoPlay)*/
     }
 
-    override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
+    override suspend fun prepare(item: SongItem, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
         mutex.withLock {
             clip.close()
 
@@ -60,7 +60,7 @@ class JVMPlayer() : Player {
 
             val defaultFormat = clip.format
 
-            val stream = AudioSystem.getAudioInputStream(ByteArrayInputStream(bytes))
+            val stream = AudioSystem.getAudioInputStream(ByteArrayInputStream(item.audioBytes))
             val baseFormat = stream.format
 //        val sampleSizeInBites = baseFormat.sampleSizeInBits.takeIf { it > 0 } ?: 32 // Defaults to fltp(32bits)
 
