@@ -7,11 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import world.hachimi.app.api.ApiClient
+import world.hachimi.app.api.err
 import world.hachimi.app.api.module.SongModule
+import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
 
 class MainViewModel(
@@ -36,12 +36,13 @@ class MainViewModel(
             isLoading = true
 
             try {
-                val recentIds = apiClient.songModule.recent().okData<SongModule.SongListResp>()
-                val details = recentIds.songIds.map {
-                    async { apiClient.songModule.detail(it).okData<SongModule.DetailResp>() }
-                }.awaitAll()
-
-                songs = details
+                val resp = apiClient.songModule.recentV2();
+                if (resp.ok) {
+                    val data = resp.ok()
+                    songs = data.songs
+                } else {
+                    global.alert(resp.err().msg)
+                }
             } catch (e: Exception) {
                 Logger.e("home", "Failed to get recommend songs", e)
                 global.alert("获取推荐音乐失败")
