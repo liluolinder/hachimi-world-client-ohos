@@ -6,6 +6,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import world.hachimi.app.logging.Logger
 import java.io.ByteArrayInputStream
+import java.net.URI
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.Clip
@@ -26,6 +27,14 @@ class JVMPlayer() : Player {
     private var pauseByUser = false
 
     private val mutex = Mutex()
+
+    suspend fun prepare(uri: String, autoPlay: Boolean) {
+        val bytes = withContext(Dispatchers.IO) {
+            val uri = URI.create(uri).toURL()
+            uri.readBytes()
+        }
+        prepare(bytes, autoPlay)
+    }
 
     override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean): Unit = withContext(Dispatchers.IO) {
         mutex.withLock {
@@ -71,36 +80,36 @@ class JVMPlayer() : Player {
         }
     }
 
-    override fun isReady(): Boolean {
+    override suspend fun isReady(): Boolean {
         return ready
     }
 
-    override fun isPlaying(): Boolean {
+    override suspend fun isPlaying(): Boolean {
         return clip.isRunning
     }
 
-    override fun isEnd(): Boolean {
+    override suspend fun isEnd(): Boolean {
         return clip.framePosition >= clip.frameLength - 1
     }
 
-    override fun currentPosition(): Long {
+    override suspend fun currentPosition(): Long {
         return clip.microsecondPosition / 1000L
     }
 
-    override fun play() {
+    override suspend fun play() {
         if (ready) {
             clip.start()
         }
     }
 
-    override fun pause() {
+    override suspend fun pause() {
         if (ready) {
             pauseByUser = true
             clip.stop()
         }
     }
 
-    override fun seek(position: Long, autoStart: Boolean) {
+    override suspend fun seek(position: Long, autoStart: Boolean) {
         if (autoStart || isPlaying()) {
             pauseByUser = true
             clip.stop()
@@ -111,15 +120,15 @@ class JVMPlayer() : Player {
         }
     }
 
-    override fun getVolume(): Float {
+    override suspend fun getVolume(): Float {
         return volumeControl?.value ?: 1f
     }
 
-    override fun setVolume(value: Float) {
+    override suspend fun setVolume(value: Float) {
         volumeControl?.value = value
     }
 
-    override fun release() {
+    override suspend fun release() {
         // Do some cleanup work
         try {
             clip.stop()

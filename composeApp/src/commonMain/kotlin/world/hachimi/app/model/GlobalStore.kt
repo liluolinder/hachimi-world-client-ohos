@@ -276,7 +276,7 @@ class GlobalStore(
         }
     }
 
-    fun removeFromQueue(id: String) {
+    fun removeFromQueue(id: String) = scope.launch {
         val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
         val targetIndex = musicQueue.indexOfFirst { it.displayId == id }
 
@@ -291,7 +291,7 @@ class GlobalStore(
         musicQueue.removeAt(targetIndex)
     }
 
-    fun playOrPause() {
+    fun playOrPause() = scope.launch {
         if (player.isPlaying()) {
             player.pause()
         } else {
@@ -299,7 +299,7 @@ class GlobalStore(
         }
     }
 
-    fun setSongProgress(progress: Float) {
+    fun setSongProgress(progress: Float) = scope.launch {
         val millis = (progress * (playerState.songDurationSecs * 1000L)).toLong()
         player.seek(millis, true)
 

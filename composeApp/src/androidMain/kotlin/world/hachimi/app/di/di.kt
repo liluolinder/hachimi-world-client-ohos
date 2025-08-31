@@ -1,9 +1,13 @@
 package world.hachimi.app.di
 
+import android.content.ComponentName
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import okio.Path.Companion.toOkioPath
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -21,6 +25,7 @@ import world.hachimi.app.model.SearchViewModel
 import world.hachimi.app.model.UserSpaceViewModel
 import world.hachimi.app.player.AndroidPlayer
 import world.hachimi.app.player.Player
+import world.hachimi.app.service.PlaybackService
 import world.hachimi.app.storage.MyDataStore
 
 val appModule = module {
@@ -29,7 +34,12 @@ val appModule = module {
     }
     single { getPreferencesDataStore() }
     single { MyDataStore(get()) }
-    single<Player> { AndroidPlayer() }
+    single<Player> {
+        val sessionToken = SessionToken(androidContext(), ComponentName(androidContext(), PlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(androidContext(), sessionToken).buildAsync()
+
+        AndroidPlayer(controllerFuture)
+    }
 
     singleOf(::GlobalStore)
 

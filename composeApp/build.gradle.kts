@@ -67,6 +67,9 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.browser)
             implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.media3.session)
+            implementation(libs.androidx.media3.exoplayer)
+            implementation(libs.androidx.media3.exoplayer.dash)
 
             implementation(libs.koin.android)
             implementation(libs.room.runtime)
