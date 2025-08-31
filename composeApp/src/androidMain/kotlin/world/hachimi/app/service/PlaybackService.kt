@@ -13,6 +13,7 @@ class PlaybackService: MediaSessionService() {
         val player = ExoPlayer.Builder(this).build()
         player.addAnalyticsListener(EventLogger())
         mediaSession = MediaSession.Builder(this, player).build()
+        // TODO: Support next and previous actions
     }
 
     override fun onGetSession(p0: MediaSession.ControllerInfo): MediaSession? {

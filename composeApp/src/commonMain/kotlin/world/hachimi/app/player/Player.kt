@@ -19,7 +19,7 @@ interface Player {
      * Download from URL and prepare to play
      * Might throw Exception
      */
-    suspend fun prepare(bytes: ByteArray, autoPlay: Boolean = false)
+    suspend fun prepare(item: SongItem, autoPlay: Boolean = false)
     suspend fun isReady(): Boolean
 
     suspend fun release()
@@ -43,3 +43,34 @@ sealed class PlayEvent {
     data class Seek(val position: Long) : PlayEvent()
 }
 
+data class SongItem(
+    val id: String,
+    val title: String,
+    val artist: String,
+    val audioBytes: ByteArray,
+    val coverBytes: ByteArray? = null,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SongItem
+
+        if (id != other.id) return false
+        if (title != other.title) return false
+        if (artist != other.artist) return false
+        if (!audioBytes.contentEquals(other.audioBytes)) return false
+        if (!coverBytes.contentEquals(other.coverBytes)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + title.hashCode()
+        result = 31 * result + artist.hashCode()
+        result = 31 * result + audioBytes.contentHashCode()
+        result = 31 * result + (coverBytes?.contentHashCode() ?: 0)
+        return result
+    }
+}

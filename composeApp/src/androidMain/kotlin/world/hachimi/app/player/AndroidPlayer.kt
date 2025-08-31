@@ -2,6 +2,7 @@ package world.hachimi.app.player
 
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.session.MediaController
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -90,17 +91,34 @@ class AndroidPlayer(
         controller!!.volume = value
     }
 
-    override suspend fun prepare(bytes: ByteArray, autoPlay: Boolean) {
+    override suspend fun prepare(item: SongItem, autoPlay: Boolean) {
         // TODO[refactor]: This is a workaround to get uri. Consider to use network uri or other ways in the future.
-        val file = withContext(Dispatchers.IO) {
+        val audioFile = withContext(Dispatchers.IO) {
             getPlatform().getCacheDir().resolve("playing").also {
-                it.writeBytes(bytes)
+                it.writeBytes(item.audioBytes)
             }
         }
-        val uri = file.toUri()
-        // TODO[feat](player-android): Write metadata
+        val audioUri = audioFile.toUri()
+
+
+        /*val coverFile = item.coverBytes?.let { bytes ->
+            withContext(Dispatchers.IO) {
+                getPlatform().getCacheDir().resolve("playing_cover").also {
+                    it.writeBytes(bytes)
+                }
+            }
+        }
+
+        val coverUri = coverFile?.toUri()*/
+
+        val metadata = MediaMetadata.Builder()
+            .setTitle(item.title)
+            .setArtist(item.artist)
+            .setArtworkData(item.coverBytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+            .build()
         val mediaItem = MediaItem.Builder()
-            .setUri(uri)
+            .setUri(audioUri)
+            .setMediaMetadata(metadata)
             .build()
         withContext(Dispatchers.Main) {
             controller?.setMediaItem(mediaItem)

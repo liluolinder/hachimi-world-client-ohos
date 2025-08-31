@@ -32,6 +32,7 @@ import world.hachimi.app.nav.Route
 import world.hachimi.app.nav.Navigator
 import world.hachimi.app.player.PlayEvent
 import world.hachimi.app.player.Player
+import world.hachimi.app.player.SongItem
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.PreferencesKeys
 import world.hachimi.app.util.LrcParser
@@ -339,7 +340,7 @@ class GlobalStore(
     /**
      * This is only for play current song. Not interested in the music queue.
      */
-    private suspend fun play(id: String) {
+    private suspend fun play(id: String) = coroutineScope {
         player.pause()
 
         playerState.isLoading = true
@@ -360,6 +361,9 @@ class GlobalStore(
                 }
                 playerState.updateCurrentMillis(0L)
 
+                val coverBytes = async<ByteArray>(Dispatchers.IO) {
+                    api.httpClient.get(data.coverUrl).bodyAsBytes()
+                }
                 val filename = data.audioUrl.substringAfterLast("/")
                 val cacheFile = getPlatform().getCacheDir()
                     .resolve("song_caches").also {
@@ -404,15 +408,21 @@ class GlobalStore(
                     cacheFile.writeBytes(songBytes)
                     songBytes
                 }
-                player.prepare(bytes, autoPlay = true)
+                player.prepare(SongItem(
+                    id = data.id.toString(),
+                    title = data.title,
+                    artist = data.uploaderName,
+                    audioBytes = bytes,
+                    coverBytes = coverBytes.await(),
+                ), autoPlay = true)
             } else {
                 alert(resp.errData<CommonError>().msg)
-                return
+                return@coroutineScope
             }
         } catch (e: Exception) {
             Logger.e("player", "Failed to play song", e)
             alert(e.message)
-            return
+            return@coroutineScope
         } finally {
             playerState.isLoading = false
         }
