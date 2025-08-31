@@ -18,9 +18,18 @@ class SongModule(
         val songIds: List<String>
     )
 
+    @Deprecated(message = "Deprecated since 250831", level = DeprecationLevel.ERROR)
     suspend fun recent(): WebResult<SongListResp> = client.get("/song/recent", false)
 
+    @Deprecated(message = "Deprecated since 250831", level = DeprecationLevel.ERROR)
     suspend fun hot(): WebResult<SongListResp> = client.get("/song/hot", false)
+
+    @Serializable
+    data class RecentResp(
+        val songs: List<DetailResp>
+    )
+
+    suspend fun recentV2(): WebResult<RecentResp> = client.get("/song/recent_v2", true)
 
     @Serializable
     data class DetailResp(

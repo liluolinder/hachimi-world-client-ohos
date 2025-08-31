@@ -333,9 +333,11 @@ data class CommonError(
 
 // Ohh! I like extension function! :p
 inline fun <reified T> WebResp<T, *>.ok(): T {
+    if (!ok) error("Trying to decode ok data with error response!")
     return okData<T>()
 }
 
 inline fun <reified E> WebResp<*, E>.err(): E {
+    if (ok) error("Trying to decode error data with ok response!")
     return errData<E>()
 }
