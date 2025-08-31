@@ -26,6 +26,7 @@ import world.hachimi.app.api.AuthError
 import world.hachimi.app.api.AuthenticationListener
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.SongModule
+import world.hachimi.app.api.ok
 import world.hachimi.app.getPlatform
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
@@ -115,6 +116,9 @@ class GlobalStore(
                 }
                 delay(100)
             }
+        }
+        scope.launch {
+            checkMinApiVersion()
         }
     }
 
@@ -425,6 +429,29 @@ class GlobalStore(
             return@coroutineScope
         } finally {
             playerState.isLoading = false
+        }
+    }
+
+    var showApiVersionIncompatible by mutableStateOf(false)
+        private set
+    var serverVersion by mutableStateOf("")
+    var serverMinVersion by mutableStateOf("")
+    val clientApiVersion by mutableStateOf(ApiClient.VERSION)
+
+    private suspend fun checkMinApiVersion() {
+        try {
+            val resp = api.versionModule.server()
+            // We assume it won't return false
+            val data = resp.ok()
+            serverVersion = data.version.toString()
+            serverMinVersion = data.minVersion.toString()
+
+            if (ApiClient.VERSION < data.minVersion) {
+                showApiVersionIncompatible = true
+            }
+        } catch (e: Exception) {
+            Logger.e("player", "Failed to check min API version", e)
+            alert("Failed to check min API version")
         }
     }
 }

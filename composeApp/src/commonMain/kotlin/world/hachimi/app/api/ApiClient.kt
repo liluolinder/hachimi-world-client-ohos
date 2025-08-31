@@ -35,7 +35,9 @@ private const val TAG = "ApiClient"
  * Auto get refresh token
  */
 class ApiClient(private val baseUrl: String) {
-    val version: Int = 250901
+    companion object {
+        const val VERSION: Int = 250901
+    }
 
     @OptIn(ExperimentalSerializationApi::class)
     internal val json = Json {
