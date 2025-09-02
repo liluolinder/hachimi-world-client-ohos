@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">@string/app_name_base</string>
     <string name="app_name_base">基米天堂</string>
     <string name="app_name_dev">基米天堂 Dev</string>
 </resources>
