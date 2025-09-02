@@ -211,9 +211,28 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "world.hachimi.app"
+            packageName = "基米天堂"
             packageVersion = gitVersionNameShort.get()
             modules("jdk.unsupported", "java.naming")
+
+            windows {
+                upgradeUuid = "1544B476-25C9-4A01-705E-B374B14B2F1B"
+                perUserInstall = true
+                dirChooser = true
+                shortcut = true
+                menu = true
+                iconFile.set(rootProject.file("icons/icon.ico"))
+            }
+            macOS {
+                appCategory = "public.app-category.entertainment"
+
+                bundleID = "world.hachimi.app"
+                iconFile.set(rootProject.file("icons/icon.icns"))
+                // TODO: Set signing
+            }
+            linux {
+                iconFile.set(rootProject.file("icons/icon.png"))
+            }
         }
     }
 }
