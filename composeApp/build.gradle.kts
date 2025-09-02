@@ -172,9 +172,22 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    signingConfigs {
+        if (System.getenv("IS_CI") == "true") {
+            register("release") {
+                storeFile = file(System.getenv("KEYSTORE_FILE"))
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEYSTORE_KEY_ALIAS")
+                keyPassword = System.getenv("KEYSTORE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            if (System.getenv("IS_CI") == "true") {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -207,8 +220,8 @@ buildkonfig {
 
     defaultConfigs {
         buildConfigField(Type.LONG, "BUILD_TIME", System.currentTimeMillis().toString())
-        buildConfigField(Type.INT,"VERSION_CODE", gitVersionCode.get().toString())
-        buildConfigField(Type.STRING,"VERSION_NAME", gitVersionName.get())
+        buildConfigField(Type.INT, "VERSION_CODE", gitVersionCode.get().toString())
+        buildConfigField(Type.STRING, "VERSION_NAME", gitVersionName.get())
 
         buildConfigField(Type.STRING, "BUILD_TYPE", "dev")
         buildConfigField(Type.STRING, "APP_PACKAGE_NAME", "world.hachimi.app.dev")
