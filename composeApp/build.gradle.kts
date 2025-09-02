@@ -183,15 +183,16 @@ android {
         }
     }
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
             if (System.getenv("IS_CI") == "true") {
                 signingConfig = signingConfigs.getByName("release")
             }
+            resValue("string", "app_name", "@string/app_name_base")
         }
-        getByName("debug") {
+        debug {
             applicationIdSuffix = ".dev"
-            resValue("string", "app_name", "基米天堂 Dev")
+            resValue("string", "app_name", "@string/app_name_dev")
         }
     }
     compileOptions {
