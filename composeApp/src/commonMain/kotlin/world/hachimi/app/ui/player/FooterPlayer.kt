@@ -34,7 +34,7 @@ fun FooterPlayer() {
     val playerState = global.playerState
     BoxWithConstraints {
         AnimatedVisibility(
-            visible = playerState.hasSong,
+            visible = playerState.hasSong || playerState.isFetching,
             modifier = Modifier.fillMaxWidth(),
             enter = expandVertically(expandFrom = Alignment.Top),
             exit = shrinkVertically()
@@ -111,7 +111,7 @@ fun ExpandedFooterPlayer() {
                 SongControl(
                     modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
                     isPlaying = playerState.isPlaying,
-                    isLoading = playerState.isLoading,
+                    isLoading = playerState.isBuffering,
                     loadingProgress = playerState.downloadProgress,
                     onPlayPauseClick = { global.playOrPause() },
                     onPreviousClick = { global.queuePrevious() },

@@ -19,6 +19,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
 import org.jetbrains.compose.resources.StringResource
 import world.hachimi.app.api.ApiClient
@@ -36,7 +38,6 @@ import world.hachimi.app.player.Player
 import world.hachimi.app.player.SongItem
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.PreferencesKeys
-import world.hachimi.app.util.LrcParser
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -64,6 +65,7 @@ class GlobalStore(
 
     val musicQueue = mutableStateListOf<MusicQueueItem>()
     var queueCurrentIndex by mutableStateOf(-1)
+    private val queueMutex = Mutex()
 
     data class MusicQueueItem(
         val id: Long,
@@ -91,7 +93,7 @@ class GlobalStore(
                         }
 
                         is PlayEvent.Error -> {
-
+                            alert(event.e.message)
                         }
 
                         PlayEvent.Pause -> {
@@ -177,43 +179,53 @@ class GlobalStore(
     }
 
     fun playSongInQueue(id: String) {
-        val index = musicQueue.indexOfFirst { it.displayId == id }
-        if (index != -1) {
-            val song = musicQueue[index]
+        scope.launch {
+            queueMutex.withLock {
+                val index = musicQueue.indexOfFirst { it.displayId == id }
+                if (index != -1) {
+                    val song = musicQueue[index]
 
-            queueCurrentIndex = index
-            scope.launch {
-                play(song.displayId)
+                    queueCurrentIndex = index
+                    play(song.displayId)
+                }
             }
         }
     }
 
     // TODO[refactor](player): Should queue be a builtin feature in player? To make GlobalStore more clear
     fun queuePrevious() {
-        if (musicQueue.isNotEmpty()) {
-            val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-            if (currentIndex == -1) {
-                playSongInQueue(musicQueue.first().displayId)
-            } else {
-                if (currentIndex == 0) {
-                    playSongInQueue(musicQueue.last().displayId)
-                } else {
-                    playSongInQueue(musicQueue[currentIndex - 1].displayId)
+        scope.launch {
+            queueMutex.withLock {
+                if (musicQueue.isNotEmpty()) {
+                    val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
+                    if (currentIndex == -1) {
+                        playSongInQueue(musicQueue.first().displayId)
+                    } else {
+                        if (currentIndex == 0) {
+                            playSongInQueue(musicQueue.last().displayId)
+                        } else {
+                            playSongInQueue(musicQueue[currentIndex - 1].displayId)
+                        }
+                    }
                 }
             }
         }
     }
 
     fun queueNext() {
-        if (musicQueue.isNotEmpty()) {
-            val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-            if (currentIndex == -1) {
-                playSongInQueue(musicQueue.first().displayId)
-            } else {
-                if (currentIndex >= musicQueue.lastIndex) {
-                    playSongInQueue(musicQueue.first().displayId)
-                } else {
-                    playSongInQueue(musicQueue[currentIndex + 1].displayId)
+        scope.launch {
+            queueMutex.withLock {
+                if (musicQueue.isNotEmpty()) {
+                    val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
+                    if (currentIndex == -1) {
+                        playSongInQueue(musicQueue.first().displayId)
+                    } else {
+                        if (currentIndex >= musicQueue.lastIndex) {
+                            playSongInQueue(musicQueue.first().displayId)
+                        } else {
+                            playSongInQueue(musicQueue[currentIndex + 1].displayId)
+                        }
+                    }
                 }
             }
         }
@@ -224,8 +236,9 @@ class GlobalStore(
      * @param instantPlay instantly play after inserting
      * @param append appends to tail or insert after current playing
      */
-    fun insertToQueue(songDisplayId: String, instantPlay: Boolean, append: Boolean) {
-        scope.launch {
+    fun insertToQueue(songDisplayId: String, instantPlay: Boolean, append: Boolean) = scope.launch {
+        queueMutex.withLock {
+            playerState.isFetching = true
             val resp = async {
                 api.songModule.detail(songDisplayId)
             }
@@ -258,6 +271,7 @@ class GlobalStore(
                     }
 
                     if (instantPlay) {
+                        playerState.hasSong = true
                         queueNext()
                     }
                 } else {
@@ -267,33 +281,39 @@ class GlobalStore(
             } catch (e: Exception) {
                 Logger.e("player", "Failed to insert song to queue", e)
                 alert(e.message)
+            } finally {
+                playerState.isFetching = false
             }
         }
     }
 
     fun playAll(items: List<MusicQueueItem>) {
         scope.launch {
-            player.pause()
-            musicQueue.clear()
-            musicQueue.addAll(items)
-            queueCurrentIndex = -1
-            queueNext()
+            queueMutex.withLock {
+                player.pause()
+                musicQueue.clear()
+                musicQueue.addAll(items)
+                queueCurrentIndex = -1
+                queueNext()
+            }
         }
     }
 
     fun removeFromQueue(id: String) = scope.launch {
-        val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-        val targetIndex = musicQueue.indexOfFirst { it.displayId == id }
+        queueMutex.withLock {
+            val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
+            val targetIndex = musicQueue.indexOfFirst { it.displayId == id }
 
-        if (currentPlayingIndex == targetIndex) {
-            if (musicQueue.size > 1) {
-                queueNext()
-            } else {
-                player.pause()
-                playerState.hasSong = false
+            if (currentPlayingIndex == targetIndex) {
+                if (musicQueue.size > 1) {
+                    queueNext()
+                } else {
+                    player.pause()
+                    playerState.hasSong = false
+                }
             }
+            musicQueue.removeAt(targetIndex)
         }
-        musicQueue.removeAt(targetIndex)
     }
 
     fun playOrPause() = scope.launch {
@@ -347,7 +367,7 @@ class GlobalStore(
     private suspend fun play(id: String) = coroutineScope {
         player.pause()
 
-        playerState.isLoading = true
+        playerState.isBuffering = true
         try {
             val resp = api.songModule.detail(id)
             if (resp.ok) {
@@ -428,7 +448,7 @@ class GlobalStore(
             alert(e.message)
             return@coroutineScope
         } finally {
-            playerState.isLoading = false
+            playerState.isBuffering = false
         }
     }
 
@@ -455,87 +475,3 @@ class GlobalStore(
         }
     }
 }
-
-/**
- * UI states, should attach a player
- */
-class PlayerUIState() {
-    var hasSong by mutableStateOf(false)
-    var songId by mutableStateOf<Long?>(null)
-    var songDisplayId by mutableStateOf("")
-    var isPlaying by mutableStateOf(false)
-    var isLoading by mutableStateOf(false)
-    var songTitle by mutableStateOf("")
-    var songAuthor by mutableStateOf("")
-    var songCoverUrl by mutableStateOf<String?>(null)
-    var songDurationSecs by mutableStateOf(0)
-
-    var currentMillis by mutableStateOf(0L)
-        private set
-    var currentLyricsLine by mutableStateOf(-1)
-        private set
-    var timedLyricsEnabled by mutableStateOf(false)
-        private set
-    var lyricsLines by mutableStateOf<List<String>>(emptyList())
-        private set
-    private var lrcSegments: List<TimedLyricsSegment> = emptyList()
-
-    var downloadProgress by mutableStateOf(0f)
-
-    data class TimedLyricsSegment(
-        val startTimeMs: Long,
-        val endTimeMs: Long,
-        val spans: List<TimedLyricsSpan>
-    )
-
-    data class TimedLyricsSpan(
-        val startTimeMs: Long,
-        val endTimeMs: Long,
-        val text: String
-    )
-
-    fun updateCurrentMillis(milliseconds: Long) {
-        currentMillis = milliseconds
-
-        if (timedLyricsEnabled) {
-            val currentLineIndex = lrcSegments.indexOfFirst {
-                it.startTimeMs <= milliseconds && milliseconds <= it.endTimeMs
-            }
-            currentLyricsLine = currentLineIndex
-        }
-    }
-
-    fun setLyrics(content: String) {
-        try {
-            val lrcLines = LrcParser.parse(content)
-            val result = mutableListOf<TimedLyricsSegment>()
-            for ((index, line) in lrcLines.withIndex()) {
-                val startTime = line.timestampMs
-
-                val next = lrcLines.getOrNull(index + 1)
-                val endTime = next?.timestampMs ?: Long.MAX_VALUE
-
-                val segment = TimedLyricsSegment(
-                    startTimeMs = startTime,
-                    endTimeMs = endTime,
-                    // TODO: Support enhanced lrc later
-                    spans = listOf(TimedLyricsSpan(startTime, endTime, line.content))
-                )
-                result.add(segment)
-            }
-            this.lrcSegments = result
-            lyricsLines = lrcSegments.map { it.spans.first().text }
-            timedLyricsEnabled = true
-        } catch (e: Exception) {
-            Logger.e("player", "Failed to parse lyrics", e)
-            lyricsLines = content.lines()
-            timedLyricsEnabled = false
-        }
-    }
-}
-
-data class UserInfo(
-    val uid: Long,
-    val name: String,
-    val avatarUrl: String?
-)
