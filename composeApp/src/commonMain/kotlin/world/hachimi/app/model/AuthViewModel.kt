@@ -99,6 +99,17 @@ class AuthViewModel(
 
     fun regNextStep() {
         if (regStep == 0) {
+            // Validate
+            if (!regEmail.matches(Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"))) {
+                global.alert("邮箱地址不正确")
+                return
+            }
+
+            if (regPassword.length < 8) {
+                global.alert("密码长度至少为8位")
+                return
+            }
+
             regSendEmailCode()
             regStep = 1
         } else if (regStep == 1) {
