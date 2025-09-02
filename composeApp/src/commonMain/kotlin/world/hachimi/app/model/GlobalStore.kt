@@ -140,11 +140,14 @@ class GlobalStore(
                 }
 
                 override suspend fun onAuthenticationError(err: AuthError) {
-                    // TODO[feat](auth): Ask user to re-login when authentication error occur
-                    println(err)
+                    // TODO: Should we process other errors?
                     when (err) {
+                        is AuthError.RefreshTokenError -> {
+                            logout()
+                            alert("登录令牌失效，请重新登录")
+                            nav.push(Route.Auth())
+                        }
                         is AuthError.ErrorHttpResponse -> {}
-                        is AuthError.RefreshTokenError -> {}
                         is AuthError.UnknownError -> {}
                         is AuthError.UnauthorizedDuringRequest -> {}
                     }
