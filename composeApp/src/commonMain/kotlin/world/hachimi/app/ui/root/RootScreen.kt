@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.root
 
+import androidx.compose.foundation.Image
 import world.hachimi.app.ui.player.FooterPlayer
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
@@ -16,7 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import hachimiworld.composeapp.generated.resources.Res
+import hachimiworld.composeapp.generated.resources.brand
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
@@ -82,7 +86,10 @@ private fun CompactScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(Modifier.width(300.dp)) {
-                Text(text = "基米天堂", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+                Image(
+                    modifier = Modifier.padding(16.dp),
+                    painter = painterResource(Res.drawable.brand), contentDescription = "Brand"
+                )
                 Box(Modifier.padding(horizontal = 12.dp)) {
                     navigationContent()
                 }
