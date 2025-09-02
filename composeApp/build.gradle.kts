@@ -189,6 +189,10 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
+        getByName("debug") {
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "基米天堂 Dev")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
