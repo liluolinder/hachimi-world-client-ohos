@@ -173,7 +173,7 @@ class GlobalStore(
     @Deprecated("Use alert with i18n instead")
     fun alert(text: String?) {
         scope.launch {
-            snackbarHostState.showSnackbar(text ?: "Unknown Error", withDismissAction = true)
+            snackbarHostState.showSnackbar(text?.take(64) ?: "Unknown Error", withDismissAction = true)
         }
     }
 
