@@ -81,17 +81,20 @@ fun CompactPlayerScreen(
                     lines = playerState.lyricsLines
                 )
             } else Column(Modifier.weight(1f).padding(horizontal = 48.dp, vertical = 24.dp)) {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).padding(vertical = 24.dp),
-                    elevation = CardDefaults.cardElevation(12.dp),
-                    onClick = { displayingLyrics = true }
-                ) {
-                    AsyncImage(
-                        model = playerState.songCoverUrl,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
+                            .aspectRatio(1f, matchHeightConstraintsFirst = true),
+                        elevation = CardDefaults.cardElevation(12.dp),
+                        onClick = { displayingLyrics = true }
+                    ) {
+                        AsyncImage(
+                            model = playerState.songCoverUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
 
                 Text(
@@ -196,7 +199,7 @@ fun ExpandedPlayerScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = LocalContentColor.current.copy(0.7f)
                             )
-                            playerState.staff.fastForEach {(role, name) ->
+                            playerState.staff.fastForEach { (role, name) ->
                                 Text(
                                     text = "${role}: ${name}",
                                     style = MaterialTheme.typography.labelSmall,
@@ -257,25 +260,27 @@ fun ExpandedPlayerScreen(
 private fun rememberTestPlayerState(): PlayerUIState {
     val state = remember {
         PlayerUIState().apply {
-            updateSongInfo(SongDetailInfo(
-                id = 0,
-                displayId = "JM-AWSL-123",
-                title = "Test Title",
-                subtitle = "Test Subtitle",
-                description = "",
-                durationSeconds = 365,
-                tags = emptyList(),
-                lyrics = "",
-                audioUrl = "",
-                coverUrl = "",
-                productionCrew = emptyList(),
-                creationType = 0,
-                originInfos = emptyList(),
-                uploaderUid = 100000,
-                uploaderName = "",
-                playCount = 0,
-                likeCount = 0
-            ))
+            updateSongInfo(
+                SongDetailInfo(
+                    id = 0,
+                    displayId = "JM-AWSL-123",
+                    title = "Test Title",
+                    subtitle = "Test Subtitle",
+                    description = "",
+                    durationSeconds = 365,
+                    tags = emptyList(),
+                    lyrics = "",
+                    audioUrl = "",
+                    coverUrl = "",
+                    productionCrew = emptyList(),
+                    creationType = 0,
+                    originInfos = emptyList(),
+                    uploaderUid = 100000,
+                    uploaderName = "",
+                    playCount = 0,
+                    likeCount = 0
+                )
+            )
             hasSong = true
             setLyrics("[00:00.00] Test lyrics line\n[01:00.00] Test lyrics line 2")
             updateCurrentMillis(100L)
