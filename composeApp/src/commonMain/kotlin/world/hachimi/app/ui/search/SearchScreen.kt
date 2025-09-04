@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.search
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -42,7 +43,9 @@ fun SearchScreen(
         }
     }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp)) {
+    if (vm.loading) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    } else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp)) {
         item {
             Row(
                 modifier = Modifier.padding(bottom = 12.dp),
@@ -67,6 +70,11 @@ fun SearchScreen(
                     shape = SegmentedButtonDefaults.itemShape(index = 0, count = 1),
                     label = { Text("歌曲") }
                 )
+            }
+        }
+        item {
+            if (vm.data.isEmpty()) Box(Modifier.fillMaxWidth().padding(vertical = 128.dp), contentAlignment = Alignment.Center) {
+                Text("空空如也")
             }
         }
         itemsIndexed(
