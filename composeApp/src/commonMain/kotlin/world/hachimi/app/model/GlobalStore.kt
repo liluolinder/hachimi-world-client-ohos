@@ -376,16 +376,8 @@ class GlobalStore(
             if (resp.ok) {
                 Logger.i("global", "Reading detail")
                 val data = resp.okData<SongModule.DetailResp>()
-                Snapshot.withMutableSnapshot {
-                    playerState.songId = data.id
-                    playerState.songDisplayId = data.displayId
-                    playerState.hasSong = true
-                    playerState.songCoverUrl = data.coverUrl
-                    playerState.songTitle = data.title
-                    playerState.songAuthor = data.uploaderName
-                    playerState.songDurationSecs = data.durationSeconds
-                    playerState.setLyrics(data.lyrics)
-                }
+                playerState.updateSongInfo(data)
+                playerState.hasSong = true
                 playerState.updateCurrentMillis(0L)
 
                 val coverBytes = async<ByteArray>(Dispatchers.IO) {

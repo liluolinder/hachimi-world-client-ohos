@@ -15,11 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.util.fastForEach
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlayerUIState
+import world.hachimi.app.model.SongDetailInfo
 import world.hachimi.app.ui.player.components.Lyrics
 import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
@@ -107,6 +109,7 @@ fun CompactPlayerScreen(
                     style = MaterialTheme.typography.labelSmall,
                     color = LocalContentColor.current.copy(0.7f)
                 )
+
             }
 
             Column(
@@ -193,6 +196,13 @@ fun ExpandedPlayerScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = LocalContentColor.current.copy(0.7f)
                             )
+                            playerState.staff.fastForEach {(role, name) ->
+                                Text(
+                                    text = "${role}: ${name}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = LocalContentColor.current.copy(0.7f)
+                                )
+                            }
                         }
                     }
 
@@ -247,12 +257,26 @@ fun ExpandedPlayerScreen(
 private fun rememberTestPlayerState(): PlayerUIState {
     val state = remember {
         PlayerUIState().apply {
-            songTitle = "Test song title"
-            songAuthor = "Test song author"
-            songCoverUrl = null
-            songDisplayId = "JM-AWSL-123"
+            updateSongInfo(SongDetailInfo(
+                id = 0,
+                displayId = "JM-AWSL-123",
+                title = "Test Title",
+                subtitle = "Test Subtitle",
+                description = "",
+                durationSeconds = 365,
+                tags = emptyList(),
+                lyrics = "",
+                audioUrl = "",
+                coverUrl = "",
+                productionCrew = emptyList(),
+                creationType = 0,
+                originInfos = emptyList(),
+                uploaderUid = 100000,
+                uploaderName = "",
+                playCount = 0,
+                likeCount = 0
+            ))
             hasSong = true
-            songDurationSecs = 365
             setLyrics("[00:00.00] Test lyrics line\n[01:00.00] Test lyrics line 2")
             updateCurrentMillis(100L)
         }

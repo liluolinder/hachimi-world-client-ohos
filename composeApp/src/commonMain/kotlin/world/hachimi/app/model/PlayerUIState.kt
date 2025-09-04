@@ -3,35 +3,53 @@ package world.hachimi.app.model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import world.hachimi.app.api.module.PlaylistModule
+import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
+import world.hachimi.app.player.SongItem
 import world.hachimi.app.util.LrcParser
+
+typealias SongDetailInfo = SongModule.DetailResp
 
 /**
  * UI states, should attach a player
  */
 class PlayerUIState() {
-    var isFetching by mutableStateOf(false)
+    // Status
     var hasSong by mutableStateOf(false)
-    var songId by mutableStateOf<Long?>(null)
-    var songDisplayId by mutableStateOf("")
+    var isFetching by mutableStateOf(false)
     var isPlaying by mutableStateOf(false)
     var isBuffering by mutableStateOf(false)
-    var songTitle by mutableStateOf("")
-    var songAuthor by mutableStateOf("")
-    var songCoverUrl by mutableStateOf<String?>(null)
-    var songDurationSecs by mutableStateOf(0)
-
+    var downloadProgress by mutableStateOf(0f)
     var currentMillis by mutableStateOf(0L)
         private set
+
+    // Info
+    var songId by mutableStateOf<Long?>(null)
+        private set
+    var songDisplayId by mutableStateOf("")
+        private set
+    var songTitle by mutableStateOf("")
+        private set
+    var songAuthor by mutableStateOf("")
+        private set
+    var songCoverUrl by mutableStateOf<String?>(null)
+        private set
+    var songDurationSecs by mutableStateOf(0)
+        private set
+    var staff by mutableStateOf<List<Pair<String, String>>>(emptyList())
+        private set
+    // Lyrics status
     var currentLyricsLine by mutableStateOf(-1)
         private set
     var timedLyricsEnabled by mutableStateOf(false)
         private set
     var lyricsLines by mutableStateOf<List<String>>(emptyList())
         private set
-    private var lrcSegments: List<TimedLyricsSegment> = emptyList()
 
-    var downloadProgress by mutableStateOf(0f)
+    var songInfo by mutableStateOf<SongDetailInfo?>(null)
+
+    private var lrcSegments: List<TimedLyricsSegment> = emptyList()
 
     data class TimedLyricsSegment(
         val startTimeMs: Long,
@@ -82,5 +100,19 @@ class PlayerUIState() {
             lyricsLines = content.lines()
             timedLyricsEnabled = false
         }
+    }
+
+    fun updateSongInfo(data: SongDetailInfo) {
+        songId = data.id
+        songDisplayId = data.displayId
+        hasSong = true
+        songCoverUrl = data.coverUrl
+        songTitle = data.title
+        songAuthor = data.uploaderName
+        songDurationSecs = data.durationSeconds
+        staff = data.productionCrew.map {
+            it.role to (it.personName ?: it.uid?.toString() ?: "Unknown")
+        }
+        setLyrics(data.lyrics)
     }
 }
