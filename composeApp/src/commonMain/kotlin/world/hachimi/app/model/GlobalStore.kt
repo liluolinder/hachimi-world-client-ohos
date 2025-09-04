@@ -165,6 +165,8 @@ class GlobalStore(
             dataStore.delete(PreferencesKeys.USER_AVATAR)
             dataStore.delete(PreferencesKeys.AUTH_ACCESS_TOKEN)
             dataStore.delete(PreferencesKeys.AUTH_REFRESH_TOKEN)
+            api.setToken(null, null)
+            nav.replace(Route.Root.Default)
             isLoggedIn = false
             userInfo = null
         }
