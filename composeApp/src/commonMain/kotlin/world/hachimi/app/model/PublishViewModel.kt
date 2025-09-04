@@ -90,6 +90,33 @@ class PublishViewModel(
     var addStaffRole by mutableStateOf("")
     var addStaffOperating by mutableStateOf(false)
 
+    private fun clearInput() {
+        title = ""
+        subtitle = ""
+        tags.clear()
+        description = ""
+        lyrics = ""
+
+        creationType = 0
+        originId = ""
+        originTitle = ""
+        originLink = ""
+        deriveId = ""
+        deriveTitle = ""
+        deriveLink = ""
+
+        coverImage = null
+        coverTempId = null
+
+        audioFileName = ""
+        audioDurationSecs = 0
+        audioUploaded = false
+        audioTempId = null
+
+        staffs.clear()
+        externalLinks.clear()
+    }
+
     fun setAudioFile() {
         viewModelScope.launch(Dispatchers.Default) {
             val audio = FileKit.openFilePicker(
@@ -373,6 +400,7 @@ class PublishViewModel(
                 val data = resp.okData<SongModule.PublishResp>()
                 publishedSongId = data.songDisplayId
                 showSuccessDialog = true
+                clearInput()
             } else {
                 val data = resp.errData<CommonError>()
                 global.alert(data.msg)
