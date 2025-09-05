@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -78,7 +82,11 @@ fun Lyrics(
                 val scale by transition.animateFloat { if (it) 1f else 0.7f }
                 val alpha by transition.animateFloat { if (it) 1f else 0.9f }
 
-                Text(
+                if (line.isBlank()) Icon(imageVector = Icons.Default.MusicNote, contentDescription = "Interlude",  modifier = Modifier.padding(vertical = 12.dp).size(28.dp).graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    transformOrigin = TransformOrigin(0f, 0.5f)
+                }) else Text(
                     modifier = Modifier.padding(vertical = 12.dp).graphicsLayer {
                         scaleX = scale
                         scaleY = scale
