@@ -29,6 +29,7 @@ import world.hachimi.app.ui.contributor.ContributorCenterScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
 import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.playlist.PlaylistRouteScreen
+import world.hachimi.app.ui.recentplay.RecentPlayScreen
 import world.hachimi.app.ui.root.component.SideNavigation
 import world.hachimi.app.ui.root.component.TopAppBar
 import world.hachimi.app.ui.search.SearchScreen
@@ -47,7 +48,7 @@ fun RootScreen(routeContent: Route.Root) {
                 is Route.Root.Search -> SearchScreen(routeContent.query)
                 Route.Root.Home -> HomeScreen()
                 Route.Root.RecentLike -> {}
-                Route.Root.RecentPlay -> {}
+                Route.Root.RecentPlay -> RecentPlayScreen()
                 is Route.Root.MyPlaylist -> PlaylistRouteScreen(routeContent)
                 Route.Root.MySubscribe -> {}
                 is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)

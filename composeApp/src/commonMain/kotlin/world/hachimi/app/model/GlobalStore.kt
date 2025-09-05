@@ -166,7 +166,7 @@ class GlobalStore(
             dataStore.delete(PreferencesKeys.AUTH_ACCESS_TOKEN)
             dataStore.delete(PreferencesKeys.AUTH_REFRESH_TOKEN)
             api.setToken(null, null)
-            nav.replace(Route.Root.Default)
+            nav.replace(Route.Root.Home)
             isLoggedIn = false
             userInfo = null
         }
@@ -244,10 +244,6 @@ class GlobalStore(
     fun insertToQueue(songDisplayId: String, instantPlay: Boolean, append: Boolean) = scope.launch {
         queueMutex.withLock {
             playerState.isFetching = true
-            val resp = async {
-                api.songModule.detail(songDisplayId)
-            }
-
             val indexInQueue = musicQueue.indexOfFirst { it.displayId == songDisplayId }
 
             // Remove and reinsert
@@ -257,7 +253,7 @@ class GlobalStore(
 
             val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
             try {
-                val resp = resp.await()
+                val resp = api.songModule.detail(songDisplayId)
                 if (resp.ok) {
                     val data = resp.okData<SongModule.DetailResp>()
                     val item = MusicQueueItem(
@@ -290,6 +286,10 @@ class GlobalStore(
                 playerState.isFetching = false
             }
         }
+    }
+
+    fun insertToQueue(item: MusicQueueItem, instantPlay: Boolean, append: Boolean) = scope.launch {
+
     }
 
     fun playAll(items: List<MusicQueueItem>) {
@@ -436,6 +436,13 @@ class GlobalStore(
                     audioBytes = bytes,
                     coverBytes = coverBytes.await(),
                 ), autoPlay = true)
+
+                // Touch playing
+                if (isLoggedIn) {
+                    api.playHistoryModule.touch(data.id)
+                } else {
+                    api.playHistoryModule.touchAnonymous(data.id)
+                }
             } else {
                 alert(resp.errData<CommonError>().msg)
                 return@coroutineScope

@@ -229,7 +229,7 @@ class ApiClient(private val baseUrl: String) {
             authListener.onAuthenticationError(AuthError.UnauthorizedDuringRequest(requestId, endpoint, resp))
         }
         val content = resp.bodyAsText()
-        error("Error response for request[${requestId}]: ${resp.status} $content")
+        error("Error response for request[${requestId}]: ${resp.status} ${content.take(100)}")
     }
 
     internal fun HttpRequestBuilder.applyAuth() {

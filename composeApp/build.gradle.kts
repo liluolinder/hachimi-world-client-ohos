@@ -192,7 +192,7 @@ android {
         }
         debug {
             applicationIdSuffix = ".dev"
-            resValue("string", "app_name", "@string/app_name_dev")
+//            resValue("string", "app_name", "@string/app_name_dev")
         }
     }
     compileOptions {

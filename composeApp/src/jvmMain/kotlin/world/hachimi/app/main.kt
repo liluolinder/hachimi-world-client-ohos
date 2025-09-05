@@ -22,16 +22,14 @@ import java.awt.Dimension
 
 fun main() {
     System.setProperty("apple.awt.application.appearance", "system")
-    startKoin {
+    val koin = startKoin {
         modules(appModule)
     }
 
-    application {
-        val global = koinInject<GlobalStore>()
-        LaunchedEffect(global) {
-            global.initialize()
-        }
+    val global = koin.koin.get<GlobalStore>()
+    global.initialize()
 
+    application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Hachimi World",
@@ -44,12 +42,7 @@ fun main() {
                 window.minimumSize = Dimension(360, 700)
             }
             if (global.initialized) {
-                CompositionLocalProvider(LocalDensity provides LocalDensity.current.let {
-                    // TODO: Remove this later
-                    Density(it.density * 0.9f, it.fontScale)
-                }) {
-                    App()
-                }
+                App()
             } else {
                 // TODO: Add splash screen
                 Box() {
