@@ -35,24 +35,26 @@ fun PlayerScreen() {
         global.shrinkPlayer()
     }
     BoxWithConstraints {
-        if (maxWidth < 600.dp) {
-            CompactPlayerScreen(
-                playerState = global.playerState,
-                onShrinkClick = { global.shrinkPlayer() },
-                onPlayOrPauseClick = { global.playOrPause() },
-                onPreviousClick = { global.queuePrevious() },
-                onNextClick = { global.queueNext() },
-                onProgressChange = { global.setSongProgress(it) }
-            )
-        } else {
-            ExpandedPlayerScreen(
-                playerState = global.playerState,
-                onShrinkClick = { global.shrinkPlayer() },
-                onPlayOrPauseClick = { global.playOrPause() },
-                onPreviousClick = { global.queuePrevious() },
-                onNextClick = { global.queueNext() },
-                onProgressChange = { global.setSongProgress(it) }
-            )
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {
+            if (maxWidth < 600.dp) {
+                CompactPlayerScreen(
+                    playerState = global.playerState,
+                    onShrinkClick = { global.shrinkPlayer() },
+                    onPlayOrPauseClick = { global.playOrPause() },
+                    onPreviousClick = { global.queuePrevious() },
+                    onNextClick = { global.queueNext() },
+                    onProgressChange = { global.setSongProgress(it) }
+                )
+            } else {
+                ExpandedPlayerScreen(
+                    playerState = global.playerState,
+                    onShrinkClick = { global.shrinkPlayer() },
+                    onPlayOrPauseClick = { global.playOrPause() },
+                    onPreviousClick = { global.queuePrevious() },
+                    onNextClick = { global.queueNext() },
+                    onProgressChange = { global.setSongProgress(it) }
+                )
+            }
         }
     }
 }
@@ -66,71 +68,165 @@ fun CompactPlayerScreen(
     onNextClick: () -> Unit,
     onProgressChange: (Float) -> Unit,
 ) {
-    Surface(Modifier.fillMaxSize()) {
-        var displayingLyrics by remember { mutableStateOf(false) }
+    var displayingLyrics by remember { mutableStateOf(false) }
 
-        Column(Modifier.systemBarsPadding()) {
-            if (displayingLyrics) {
-                Lyrics(
-                    modifier = Modifier.fillMaxWidth().weight(1f).clickable(
-                        indication = null,
-                        interactionSource = null,
-                        onClick = { displayingLyrics = false }
-                    ).padding(horizontal = 24.dp),
-                    currentLine = playerState.currentLyricsLine,
-                    lines = playerState.lyricsLines
-                )
-            } else Column(Modifier.weight(1f).padding(horizontal = 48.dp, vertical = 24.dp)) {
-                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    ElevatedCard(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
-                            .aspectRatio(1f, matchHeightConstraintsFirst = true),
-                        elevation = CardDefaults.cardElevation(12.dp),
-                        onClick = { displayingLyrics = true }
-                    ) {
-                        AsyncImage(
-                            model = playerState.songCoverUrl,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+    Column(Modifier.systemBarsPadding()) {
+        if (displayingLyrics) {
+            Lyrics(
+                modifier = Modifier.fillMaxWidth().weight(1f).clickable(
+                    indication = null,
+                    interactionSource = null,
+                    onClick = { displayingLyrics = false }
+                ).padding(horizontal = 24.dp),
+                currentLine = playerState.currentLyricsLine,
+                lines = playerState.lyricsLines,
+                fadeColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        } else Column(Modifier.weight(1f).padding(horizontal = 48.dp, vertical = 24.dp)) {
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
+                        .aspectRatio(1f, matchHeightConstraintsFirst = true),
+                    elevation = CardDefaults.cardElevation(12.dp),
+                    onClick = { displayingLyrics = true }
+                ) {
+                    AsyncImage(
+                        model = playerState.songCoverUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
+            Text(
+                text = playerState.songTitle,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = playerState.songAuthor,
+                style = MaterialTheme.typography.bodySmall,
+                color = LocalContentColor.current.copy(0.6f)
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "基米ID：${playerState.songDisplayId}",
+                style = MaterialTheme.typography.labelSmall,
+                color = LocalContentColor.current.copy(0.7f)
+            )
+
+        }
+
+        Column(
+            Modifier.fillMaxWidth().padding(
+                top = 12.dp,
+                start = 24.dp,
+                end = 24.dp,
+                bottom = 24.dp
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Current lyric line
+            if (!displayingLyrics) {
+                playerState.lyricsLines.getOrNull(playerState.currentLyricsLine)?.let { lyricsLine ->
+                    Text(text = lyricsLine)
+                }
+            }
+
+            SongControl(
+                modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
+                isPlaying = playerState.isPlaying,
+                isLoading = playerState.isBuffering,
+                loadingProgress = playerState.downloadProgress,
+                onPlayPauseClick = onPlayOrPauseClick,
+                onPreviousClick = onPreviousClick,
+                onNextClick = onNextClick
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            SongProgress(
+                durationMillis = playerState.songDurationSecs * 1000L,
+                currentMillis = playerState.currentMillis,
+                onProgressChange = onProgressChange
+            )
+        }
+    }
+}
+
+@Composable
+fun ExpandedPlayerScreen(
+    playerState: PlayerUIState,
+    onShrinkClick: () -> Unit,
+    onPlayOrPauseClick: () -> Unit,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onProgressChange: (Float) -> Unit,
+) {
+    Box {
+        Column(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxWidth().weight(1f).padding(32.dp)) {
+                Column(Modifier.fillMaxHeight().weight(1f), verticalArrangement = Arrangement.Center) {
+                    Column(Modifier.align(Alignment.End).padding(48.dp)) {
+                        BoxWithConstraints(Modifier.wrapContentSize()) {
+                            val size = min(maxHeight * 0.7f, maxWidth)
+                            ElevatedCard(
+                                modifier = Modifier.size(size),
+                                elevation = CardDefaults.cardElevation(12.dp)
+                            ) {
+                                AsyncImage(
+                                    model = playerState.songCoverUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = playerState.songTitle,
                         )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = playerState.songAuthor,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(0.6f)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "基米ID：${playerState.songDisplayId}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LocalContentColor.current.copy(0.7f)
+                        )
+                        playerState.staff.fastForEach { (role, name) ->
+                            Text(
+                                text = "${role}: ${name}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LocalContentColor.current.copy(0.7f)
+                            )
+                        }
                     }
                 }
 
-                Text(
-                    text = playerState.songTitle,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = playerState.songAuthor,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(0.6f)
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "基米ID：${playerState.songDisplayId}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColor.current.copy(0.7f)
-                )
+                Spacer(Modifier.width(64.dp))
 
+                Lyrics(
+                    currentLine = playerState.currentLyricsLine,
+                    lines = playerState.lyricsLines,
+                    modifier = Modifier.fillMaxHeight().weight(1f),
+                    fadeColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             }
 
             Column(
                 Modifier.fillMaxWidth().padding(
-                    top = 12.dp,
                     start = 24.dp,
                     end = 24.dp,
                     bottom = 24.dp
                 ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Current lyric line
-                if (!displayingLyrics) {
-                    playerState.lyricsLines.getOrNull(playerState.currentLyricsLine)?.let { lyricsLine ->
-                        Text(text = lyricsLine)
-                    }
-                }
-
                 SongControl(
                     modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
                     isPlaying = playerState.isPlaying,
@@ -150,108 +246,12 @@ fun CompactPlayerScreen(
                 )
             }
         }
-    }
-}
 
-@Composable
-fun ExpandedPlayerScreen(
-    playerState: PlayerUIState,
-    onShrinkClick: () -> Unit,
-    onPlayOrPauseClick: () -> Unit,
-    onPreviousClick: () -> Unit,
-    onNextClick: () -> Unit,
-    onProgressChange: (Float) -> Unit,
-) {
-    Surface {
-        Box {
-            Column(Modifier.fillMaxSize()) {
-                Row(Modifier.fillMaxWidth().weight(1f).padding(32.dp)) {
-                    Column(Modifier.fillMaxHeight().weight(1f), verticalArrangement = Arrangement.Center) {
-                        Column(Modifier.align(Alignment.End).padding(48.dp)) {
-                            BoxWithConstraints(Modifier.wrapContentSize()) {
-                                val size = min(maxHeight * 0.7f, maxWidth)
-                                ElevatedCard(
-                                    modifier = Modifier.size(size),
-                                    elevation = CardDefaults.cardElevation(12.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = playerState.songCoverUrl,
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            }
-
-                            Spacer(Modifier.height(16.dp))
-                            Text(
-                                text = playerState.songTitle,
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = playerState.songAuthor,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = LocalContentColor.current.copy(0.6f)
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = "基米ID：${playerState.songDisplayId}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(0.7f)
-                            )
-                            playerState.staff.fastForEach { (role, name) ->
-                                Text(
-                                    text = "${role}: ${name}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = LocalContentColor.current.copy(0.7f)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.width(64.dp))
-
-                    Lyrics(
-                        currentLine = playerState.currentLyricsLine,
-                        lines = playerState.lyricsLines,
-                        modifier = Modifier.fillMaxHeight().weight(1f)
-                    )
-                }
-
-                Column(
-                    Modifier.fillMaxWidth().padding(
-                        start = 24.dp,
-                        end = 24.dp,
-                        bottom = 24.dp
-                    ),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    SongControl(
-                        modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
-                        isPlaying = playerState.isPlaying,
-                        isLoading = playerState.isBuffering,
-                        loadingProgress = playerState.downloadProgress,
-                        onPlayPauseClick = onPlayOrPauseClick,
-                        onPreviousClick = onPreviousClick,
-                        onNextClick = onNextClick
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    SongProgress(
-                        durationMillis = playerState.songDurationSecs * 1000L,
-                        currentMillis = playerState.currentMillis,
-                        onProgressChange = onProgressChange
-                    )
-                }
-            }
-
-            IconButton(
-                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
-                onClick = onShrinkClick
-            ) {
-                Icon(Icons.Default.CloseFullscreen, "Shrink")
-            }
+        IconButton(
+            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+            onClick = onShrinkClick
+        ) {
+            Icon(Icons.Default.CloseFullscreen, "Shrink")
         }
     }
 }

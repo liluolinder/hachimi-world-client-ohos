@@ -22,19 +22,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
 fun Lyrics(
     currentLine: Int,
     lines: List<String>,
+    fadeColor: Color,
     modifier: Modifier
 ) {
     BoxWithConstraints(modifier) {
@@ -48,12 +49,11 @@ fun Lyrics(
         }
 
         val fadeHeight = 64.dp
-        val color = MaterialTheme.colorScheme.surface
         LazyColumn(Modifier.fillMaxSize().drawWithContent {
             drawContent()
             drawRect(
                 brush = Brush.verticalGradient(
-                    listOf(color, Color.Transparent),
+                    listOf(fadeColor, Color.Transparent),
                     startY = 0f,
                     endY = fadeHeight.toPx()
                 ),
@@ -61,7 +61,7 @@ fun Lyrics(
             )
             drawRect(
                 brush = Brush.verticalGradient(
-                    listOf(Color.Transparent, color),
+                    listOf(Color.Transparent, fadeColor),
                     startY = size.height - fadeHeight.toPx(),
                     endY = size.height
                 ),
@@ -76,11 +76,23 @@ fun Lyrics(
             bottom = maxHeight,
         )) {
             itemsIndexed(lines) { index, line ->
-                val current = index == currentLine
-                val transition = updateTransition(current)
+                val offsetToCurrent = currentLine - index
+                val transition = updateTransition(offsetToCurrent)
 
-                val scale by transition.animateFloat { if (it) 1f else 0.7f }
-                val alpha by transition.animateFloat { if (it) 1f else 0.9f }
+                val scale by transition.animateFloat {
+                    val offset = abs(it)
+                    when (offset) {
+                        0 -> 1f
+                        1 -> 0.8f
+                        2 -> 0.7f
+                        else -> 0.7f
+                    }
+                    /*val fraction = (abs(it).toFloat() / 3).coerceIn(0f, 1f)
+                    lerp(1f, 0.7f, fraction)*/
+                }
+                val alpha by transition.animateFloat {
+                    if (it == 0) 1f else 0.48f
+                }
 
                 if (line.isBlank()) Icon(imageVector = Icons.Default.MusicNote, contentDescription = "Interlude",  modifier = Modifier.padding(vertical = 12.dp).size(28.dp).graphicsLayer {
                     scaleX = scale
