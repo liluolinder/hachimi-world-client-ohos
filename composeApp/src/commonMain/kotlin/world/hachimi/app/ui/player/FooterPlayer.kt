@@ -3,6 +3,7 @@ package world.hachimi.app.ui.player
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -52,11 +53,13 @@ fun FooterPlayer() {
 fun CompactFooterPlayer(modifier: Modifier) {
     val global = koinInject<GlobalStore>()
     val playerState = global.playerState
-    Column(modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
+    Column(modifier.clickable(onClick = { global.expandPlayer() }).padding(horizontal = 24.dp, vertical = 12.dp)) {
         Row(Modifier.height(60.dp), verticalAlignment = Alignment.CenterVertically) {
-            Card(modifier = Modifier.aspectRatio(1f), onClick = {
-                global.expandPlayer()
-            }, colors = CardDefaults.outlinedCardColors(), elevation = CardDefaults.outlinedCardElevation()) {
+            Surface(
+                modifier = Modifier.aspectRatio(1f),
+                shape = MaterialTheme.shapes.medium,
+                color = LocalContentColor.current.copy(0.12f)
+            ) {
                 AsyncImage(
                     modifier = Modifier.fillMaxSize(),
                     model = playerState.songCoverUrl,
@@ -65,68 +68,10 @@ fun CompactFooterPlayer(modifier: Modifier) {
                 )
             }
 
-            Column(Modifier.padding(start = 16.dp).width(200.dp)) {
+            Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
                 Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-
-        SongProgress(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            durationMillis = playerState.songDurationSecs * 1000L,
-            currentMillis = playerState.currentMillis,
-            onProgressChange = {
-                global.setSongProgress(it)
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ExpandedFooterPlayer() {
-    val global = koinInject<GlobalStore>()
-    val playerState = global.playerState
-
-
-        Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
-            Card(modifier = Modifier.aspectRatio(1f), onClick = {
-                global.expandPlayer()
-            }, colors = CardDefaults.outlinedCardColors(), elevation = CardDefaults.outlinedCardElevation()) {
-                AsyncImage(
-                    modifier = Modifier.fillMaxSize(),
-                    model = playerState.songCoverUrl,
-                    contentDescription = "Cover",
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            Column(Modifier.padding(start = 16.dp).width(200.dp)) {
-                Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
-                Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
-            }
-
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                SongControl(
-                    modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
-                    isPlaying = playerState.isPlaying,
-                    isLoading = playerState.isBuffering,
-                    loadingProgress = playerState.downloadProgress,
-                    onPlayPauseClick = { global.playOrPause() },
-                    onPreviousClick = { global.queuePrevious() },
-                    onNextClick = { global.queueNext() }
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                SongProgress(
-                    durationMillis = playerState.songDurationSecs * 1000L,
-                    currentMillis = playerState.currentMillis,
-                    onProgressChange = {
-                        global.setSongProgress(it)
-                    }
-                )
             }
 
             var queueExpanded by remember { mutableStateOf(false) }
@@ -148,14 +93,100 @@ fun ExpandedFooterPlayer() {
                 alignment = Alignment.CenterEnd,
                 onDismissRequest = { queueExpanded = false }
             ) {
-                MusicQueue(onClose = {
-                    queueExpanded = false
-                })
+                MusicQueue(onClose = { queueExpanded = false })
             }
 
             AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
             CreatePlaylistDialog()
         }
+
+        SongProgress(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            durationMillis = playerState.songDurationSecs * 1000L,
+            currentMillis = playerState.currentMillis,
+            onProgressChange = {
+                global.setSongProgress(it)
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExpandedFooterPlayer() {
+    val global = koinInject<GlobalStore>()
+    val playerState = global.playerState
+
+
+    Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
+        Surface(
+            modifier = Modifier.aspectRatio(1f),
+            shape = MaterialTheme.shapes.medium,
+            onClick = { global.expandPlayer() },
+            color = LocalContentColor.current.copy(0.12f)
+        ) {
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                model = playerState.songCoverUrl,
+                contentDescription = "Cover",
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        Column(Modifier.padding(start = 16.dp).width(200.dp)) {
+            Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
+            Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
+        }
+
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            SongControl(
+                modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
+                isPlaying = playerState.isPlaying,
+                isLoading = playerState.isBuffering,
+                loadingProgress = playerState.downloadProgress,
+                onPlayPauseClick = { global.playOrPause() },
+                onPreviousClick = { global.queuePrevious() },
+                onNextClick = { global.queueNext() }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            SongProgress(
+                durationMillis = playerState.songDurationSecs * 1000L,
+                currentMillis = playerState.currentMillis,
+                onProgressChange = {
+                    global.setSongProgress(it)
+                }
+            )
+        }
+
+        var queueExpanded by remember { mutableStateOf(false) }
+
+        // TODO[refactor](footer): I really should not write this garbage. Refactor later.
+        var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
+
+        IconButton(onClick = {
+            tobeAddedSong = playerState.songId?.let { it to Random.nextLong() }
+        }) {
+            Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
+        }
+
+        IconButton(onClick = { queueExpanded = true }) {
+            Icon(Icons.AutoMirrored.Filled.QueueMusic, "Queue")
+        }
+
+        if (queueExpanded) Popup(
+            alignment = Alignment.CenterEnd,
+            onDismissRequest = { queueExpanded = false }
+        ) {
+            MusicQueue(onClose = {
+                queueExpanded = false
+            })
+        }
+
+        AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
+        CreatePlaylistDialog()
+    }
 }
 
 
