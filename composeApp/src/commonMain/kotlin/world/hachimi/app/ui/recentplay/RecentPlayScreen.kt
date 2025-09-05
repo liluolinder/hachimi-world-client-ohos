@@ -34,7 +34,7 @@ fun RecentPlayScreen(
 
     val state = rememberLazyListState()
     LaunchedEffect(state.canScrollForward) {
-        if (!state.canScrollForward) {
+        if (!vm.loading && !state.canScrollForward) {
             vm.loadMore()
         }
     }
@@ -56,9 +56,7 @@ fun RecentPlayScreen(
                         title = item.songInfo.title,
                         artist = item.songInfo.uploaderName,
                         playTime = item.playTime,
-                        onPlayClick = {
-                            vm.play(item)
-                        }
+                        onPlayClick = { vm.play(item) }
                     )
                 }
             }
