@@ -51,7 +51,7 @@ class MyArtworkViewModel(
     fun refresh() = viewModelScope.launch {
         loading = true
         try {
-            val resp = api.publishModule.page(PublishModule.PageReq(0, pageSize.toLong()))
+            val resp = api.publishModule.reviewPage(PublishModule.PageReq(0, pageSize.toLong()))
             if (resp.ok) {
                 val data = resp.ok()
                 total = data.total
@@ -74,7 +74,7 @@ class MyArtworkViewModel(
         loading = true
         try {
             val nextPageIndex = page + 1
-            val resp = api.publishModule.page(PublishModule.PageReq(nextPageIndex.toLong(), pageSize.toLong()))
+            val resp = api.publishModule.reviewPage(PublishModule.PageReq(nextPageIndex.toLong(), pageSize.toLong()))
             if (resp.ok) {
                 val data = resp.ok()
                 total = data.total

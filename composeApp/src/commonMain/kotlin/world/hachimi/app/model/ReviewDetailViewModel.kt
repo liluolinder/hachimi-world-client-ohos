@@ -39,7 +39,7 @@ class ReviewDetailViewModel(
     fun refresh() = viewModelScope.launch {
         loading = true
         try {
-            val resp = api.publishModule.detail(PublishModule.DetailReq(reviewId))
+            val resp = api.publishModule.reviewDetail(PublishModule.DetailReq(reviewId))
             if (resp.ok) {
                 data = resp.ok()
                 initializeStatus = InitializeStatus.LOADED

@@ -47,7 +47,7 @@ class ReviewViewModel(
     fun refresh() = viewModelScope.launch {
         loading = true
         try {
-            val resp = api.publishModule.pageContributor(PublishModule.PageReq(currentPage.toLong(), pageSize.toLong()))
+            val resp = api.publishModule.reviewPageContributor(PublishModule.PageReq(currentPage.toLong(), pageSize.toLong()))
             if (resp.ok) {
                 val data = resp.ok()
                 isContributor = true

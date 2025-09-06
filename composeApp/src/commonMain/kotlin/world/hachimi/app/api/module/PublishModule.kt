@@ -2,7 +2,6 @@ package world.hachimi.app.api.module
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.WebResult
 
@@ -24,15 +23,15 @@ class PublishModule(
     )
 
     @Serializable
-    data class SongPublishReviewBrief (
-       val reviewId: Long,
-       val title: String,
-       val subtitle: String,
-       val artist: String,
-       val coverUrl: String,
-       val submitTime: Instant,
-       val reviewTime: Instant?,
-       val status: Int,
+    data class SongPublishReviewBrief(
+        val reviewId: Long,
+        val title: String,
+        val subtitle: String,
+        val artist: String,
+        val coverUrl: String,
+        val submitTime: Instant,
+        val reviewTime: Instant?,
+        val status: Int,
     ) {
         companion object {
             const val STATUS_PENDING = 0
@@ -42,10 +41,10 @@ class PublishModule(
     }
 
 
-    suspend fun page(req: PageReq): WebResult<PageResp> =
+    suspend fun reviewPage(req: PageReq): WebResult<PageResp> =
         client.get("/publish/review/page", req)
 
-    suspend fun pageContributor(req: PageReq): WebResult<PageResp> =
+    suspend fun reviewPageContributor(req: PageReq): WebResult<PageResp> =
         client.get("/publish/review/page_contributor", req)
 
     @Serializable
@@ -83,6 +82,24 @@ class PublishModule(
     }
 
 
-    suspend fun detail(req: DetailReq): WebResult<SongPublishReviewData> =
+    suspend fun reviewDetail(req: DetailReq): WebResult<SongPublishReviewData> =
         client.get("/publish/review/detail", req)
+
+    @Serializable
+    data class RejectReviewReq(
+        val reviewId: Long,
+        val comment: String
+    )
+
+    suspend fun reviewReject(req: RejectReviewReq): WebResult<Unit> =
+        client.post("/publish/review/reject", req)
+
+    @Serializable
+    data class ApproveReviewReq(
+        val reviewId: Long,
+        val comment: String
+    )
+
+    suspend fun reviewApprove(req: RejectReviewReq): WebResult<Unit> =
+        client.post("/publish/review/approve", req)
 }
