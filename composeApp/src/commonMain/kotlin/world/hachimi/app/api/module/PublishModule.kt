@@ -43,4 +43,7 @@ class PublishModule(
 
     suspend fun page(req: PageReq): WebResult<PageResp> =
         client.get("/publish/review/page", req)
+
+    suspend fun pageContributor(req: PageReq): WebResult<PageResp> =
+        client.get("/publish/review/page_contributor", req)
 }

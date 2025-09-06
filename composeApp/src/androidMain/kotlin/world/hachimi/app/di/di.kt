@@ -22,6 +22,7 @@ import world.hachimi.app.model.PlaylistDetailViewModel
 import world.hachimi.app.model.PlaylistViewModel
 import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.model.RecentPlayViewModel
+import world.hachimi.app.model.ReviewViewModel
 import world.hachimi.app.model.SearchViewModel
 import world.hachimi.app.model.UserSpaceViewModel
 import world.hachimi.app.player.AndroidPlayer
@@ -53,6 +54,7 @@ val appModule = module {
     viewModelOf(::PlaylistViewModel)
     viewModelOf(::PlaylistDetailViewModel)
     viewModelOf(::RecentPlayViewModel)
+    viewModelOf(::ReviewViewModel)
 }
 
 private fun getPreferencesDataStore(): DataStore<Preferences> {
