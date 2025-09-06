@@ -21,6 +21,7 @@ import kotlinx.serialization.json.*
 import world.hachimi.app.api.module.AuthModule
 import world.hachimi.app.api.module.PlayHistoryModule
 import world.hachimi.app.api.module.PlaylistModule
+import world.hachimi.app.api.module.PublishModule
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.api.module.VersionModule
@@ -243,6 +244,7 @@ class ApiClient(private val baseUrl: String) {
     val userModule by lazy { UserModule(this) }
     val songModule by lazy { SongModule(this) }
     val playHistoryModule by lazy { PlayHistoryModule(this) }
+    val publishModule by lazy { PublishModule(this) }
     val playlistModule by lazy { PlaylistModule(this) }
     val versionModule by lazy { VersionModule(this) }
 }
