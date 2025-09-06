@@ -1,80 +1,116 @@
 package world.hachimi.app.ui.creation.artwork
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import world.hachimi.app.api.module.PublishModule
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MyArtworkViewModel
 import world.hachimi.app.nav.Route
-import world.hachimi.app.util.formatSongDuration
 import world.hachimi.app.util.formatTime
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun MyArtworkScreen(
     vm: MyArtworkViewModel = koinViewModel()
 ) {
-    val global = koinInject<GlobalStore>()
-    LazyColumn(contentPadding = PaddingValues(16.dp)) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = "我的作品",
-                    style = MaterialTheme.typography.titleLarge
-                )
+    DisposableEffect(vm) {
+        vm.mounted()
+        onDispose { vm.dispose() }
+    }
 
-                Button(onClick = {
-                    global.nav.push(Route.Root.CreationCenter.Publish)
-                }) {
-                    Text("发布作品")
+    val global = koinInject<GlobalStore>()
+    val scrollState = rememberLazyListState()
+
+    LaunchedEffect(scrollState.canScrollForward) {
+        if (!scrollState.canScrollForward && !vm.loading) {
+            vm.loadMore()
+        }
+    }
+
+    AnimatedContent(vm.initializeStatus) {
+        when(it) {
+            MyArtworkViewModel.InitializeStatus.INIT -> Box(Modifier.fillMaxSize()) {
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
+
+            MyArtworkViewModel.InitializeStatus.FAILED -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("出错了")
+                    Button(onClick = { vm.refresh() }) {
+                        Text("重试")
+                    }
                 }
             }
-        }
-        item {
-            ArtworkItem(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                coverUrl = "",
-                title = "测试作品",
-                subtitle = "测试副标题",
-                duration = 256.seconds,
-                releaseTime = remember { Clock.System.now() },
-                likeCount = 200000,
-                status = "已发布",
-                onEditClick = {
-                    // TODO
+
+            MyArtworkViewModel.InitializeStatus.LOADED -> LazyColumn(
+                state = scrollState,
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                item {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = "我的作品 (${vm.total})",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+
+                        Button(onClick = {
+                            global.nav.push(Route.Root.CreationCenter.Publish)
+                        }) {
+                            Text("发布作品")
+                        }
+                    }
                 }
-            )
+                itemsIndexed(vm.items, key = { _, item -> item.reviewId }) { index, item ->
+                    ArtworkItem(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        coverUrl = item.coverUrl,
+                        title = item.title,
+                        subtitle = item.subtitle,
+                        submitTime = item.submitTime,
+                        status = when (item.status) {
+                            PublishModule.SongPublishReviewBrief.STATUS_PENDING -> "待审核"
+                            PublishModule.SongPublishReviewBrief.STATUS_APPROVED -> "通过"
+                            PublishModule.SongPublishReviewBrief.STATUS_REJECTED -> "驳回"
+                            else -> "未知"
+                        },
+                        onEditClick = {
+                            // TODO
+                        }
+                    )
+                }
+                item {
+                    if (vm.noMoreData) Box(Modifier.fillMaxWidth(), Alignment.Center) {
+                        Text(
+                            text = "没有更多了",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                item {
+                    if (vm.loading) Box(Modifier.fillMaxWidth(), Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
         }
     }
 }
@@ -84,9 +120,7 @@ private fun ArtworkItem(
     coverUrl: String,
     title: String,
     subtitle: String,
-    duration: Duration,
-    likeCount: Int,
-    releaseTime: Instant,
+    submitTime: Instant,
     status: String,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -106,14 +140,9 @@ private fun ArtworkItem(
             Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
         }
 
-        Column(horizontalAlignment = Alignment.End) {
-            Text(text = formatSongDuration(duration), style = MaterialTheme.typography.bodySmall)
-            Text(text = likeCount.toString(), style = MaterialTheme.typography.bodySmall)
-        }
-
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = "发布时间", style = MaterialTheme.typography.bodySmall)
-            Text(text = formatTime(releaseTime), style = MaterialTheme.typography.bodySmall)
+            Text(text = "提交时间", style = MaterialTheme.typography.bodySmall)
+            Text(text = formatTime(submitTime, distance = true, precise = false), style = MaterialTheme.typography.bodySmall)
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -121,7 +150,7 @@ private fun ArtworkItem(
             Text(text = status, style = MaterialTheme.typography.bodySmall)
         }
 
-        Box {
+        /*Box {
             var expanded by remember { mutableStateOf(false) }
             TextButton(onClick = { expanded = true }) {
                 Text("操作")
@@ -129,6 +158,6 @@ private fun ArtworkItem(
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 DropdownMenuItem(text = { Text("编辑") }, onClick = onEditClick)
             }
-        }
+        }*/
     }
 }
