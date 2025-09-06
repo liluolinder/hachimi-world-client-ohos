@@ -14,6 +14,7 @@ import world.hachimi.app.api.err
 import world.hachimi.app.api.module.PublishModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
+import world.hachimi.app.nav.Route
 
 class ReviewViewModel(
     private val api: ApiClient,
@@ -81,8 +82,7 @@ class ReviewViewModel(
     }
 
     fun detail(item: PublishModule.SongPublishReviewBrief) {
-        // TODO
-//        global.nav.push()
+        global.nav.push(Route.Root.ContributorCenter.ReviewDetail(item.reviewId))
     }
 
     fun updatePageSize(pageSize: Int) {

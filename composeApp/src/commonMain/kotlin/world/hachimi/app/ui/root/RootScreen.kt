@@ -53,7 +53,7 @@ fun RootScreen(routeContent: Route.Root) {
                 Route.Root.MySubscribe -> {}
                 is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)
                 Route.Root.CommitteeCenter -> CommitteeCenterScreen()
-                Route.Root.ContributorCenter -> ContributorCenterScreen()
+                is Route.Root.ContributorCenter -> ContributorCenterScreen(routeContent)
                 Route.Root.UserSpace -> UserSpaceScreen()
             }
         }

@@ -25,7 +25,13 @@ sealed class Route {
             object Publish: CreationCenter()
         }
         data object CommitteeCenter: Root()
-        data object ContributorCenter: Root()
+        sealed class ContributorCenter: Root() {
+            companion object {
+                val Default = ReviewList
+            }
+            data object ReviewList: ContributorCenter()
+            data class ReviewDetail(val reviewId: Long): ContributorCenter()
+        }
 
         data class Search(val query: String): Root()
         object UserSpace: Root()
