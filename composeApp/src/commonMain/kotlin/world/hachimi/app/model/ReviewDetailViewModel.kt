@@ -18,7 +18,7 @@ import world.hachimi.app.logging.Logger
 class ReviewDetailViewModel(
     private val api: ApiClient,
     private val global: GlobalStore,
-): ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.IO)) {
     var initializeStatus by mutableStateOf(InitializeStatus.INIT)
         private set
     var reviewId by mutableStateOf(0L)
@@ -27,6 +27,10 @@ class ReviewDetailViewModel(
         private set
     var data by mutableStateOf<PublishModule.SongPublishReviewData?>(null)
         private set
+    var commentInput by mutableStateOf("")
+    var operating by mutableStateOf(false)
+        private set
+
     fun mounted(reviewId: Long) {
         this.reviewId = reviewId
         refresh()
@@ -59,6 +63,50 @@ class ReviewDetailViewModel(
     fun download() {
         data?.let {
             getPlatform().openUrl(it.audioUrl)
+        }
+    }
+
+    fun approve() = viewModelScope.launch {
+        operating = true
+        try {
+            val resp = api.publishModule.reviewApprove(
+                PublishModule.ApproveReviewReq(
+                reviewId, commentInput.takeIf { it.isNotBlank() }
+            ))
+            if (resp.ok) {
+                global.alert("完成")
+                commentInput = ""
+                refresh()
+            } else {
+                global.alert(resp.err().msg)
+            }
+        } catch (e: Exception) {
+            Logger.e("review_detail", "Failed to approve review", e)
+            global.alert(e.message)
+        } finally {
+            operating = false
+        }
+    }
+
+    fun reject() = viewModelScope.launch {
+        operating = true
+        try {
+            val resp = api.publishModule.reviewReject(
+                PublishModule.RejectReviewReq(
+                    reviewId, commentInput
+                ))
+            if (resp.ok) {
+                global.alert("完成")
+                commentInput = ""
+                refresh()
+            } else {
+                global.alert(resp.err().msg)
+            }
+        } catch (e: Exception) {
+            Logger.e("review_detail", "Failed to approve review", e)
+            global.alert(e.message)
+        } finally {
+            operating = false
         }
     }
 }

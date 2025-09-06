@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -17,6 +18,8 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -28,6 +31,7 @@ import androidx.compose.ui.util.fastForEach
 import coil3.compose.AsyncImage
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.api.module.PublishModule
+import world.hachimi.app.api.module.PublishModule.SongPublishReviewBrief.Companion.STATUS_PENDING
 import world.hachimi.app.getPlatform
 import world.hachimi.app.model.InitializeStatus
 import world.hachimi.app.model.ReviewDetailViewModel
@@ -77,6 +81,21 @@ private fun Content(vm: ReviewDetailViewModel) {
                 "审核时间",
                 data.reviewTime?.let { formatTime(it, distance = true, precise = false, thresholdDay = 3) } ?: "null")
 
+            if (data.status == STATUS_PENDING) Column(Modifier.padding(16.dp, 0.dp, 16.dp, 0.dp)) {
+                TextField(
+                    value = vm.commentInput,
+                    onValueChange = { vm.commentInput = it },
+                )
+                Row {
+                    Button(onClick = { vm.approve() }, enabled = !vm.operating) {
+                        Text("通过")
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    TextButton(onClick = { vm.reject() }, enabled = !vm.operating) {
+                        Text("驳回")
+                    }
+                }
+            }
 
             Text("作品详情", style = MaterialTheme.typography.titleLarge)
 

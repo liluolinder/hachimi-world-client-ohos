@@ -25,6 +25,7 @@ class PublishModule(
     @Serializable
     data class SongPublishReviewBrief(
         val reviewId: Long,
+        val displayId: String,
         val title: String,
         val subtitle: String,
         val artist: String,
@@ -97,9 +98,9 @@ class PublishModule(
     @Serializable
     data class ApproveReviewReq(
         val reviewId: Long,
-        val comment: String
+        val comment: String?
     )
 
-    suspend fun reviewApprove(req: RejectReviewReq): WebResult<Unit> =
+    suspend fun reviewApprove(req: ApproveReviewReq): WebResult<Unit> =
         client.post("/publish/review/approve", req)
 }
