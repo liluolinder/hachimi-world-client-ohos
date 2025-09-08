@@ -32,7 +32,7 @@ fun main() {
     application {
         Window(
             onCloseRequest = ::exitApplication,
-            title = "Hachimi World",
+            title = BuildKonfig.APP_NAME,
             state = WindowState(
                 size = DpSize(1200.dp, 800.dp)
             ),
