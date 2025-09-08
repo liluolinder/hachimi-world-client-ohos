@@ -45,7 +45,7 @@ class MainViewModel(
                 }
             } catch (e: Exception) {
                 Logger.e("home", "Failed to get recommend songs", e)
-                global.alert("获取推荐音乐失败")
+                global.alert("获取推荐音乐失败：${e.message}")
             } finally {
                 isLoading = false
             }

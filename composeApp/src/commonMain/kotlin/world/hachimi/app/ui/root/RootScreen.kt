@@ -33,6 +33,7 @@ import world.hachimi.app.ui.recentplay.RecentPlayScreen
 import world.hachimi.app.ui.root.component.SideNavigation
 import world.hachimi.app.ui.root.component.TopAppBar
 import world.hachimi.app.ui.search.SearchScreen
+import world.hachimi.app.ui.settings.SettingsScreen
 import world.hachimi.app.ui.userspace.UserSpaceScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +56,7 @@ fun RootScreen(routeContent: Route.Root) {
                 Route.Root.CommitteeCenter -> CommitteeCenterScreen()
                 is Route.Root.ContributorCenter -> ContributorCenterScreen(routeContent)
                 Route.Root.UserSpace -> UserSpaceScreen()
+                Route.Root.Settings -> SettingsScreen()
             }
         }
     )
@@ -91,7 +93,7 @@ private fun CompactScreen(
                     modifier = Modifier.padding(16.dp),
                     painter = painterResource(Res.drawable.brand), contentDescription = "Brand"
                 )
-                Box(Modifier.padding(horizontal = 12.dp)) {
+                Box(Modifier.padding(12.dp)) {
                     navigationContent()
                 }
             }
@@ -123,7 +125,7 @@ private fun ExpandedScreen(
 
         Row(Modifier.weight(1f).fillMaxWidth()) {
             Card(
-                Modifier.padding(start = 24.dp, top = 24.dp).width(300.dp),
+                Modifier.padding(start = 24.dp, top = 24.dp, bottom = 24.dp).width(300.dp),
                 colors = CardDefaults.outlinedCardColors(),
                 shape = CardDefaults.outlinedShape
             ) {

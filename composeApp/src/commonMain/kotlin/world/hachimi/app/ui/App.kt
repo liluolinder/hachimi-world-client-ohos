@@ -40,7 +40,7 @@ fun App() {
     val global = koinInject<GlobalStore>()
     val rootDestination = global.nav.backStack.last()
 
-    AppTheme(darkTheme = isSystemInDarkTheme()) {
+    AppTheme(darkTheme = global.darkMode ?: isSystemInDarkTheme()) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Box(Modifier.fillMaxSize()) {
                 when(rootDestination) {

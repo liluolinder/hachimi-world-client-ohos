@@ -50,6 +50,8 @@ class GlobalStore(
     private val player: Player
 ) {
     var initialized by mutableStateOf(false)
+    var darkMode by mutableStateOf<Boolean?>(null)
+        private set
     val nav = Navigator(Route.Root.Home)
     var isLoggedIn by mutableStateOf(false)
         private set
@@ -79,6 +81,7 @@ class GlobalStore(
     fun initialize() {
         scope.launch(Dispatchers.IO) {
             coroutineScope {
+                launch { this@GlobalStore.darkMode = dataStore.get(PreferencesKeys.SETTINGS_DARK_MODE) }
                 launch { loadLoginStatus() }
             }
             initialized = true
@@ -121,6 +124,15 @@ class GlobalStore(
         }
         scope.launch {
             checkMinApiVersion()
+        }
+    }
+
+    fun updateDarkMode(darkMode: Boolean?) = scope.launch {
+        this@GlobalStore.darkMode = darkMode
+        if (darkMode == null) {
+            dataStore.delete(PreferencesKeys.SETTINGS_DARK_MODE)
+        } else {
+            dataStore.set(PreferencesKeys.SETTINGS_DARK_MODE, darkMode)
         }
     }
 
