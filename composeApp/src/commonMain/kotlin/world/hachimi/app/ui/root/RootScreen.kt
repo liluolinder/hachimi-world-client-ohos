@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.root
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -33,18 +34,20 @@ fun RootScreen(routeContent: Route.Root) {
             SideNavigation(global, routeContent)
         },
         content = {
-            when (routeContent) {
-                is Route.Root.Search -> SearchScreen(routeContent.query)
-                Route.Root.Home -> HomeScreen()
-                Route.Root.RecentLike -> {}
-                Route.Root.RecentPlay -> RecentPlayScreen()
-                is Route.Root.MyPlaylist -> PlaylistRouteScreen(routeContent)
-                Route.Root.MySubscribe -> {}
-                is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)
-                Route.Root.CommitteeCenter -> CommitteeCenterScreen()
-                is Route.Root.ContributorCenter -> ContributorCenterScreen(routeContent)
-                Route.Root.UserSpace -> UserSpaceScreen()
-                Route.Root.Settings -> SettingsScreen()
+            AnimatedContent(routeContent) { routeContent ->
+                when (routeContent) {
+                    is Route.Root.Search -> SearchScreen(routeContent.query)
+                    Route.Root.Home -> HomeScreen()
+                    Route.Root.RecentLike -> {}
+                    Route.Root.RecentPlay -> RecentPlayScreen()
+                    is Route.Root.MyPlaylist -> PlaylistRouteScreen(routeContent)
+                    Route.Root.MySubscribe -> {}
+                    is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)
+                    Route.Root.CommitteeCenter -> CommitteeCenterScreen()
+                    is Route.Root.ContributorCenter -> ContributorCenterScreen(routeContent)
+                    Route.Root.UserSpace -> UserSpaceScreen()
+                    Route.Root.Settings -> SettingsScreen()
+                }
             }
         }
     )

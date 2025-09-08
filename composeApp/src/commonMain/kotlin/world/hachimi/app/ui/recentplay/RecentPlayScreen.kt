@@ -17,7 +17,10 @@ import coil3.compose.AsyncImage
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import world.hachimi.app.model.InitializeStatus
 import world.hachimi.app.model.RecentPlayViewModel
+import world.hachimi.app.ui.component.LoadingPage
+import world.hachimi.app.ui.component.ReloadPage
 import world.hachimi.app.ui.theme.PreviewTheme
 import world.hachimi.app.util.formatTime
 
@@ -27,9 +30,7 @@ fun RecentPlayScreen(
 ) {
     DisposableEffect(vm) {
         vm.mounted()
-        onDispose {
-            vm.dispose()
-        }
+        onDispose { vm.dispose() }
     }
 
     val state = rememberLazyListState()
@@ -40,24 +41,25 @@ fun RecentPlayScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
-        AnimatedContent(vm.initialLoading) {
-            if (it) Box(Modifier.fillMaxSize()) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
-            else LazyColumn(
-                state = state,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 24.dp)
-            ) {
-                itemsIndexed(vm.history, key = { _, item -> item.id }) { index, item ->
-                    RecentPlayItem(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 24.dp),
-                        coverUrl = item.songInfo.coverUrl,
-                        title = item.songInfo.title,
-                        artist = item.songInfo.uploaderName,
-                        playTime = item.playTime,
-                        onPlayClick = { vm.play(item) }
-                    )
+        AnimatedContent(vm.initializeStatus) {
+            when (it) {
+                InitializeStatus.INIT -> LoadingPage()
+                InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.retry() })
+                InitializeStatus.LOADED -> LazyColumn(
+                    state = state,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 24.dp)
+                ) {
+                    itemsIndexed(vm.history, key = { _, item -> item.id }) { index, item ->
+                        RecentPlayItem(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 24.dp),
+                            coverUrl = item.songInfo.coverUrl,
+                            title = item.songInfo.title,
+                            artist = item.songInfo.uploaderName,
+                            playTime = item.playTime,
+                            onPlayClick = { vm.play(item) }
+                        )
+                    }
                 }
             }
         }
