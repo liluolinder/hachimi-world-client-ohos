@@ -40,16 +40,22 @@ fun RecentPlayScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        AnimatedContent(vm.initializeStatus) {
-            when (it) {
-                InitializeStatus.INIT -> LoadingPage()
-                InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.retry() })
-                InitializeStatus.LOADED -> LazyColumn(
+    AnimatedContent(vm.initializeStatus, modifier = Modifier.fillMaxSize()) {
+        when (it) {
+            InitializeStatus.INIT -> LoadingPage()
+            InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.retry() })
+            InitializeStatus.LOADED -> Box(Modifier.fillMaxSize()) {
+                LazyColumn(
                     state = state,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(vertical = 24.dp)
                 ) {
+                    item {
+                        Text(
+                            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
+                            text ="最近播放", style = MaterialTheme.typography.titleLarge
+                        )
+                    }
                     itemsIndexed(vm.history, key = { _, item -> item.id }) { index, item ->
                         RecentPlayItem(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 24.dp),
@@ -61,6 +67,7 @@ fun RecentPlayScreen(
                         )
                     }
                 }
+                if (vm.loading) CircularProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
     }
