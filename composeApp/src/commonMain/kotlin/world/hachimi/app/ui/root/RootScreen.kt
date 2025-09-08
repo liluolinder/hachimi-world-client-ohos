@@ -109,11 +109,7 @@ private fun ExpandedScreen(
         TopAppBar(global, {})
 
         Row(Modifier.weight(1f).fillMaxWidth()) {
-            Card(
-                Modifier.padding(start = 24.dp, top = 24.dp, bottom = 24.dp).width(300.dp),
-                colors = CardDefaults.outlinedCardColors(),
-                shape = CardDefaults.outlinedShape
-            ) {
+            Box(Modifier.padding(start = 24.dp, top = 24.dp, bottom = 24.dp).width(300.dp)) {
                 navigationContent()
             }
             Spacer(Modifier.width(24.dp))
