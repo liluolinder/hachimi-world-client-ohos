@@ -7,7 +7,7 @@ import java.io.File
 import java.net.URI
 
 object JVMPlatform : Platform {
-    override val name: String = "Java"
+    override val name: String = "JVM"
     override val platformVersion: String = System.getProperty("java.version")
 
     private val appName = BuildKonfig.APP_PACKAGE_NAME
