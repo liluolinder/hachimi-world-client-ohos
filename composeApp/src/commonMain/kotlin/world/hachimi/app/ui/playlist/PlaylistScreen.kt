@@ -27,9 +27,7 @@ import world.hachimi.app.nav.Route
 fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
     DisposableEffect(vm) {
         vm.mounted()
-        onDispose {
-            vm.dispose()
-        }
+        onDispose { vm.dispose() }
     }
     val global = koinInject<GlobalStore>()
     Column(

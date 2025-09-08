@@ -37,11 +37,20 @@ class ReviewViewModel(
         private set
 
     fun mounted() {
-        refresh()
+        if (initializeStatus == InitializeStatus.INIT) {
+            refresh()
+        } else {
+            refresh()
+        }
     }
 
     fun dispose() {
 
+    }
+
+    fun retry() {
+        initializeStatus = InitializeStatus.INIT
+        refresh()
     }
 
     fun refresh() = viewModelScope.launch {
