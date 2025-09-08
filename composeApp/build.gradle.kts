@@ -209,29 +209,59 @@ compose.desktop {
     application {
         mainClass = "world.hachimi.app.MainKt"
 
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "基米天堂"
-            packageVersion = gitVersionNameShort.get()
-            modules("jdk.unsupported", "java.naming")
+        val flavor = project.findProperty("buildkonfig.flavor")
+        when (flavor) {
+            "release" -> nativeDistributions {
+                targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+                packageName = "基米天堂"
+                packageVersion = gitVersionNameShort.get()
+                modules("jdk.unsupported", "java.naming")
 
-            windows {
-                upgradeUuid = "1544B476-25C9-4A01-705E-B374B14B2F1B"
-                perUserInstall = true
-                dirChooser = true
-                shortcut = true
-                menu = true
-                iconFile.set(rootProject.file("icons/icon.ico"))
-            }
-            macOS {
-                appCategory = "public.app-category.entertainment"
+                windows {
+                    upgradeUuid = "1544B476-25C9-4A01-705E-B374B14B2F1B"
+                    perUserInstall = true
+                    dirChooser = true
+                    shortcut = true
+                    menu = true
+                    iconFile.set(rootProject.file("icons/icon.ico"))
+                }
+                macOS {
+                    appCategory = "public.app-category.entertainment"
 
-                bundleID = "world.hachimi.app"
-                iconFile.set(rootProject.file("icons/icon.icns"))
+                    bundleID = "world.hachimi.app"
+                    iconFile.set(rootProject.file("icons/icon.icns"))
+                }
+                linux {
+                    packageName = "hachimi-world" // Linux does not support Chinese characters
+                    iconFile.set(rootProject.file("icons/icon.png"))
+                }
             }
-            linux {
-                packageName = "hachimi-world" // Linux does not support Chinese characters
-                iconFile.set(rootProject.file("icons/icon.png"))
+            else -> {
+                nativeDistributions {
+                    targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+                    packageName = "基米天堂 Dev"
+                    packageVersion = gitVersionNameShort.get()
+                    modules("jdk.unsupported", "java.naming")
+
+                    windows {
+                        upgradeUuid = "8AD88FC9-A6A2-478D-9E80-FF735EE15785"
+                        perUserInstall = true
+                        dirChooser = true
+                        shortcut = true
+                        menu = true
+                        iconFile.set(rootProject.file("icons/icon.ico"))
+                    }
+                    macOS {
+                        appCategory = "public.app-category.entertainment"
+
+                        bundleID = "world.hachimi.app.dev"
+                        iconFile.set(rootProject.file("icons/icon.icns"))
+                    }
+                    linux {
+                        packageName = "hachimi-world-dev" // Linux does not support Chinese characters
+                        iconFile.set(rootProject.file("icons/icon.png"))
+                    }
+                }
             }
         }
     }
