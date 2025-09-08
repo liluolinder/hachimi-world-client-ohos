@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.playlist
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -20,8 +21,11 @@ import kotlinx.datetime.Instant
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.model.InitializeStatus
 import world.hachimi.app.model.PlaylistViewModel
 import world.hachimi.app.nav.Route
+import world.hachimi.app.ui.component.LoadingPage
+import world.hachimi.app.ui.component.ReloadPage
 
 @Composable
 fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
@@ -35,21 +39,31 @@ fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Text(modifier = Modifier.fillMaxWidth(), text = "我的歌单", style = MaterialTheme.typography.titleLarge)
-        if (vm.playlistIsLoading) {
-            CircularProgressIndicator()
-        }
-        LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize()) {
-            itemsIndexed(vm.playlists, key = { index, item -> item.id }) { index, item ->
-                PlaylistItem(
-                    modifier = Modifier.fillMaxWidth().padding(12.dp),
-                    coverUrl = item.coverUrl,
-                    title = item.name,
-                    songCount = item.songsCount,
-                    createTime = item.createTime,
-                    onEnter = {
-                        global.nav.push(Route.Root.MyPlaylist.Detail(item.id))
+        AnimatedContent(vm.initializeStatus, modifier = Modifier.weight(1f)) {
+            when (it) {
+                InitializeStatus.INIT -> LoadingPage()
+                InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.retry() })
+                InitializeStatus.LOADED -> Box(Modifier.fillMaxSize()) {
+                    if (vm.playlists.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("空空如也")
+                    } else LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize()) {
+                        itemsIndexed(vm.playlists, key = { index, item -> item.id }) { index, item ->
+                            PlaylistItem(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                coverUrl = item.coverUrl,
+                                title = item.name,
+                                songCount = item.songsCount,
+                                createTime = item.createTime,
+                                onEnter = {
+                                    global.nav.push(Route.Root.MyPlaylist.Detail(item.id))
+                                }
+                            )
+                        }
                     }
-                )
+                    if (vm.playlistIsLoading) {
+                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    }
+                }
             }
         }
     }
