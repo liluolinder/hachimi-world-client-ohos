@@ -48,13 +48,13 @@ fun ReviewScreen(
         }
     }
 
-    AnimatedContent(vm.initializeStatus) {
+    AnimatedContent(vm.initializeStatus, modifier = Modifier.fillMaxSize()) {
         when (it) {
             InitializeStatus.INIT -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 CircularProgressIndicator()
             }
 
-            InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.refresh() })
+            InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.retry() })
             InitializeStatus.LOADED -> Box(Modifier.fillMaxSize()) {
                 if (vm.isContributor) Content(vm)
                 else NotContributor()

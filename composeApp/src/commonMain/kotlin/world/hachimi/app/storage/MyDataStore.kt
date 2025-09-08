@@ -49,4 +49,5 @@ object PreferencesKeys {
     val USER_AVATAR = stringPreferencesKey("user_avatar")
     val AUTH_ACCESS_TOKEN = stringPreferencesKey("auth_access_token")
     val AUTH_REFRESH_TOKEN = stringPreferencesKey("auth_refresh_token")
+    val SETTINGS_DARK_MODE = booleanPreferencesKey("settings_dark_mode")
 }

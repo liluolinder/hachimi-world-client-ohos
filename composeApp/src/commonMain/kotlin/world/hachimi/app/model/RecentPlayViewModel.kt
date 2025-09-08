@@ -20,7 +20,7 @@ class RecentPlayViewModel(
     private val global: GlobalStore,
     private val api: ApiClient
 ): ViewModel(CoroutineScope(Dispatchers.IO)) {
-    var initialLoading by mutableStateOf(true)
+    var initializeStatus by mutableStateOf(InitializeStatus.INIT)
         private set
     var loading by mutableStateOf(false)
         private set
@@ -29,21 +29,28 @@ class RecentPlayViewModel(
     private var cursor: Instant? = null
 
     fun mounted() {
-        refresh()
+        if (initializeStatus == InitializeStatus.INIT) {
+            refresh()
+        } else {
+            refresh()
+        }
     }
 
     fun dispose() {
 
     }
 
-    private fun refresh() {
-        cursor = null
-        _history.clear()
-        initialLoading = true
-        loadMore()
+    fun retry() {
+        initializeStatus = InitializeStatus.INIT
+        refresh()
     }
 
-    fun loadMore() = viewModelScope.launch {
+    fun refresh() {
+        cursor = null
+        loadMore(true)
+    }
+
+    fun loadMore(clear: Boolean = false) = viewModelScope.launch {
         loading = true
 
         try {
@@ -54,21 +61,35 @@ class RecentPlayViewModel(
             if (resp.ok) {
                 val data = resp.ok()
                 if (data.list.isNotEmpty()) {
+                    if (clear) {
+                        _history.clear()
+                    }
                     _history.addAll(data.list)
                     cursor = data.list.last().playTime
+                }
+                if (initializeStatus == InitializeStatus.INIT) {
+                    initializeStatus = InitializeStatus.LOADED
                 }
             } else {
                 val err = resp.err()
                 global.alert(err.msg)
+                if (initializeStatus == InitializeStatus.INIT) {
+                    initializeStatus = InitializeStatus.FAILED
+                }
                 return@launch
             }
         } catch (e: Exception) {
             Logger.e("recent", "Failed to fetch recent play history", e)
             global.alert(e.message)
+            if (initializeStatus == InitializeStatus.INIT) {
+                initializeStatus = InitializeStatus.FAILED
+            }
             return@launch
         } finally {
             loading = false
-            initialLoading = false
+            if (initializeStatus == InitializeStatus.INIT) {
+                initializeStatus = InitializeStatus.FAILED
+            }
         }
     }
 

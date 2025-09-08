@@ -19,6 +19,8 @@ class PlaylistViewModel(
 ): ViewModel(CoroutineScope(Dispatchers.IO)) {
     // Playlist related states
     // Store at here because the footer player is shared across multiple screens
+    var initializeStatus by mutableStateOf(InitializeStatus.INIT)
+        private set
     var toBeAddedSongId by mutableStateOf<Long?>(null)
     var showPlaylistDialog by mutableStateOf(false)
     var playlists by mutableStateOf<List<PlaylistModule.PlaylistItem>>(emptyList())
@@ -27,13 +29,26 @@ class PlaylistViewModel(
     var addingToPlaylistOperating by mutableStateOf(false)
 
     fun mounted() {
-        viewModelScope.launch {
-            refreshPlaylist()
+        if (initializeStatus == InitializeStatus.INIT) {
+            viewModelScope.launch {
+                refreshPlaylist()
+            }
+        } else {
+            viewModelScope.launch {
+                refreshPlaylist()
+            }
         }
     }
 
     fun dispose() {
 
+    }
+
+    fun retry() {
+        initializeStatus = InitializeStatus.INIT
+        viewModelScope.launch {
+            refreshPlaylist()
+        }
     }
 
     fun addToPlaylist() {
@@ -59,13 +74,16 @@ class PlaylistViewModel(
             if (resp.ok) {
                 val data = resp.okData<PlaylistModule.ListResp>()
                 playlists = data.playlists
+                initializeStatus = InitializeStatus.LOADED
             } else {
                 val data = resp.errData<CommonError>()
                 global.alert(data.msg)
+                initializeStatus = InitializeStatus.FAILED
             }
         } catch (e: Exception) {
             Logger.e("player", "Failed to play playlist", e)
             global.alert(e.message)
+            initializeStatus = InitializeStatus.INIT
         } finally {
             playlistIsLoading = false
         }

@@ -1,6 +1,5 @@
 package world.hachimi.app.ui.root.component
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,13 +24,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import hachimiworld.composeapp.generated.resources.Res
-import hachimiworld.composeapp.generated.resources.brand
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import world.hachimi.app.getPlatform
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
+import world.hachimi.app.ui.component.Logo
 import world.hachimi.app.ui.theme.PreviewTheme
 
 @Composable
@@ -100,7 +97,7 @@ fun ExpandedTopAppBar(global: GlobalStore) {
             }, enabled = global.nav.backStack.size > 1) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back")
             }
-            Image(painter = painterResource(Res.drawable.brand), contentDescription = "Brand")
+            Logo()
 
             Row(Modifier.weight(1f).wrapContentWidth()) {
                 var searchText by remember { mutableStateOf("") }

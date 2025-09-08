@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.home
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -13,7 +14,10 @@ import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.model.InitializeStatus
 import world.hachimi.app.model.MainViewModel
+import world.hachimi.app.ui.component.LoadingPage
+import world.hachimi.app.ui.component.ReloadPage
 import world.hachimi.app.ui.home.components.SongCard
 
 @Composable
@@ -21,9 +25,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
     val global = koinInject<GlobalStore>()
     DisposableEffect(vm) {
         vm.mounted()
-        onDispose {
-            vm.unmount()
-        }
+        onDispose { vm.unmount() }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -35,26 +37,32 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
 
             Spacer(Modifier.height(12.dp))
 
-            LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize(),) {
-                itemsIndexed(vm.songs, key = { index, item -> item.id }) { index, item ->
-                    SongCard(
-                        item.coverUrl,
-                        item.title,
-                        item.subtitle,
-                        item.uploaderName,
-                        item.tags.map { it.name },
-                        item.likeCount,
-                        onClick = {
-                            global.insertToQueue(item.displayId, true, false)
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(12.dp),
-                    )
+            AnimatedContent(vm.initializeStatus, modifier = Modifier.fillMaxSize()) {
+                when (it) {
+                    InitializeStatus.INIT -> LoadingPage()
+                    InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.retry() })
+                    InitializeStatus.LOADED -> {
+                        if (vm.songs.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("空空如也")
+                        } else LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize(),) {
+                            itemsIndexed(vm.songs, key = { index, item -> item.id }) { index, item ->
+                                SongCard(
+                                    coverUrl = item.coverUrl,
+                                    title = item.title,
+                                    subtitle = item.subtitle,
+                                    author = item.uploaderName,
+                                    tags = item.tags.map { it.name },
+                                    likeCount = item.likeCount,
+                                    onClick = {
+                                        global.insertToQueue(item.displayId, true, false)
+                                    },
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                )
+                            }
+                        }
+                    }
                 }
             }
-        }
-
-        if (vm.isLoading) {
-            CircularProgressIndicator(Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
     }
 }

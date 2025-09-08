@@ -1,6 +1,7 @@
 package world.hachimi.app.ui.root.component
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.NavigationDrawerItem
@@ -46,6 +47,10 @@ fun SideNavigation(
                 global.nav.push(Route.Root.ContributorCenter.Default)
             })
         }
+        Spacer(Modifier.weight(1f))
+        NavItem("设置", selected = content is Route.Root.Settings, onSelectedChange = {
+            global.nav.push(Route.Root.Settings)
+        })
     }
 }
 
@@ -62,9 +67,7 @@ private fun NavItem(
         label = { Text(label) },
         selected = selected,
         onClick = {
-            if (!selected) {
-                onSelectedChange(true)
-            }
+            onSelectedChange(true)
         }
     )
     /*if (selected) {

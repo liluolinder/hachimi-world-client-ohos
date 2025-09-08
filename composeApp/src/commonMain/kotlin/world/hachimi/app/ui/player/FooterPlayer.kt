@@ -33,17 +33,19 @@ import kotlin.random.Random
 fun FooterPlayer() {
     val global = koinInject<GlobalStore>()
     val playerState = global.playerState
-    BoxWithConstraints {
-        AnimatedVisibility(
-            visible = playerState.hasSong || playerState.isFetching,
-            modifier = Modifier.fillMaxWidth(),
-            enter = expandVertically(expandFrom = Alignment.Top),
-            exit = shrinkVertically()
-        ) {
-            if (maxWidth < 600.dp) {
-                CompactFooterPlayer(Modifier.fillMaxWidth())
-            } else {
-                ExpandedFooterPlayer()
+    Surface(shadowElevation = 2.dp) {
+        BoxWithConstraints {
+            AnimatedVisibility(
+                visible = playerState.hasSong || playerState.isFetching,
+                modifier = Modifier.fillMaxWidth(),
+                enter = expandVertically(expandFrom = Alignment.Top),
+                exit = shrinkVertically()
+            ) {
+                if (maxWidth < 600.dp) {
+                    CompactFooterPlayer(Modifier.fillMaxWidth())
+                } else {
+                    ExpandedFooterPlayer()
+                }
             }
         }
     }

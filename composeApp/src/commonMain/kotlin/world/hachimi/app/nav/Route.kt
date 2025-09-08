@@ -35,6 +35,7 @@ sealed class Route {
 
         data class Search(val query: String): Root()
         object UserSpace: Root()
+        data object Settings: Root()
     }
     data class Auth(val initialLogin: Boolean = true) : Route()
 }

@@ -2,22 +2,13 @@ package world.hachimi.app.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -33,6 +24,8 @@ import world.hachimi.app.ui.player.PlayerScreen
 import world.hachimi.app.ui.root.RootScreen
 import world.hachimi.app.ui.theme.AppTheme
 
+val LocalDarkMode = staticCompositionLocalOf { false }
+
 @Composable
 fun App() {
     setupCoil()
@@ -40,31 +33,28 @@ fun App() {
     val global = koinInject<GlobalStore>()
     val rootDestination = global.nav.backStack.last()
 
-    AppTheme(darkTheme = isSystemInDarkTheme()) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Box(Modifier.fillMaxSize()) {
-                when(rootDestination) {
-                    is Root -> RootScreen(rootDestination)
-                    is Auth -> AuthScreen(rootDestination.initialLogin)
-                }
-                /*FloatingActionButton(
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                    onClick = { global.nav.back() }
-                ) {
-                    Icon(Icons.Default.ArrowBack, "Back")
-                }*/
+    val darkMode = global.darkMode ?: isSystemInDarkTheme()
+    CompositionLocalProvider(LocalDarkMode provides darkMode) {
+        AppTheme(darkTheme = LocalDarkMode.current) {
+            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Box(Modifier.fillMaxSize()) {
+                    when(rootDestination) {
+                        is Root -> RootScreen(rootDestination)
+                        is Auth -> AuthScreen(rootDestination.initialLogin)
+                    }
 
-                AnimatedVisibility(visible = global.playerExpanded, modifier = Modifier.fillMaxSize()) {
-                    PlayerScreen()
-                }
+                    AnimatedVisibility(visible = global.playerExpanded, modifier = Modifier.fillMaxSize()) {
+                        PlayerScreen()
+                    }
 
-                SnackbarHost(
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 120.dp),
-                    hostState = global.snackbarHostState,
-                )
+                    SnackbarHost(
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 120.dp),
+                        hostState = global.snackbarHostState,
+                    )
+                }
             }
+            ClientApiVersionIncompatibleDialog(global)
         }
-        ClientApiVersionIncompatibleDialog(global)
     }
 }
 

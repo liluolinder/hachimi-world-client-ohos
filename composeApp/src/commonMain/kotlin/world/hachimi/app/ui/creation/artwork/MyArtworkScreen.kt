@@ -42,7 +42,7 @@ fun MyArtworkScreen(
         }
     }
 
-    AnimatedContent(vm.initializeStatus) {
+    AnimatedContent(vm.initializeStatus, modifier = Modifier.fillMaxSize()) {
         when(it) {
             MyArtworkViewModel.InitializeStatus.INIT -> Box(Modifier.fillMaxSize()) {
                 CircularProgressIndicator(Modifier.align(Alignment.Center))
