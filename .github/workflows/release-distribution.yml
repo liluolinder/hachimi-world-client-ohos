@@ -160,14 +160,21 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android.jks
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > composeApp/android.jks
       - name: Build Release APK
         run: ./gradlew assembleRelease -P buildkonfig.flavor=release
         env:
+          IS_CI: true
           ANDROID_KEYSTORE_FILE: android.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jpackage-logs
+          path: build/reports/problems
       - name: Rename output
         working-directory: composeApp/build/outputs/apk/release/
         run: mv *.apk hachimi-world-latest.apk
