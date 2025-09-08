@@ -61,8 +61,19 @@ class AuthViewModel(
     }
 
     fun unmount() {
+        clearInput()
         countdownJob?.cancel()
         countdownJob = null
+    }
+
+    private fun clearInput() {
+        email = ""
+        password = ""
+        regStep = 0
+        regEmail = ""
+        regPassword = ""
+        regPasswordRepeat = ""
+        regCode = ""
     }
 
     private var countdownJob: Job? = null

@@ -175,19 +175,24 @@ android {
     signingConfigs {
         if (System.getenv("IS_CI") == "true") {
             register("release") {
-                storeFile = file(System.getenv("KEYSTORE_FILE"))
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEYSTORE_KEY_ALIAS")
-                keyPassword = System.getenv("KEYSTORE_KEY_PASSWORD")
+                storeFile = file(System.getenv("ANDROID_KEYSTORE_FILE"))
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
             }
         }
     }
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
             if (System.getenv("IS_CI") == "true") {
                 signingConfig = signingConfigs.getByName("release")
             }
+            resValue("string", "app_name", "@string/app_name_base")
+        }
+        debug {
+            applicationIdSuffix = ".dev"
+//            resValue("string", "app_name", "@string/app_name_dev")
         }
     }
     compileOptions {
@@ -206,9 +211,28 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "world.hachimi.app"
+            packageName = "基米天堂"
             packageVersion = gitVersionNameShort.get()
             modules("jdk.unsupported", "java.naming")
+
+            windows {
+                upgradeUuid = "1544B476-25C9-4A01-705E-B374B14B2F1B"
+                perUserInstall = true
+                dirChooser = true
+                shortcut = true
+                menu = true
+                iconFile.set(rootProject.file("icons/icon.ico"))
+            }
+            macOS {
+                appCategory = "public.app-category.entertainment"
+
+                bundleID = "world.hachimi.app"
+                iconFile.set(rootProject.file("icons/icon.icns"))
+            }
+            linux {
+                packageName = "hachimi-world" // Linux does not support Chinese characters
+                iconFile.set(rootProject.file("icons/icon.png"))
+            }
         }
     }
 }

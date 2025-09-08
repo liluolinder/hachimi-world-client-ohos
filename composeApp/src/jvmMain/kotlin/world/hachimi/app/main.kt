@@ -1,7 +1,6 @@
 package world.hachimi.app
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalDensity
@@ -11,11 +10,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import coil3.ImageLoader
-import coil3.compose.setSingletonImageLoaderFactory
 import hachimiworld.composeapp.generated.resources.Res
-import hachimiworld.composeapp.generated.resources.icon
-import io.github.vinceglb.filekit.coil.addPlatformFileSupport
+import hachimiworld.composeapp.generated.resources.icon_vector
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
@@ -26,34 +22,27 @@ import java.awt.Dimension
 
 fun main() {
     System.setProperty("apple.awt.application.appearance", "system")
-    startKoin {
+    val koin = startKoin {
         modules(appModule)
     }
 
-    application {
-        val global = koinInject<GlobalStore>()
-        LaunchedEffect(global) {
-            global.initialize()
-        }
+    val global = koin.koin.get<GlobalStore>()
+    global.initialize()
 
+    application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Hachimi World",
             state = WindowState(
                 size = DpSize(1200.dp, 800.dp)
             ),
-            icon = painterResource(Res.drawable.icon)
+            icon = painterResource(Res.drawable.icon_vector)
         ) {
             LaunchedEffect(Unit) {
                 window.minimumSize = Dimension(360, 700)
             }
             if (global.initialized) {
-                CompositionLocalProvider(LocalDensity provides LocalDensity.current.let {
-                    // TODO: Remove this later
-                    Density(it.density * 0.9f, it.fontScale)
-                }) {
-                    App()
-                }
+                App()
             } else {
                 // TODO: Add splash screen
                 Box() {

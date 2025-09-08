@@ -38,6 +38,11 @@ class PlaylistViewModel(
 
     fun addToPlaylist() {
         if (!global.playerState.hasSong) return
+        if (!global.isLoggedIn) {
+            global.alert("歌单功能登录后可用")
+            return
+        }
+
         viewModelScope.launch {
             toBeAddedSongId = global.playerState.songId
             selectedPlaylistId = null

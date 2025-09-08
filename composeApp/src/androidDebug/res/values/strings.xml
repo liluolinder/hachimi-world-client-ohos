@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">@string/app_name_dev</string>
+    <string name="app_name_base">Hachimi World</string>
+    <string name="app_name_dev">Hachimi World Dev</string>
+</resources>

@@ -42,8 +42,8 @@ fun SideNavigation(
             NavItem("委员会中心", selected = content == Route.Root.CommitteeCenter, onSelectedChange = {
                 global.nav.push(Route.Root.CommitteeCenter)
             })
-            NavItem("维护者中心", selected = content == Route.Root.ContributorCenter, onSelectedChange = {
-                global.nav.push(Route.Root.ContributorCenter)
+            NavItem("维护者中心", selected = content is Route.Root.ContributorCenter, onSelectedChange = {
+                global.nav.push(Route.Root.ContributorCenter.Default)
             })
         }
     }

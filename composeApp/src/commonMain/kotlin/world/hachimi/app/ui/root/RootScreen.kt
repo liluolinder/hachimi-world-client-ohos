@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.root
 
+import androidx.compose.foundation.Image
 import world.hachimi.app.ui.player.FooterPlayer
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
@@ -16,7 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import hachimiworld.composeapp.generated.resources.Res
+import hachimiworld.composeapp.generated.resources.brand
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
@@ -25,6 +29,7 @@ import world.hachimi.app.ui.contributor.ContributorCenterScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
 import world.hachimi.app.ui.home.HomeScreen
 import world.hachimi.app.ui.playlist.PlaylistRouteScreen
+import world.hachimi.app.ui.recentplay.RecentPlayScreen
 import world.hachimi.app.ui.root.component.SideNavigation
 import world.hachimi.app.ui.root.component.TopAppBar
 import world.hachimi.app.ui.search.SearchScreen
@@ -43,12 +48,12 @@ fun RootScreen(routeContent: Route.Root) {
                 is Route.Root.Search -> SearchScreen(routeContent.query)
                 Route.Root.Home -> HomeScreen()
                 Route.Root.RecentLike -> {}
-                Route.Root.RecentPlay -> {}
+                Route.Root.RecentPlay -> RecentPlayScreen()
                 is Route.Root.MyPlaylist -> PlaylistRouteScreen(routeContent)
                 Route.Root.MySubscribe -> {}
                 is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)
                 Route.Root.CommitteeCenter -> CommitteeCenterScreen()
-                Route.Root.ContributorCenter -> ContributorCenterScreen()
+                is Route.Root.ContributorCenter -> ContributorCenterScreen(routeContent)
                 Route.Root.UserSpace -> UserSpaceScreen()
             }
         }
@@ -82,7 +87,10 @@ private fun CompactScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(Modifier.width(300.dp)) {
-                Text(text = "基米天堂", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+                Image(
+                    modifier = Modifier.padding(16.dp),
+                    painter = painterResource(Res.drawable.brand), contentDescription = "Brand"
+                )
                 Box(Modifier.padding(horizontal = 12.dp)) {
                     navigationContent()
                 }

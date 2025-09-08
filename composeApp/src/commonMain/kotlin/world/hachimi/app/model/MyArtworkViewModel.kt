@@ -1,13 +1,97 @@
 package world.hachimi.app.model
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import world.hachimi.app.api.ApiClient
+import world.hachimi.app.api.err
+import world.hachimi.app.api.module.PublishModule
+import world.hachimi.app.api.ok
+import world.hachimi.app.logging.Logger
 
 class MyArtworkViewModel(
     private val global: GlobalStore,
     private val api: ApiClient
-): ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.IO)) {
+    var initializeStatus by mutableStateOf(InitializeStatus.INIT)
+        private set
 
+    enum class InitializeStatus {
+        INIT, LOADED, FAILED
+    }
+
+    var loading by mutableStateOf(false)
+        private set
+    var total by mutableStateOf(0L)
+        private set
+    private val _items = mutableStateListOf<PublishModule.SongPublishReviewBrief>()
+    val items: List<PublishModule.SongPublishReviewBrief> = _items
+
+    private var page: Int = 0
+    private var pageSize: Int = 10
+    var loadingMore by mutableStateOf(false)
+        private set
+    var noMoreData by mutableStateOf(false)
+        private set
+
+    fun mounted() {
+        refresh()
+    }
+
+    fun dispose() {
+
+    }
+
+    fun refresh() = viewModelScope.launch {
+        loading = true
+        try {
+            val resp = api.publishModule.reviewPage(PublishModule.PageReq(0, pageSize.toLong()))
+            if (resp.ok) {
+                val data = resp.ok()
+                total = data.total
+                _items.clear()
+                _items.addAll(data.data)
+                initializeStatus = InitializeStatus.LOADED
+            } else {
+                val err = resp.err()
+                global.alert(err.msg)
+            }
+        } catch (e: Exception) {
+            global.alert(e.message)
+            Logger.e("my_artwork", "Failed to fetch my artwork", e)
+        } finally {
+            loading = false
+        }
+    }
+
+    fun loadMore() = viewModelScope.launch {
+        loading = true
+        try {
+            val nextPageIndex = page + 1
+            val resp = api.publishModule.reviewPage(PublishModule.PageReq(nextPageIndex.toLong(), pageSize.toLong()))
+            if (resp.ok) {
+                val data = resp.ok()
+                total = data.total
+                _items.addAll(data.data)
+                page = nextPageIndex
+                if (data.data.size < data.pageSize) {
+                    noMoreData = true
+                }
+            } else {
+                val err = resp.err()
+                global.alert(err.msg)
+            }
+        } catch (e: Exception) {
+            global.alert(e.message)
+            Logger.e("my_artwork", "Failed to fetch my artwork", e)
+        } finally {
+            loading = false
+        }
+    }
 }

@@ -19,7 +19,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import world.hachimi.app.api.module.AuthModule
+import world.hachimi.app.api.module.PlayHistoryModule
 import world.hachimi.app.api.module.PlaylistModule
+import world.hachimi.app.api.module.PublishModule
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.api.module.VersionModule
@@ -36,7 +38,7 @@ private const val TAG = "ApiClient"
  */
 class ApiClient(private val baseUrl: String) {
     companion object {
-        const val VERSION: Int = 250901
+        const val VERSION: Int = 250905
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -228,7 +230,7 @@ class ApiClient(private val baseUrl: String) {
             authListener.onAuthenticationError(AuthError.UnauthorizedDuringRequest(requestId, endpoint, resp))
         }
         val content = resp.bodyAsText()
-        error("Error response for request[${requestId}]: ${resp.status} $content")
+        error("Error response for request[${requestId}]: ${resp.status} ${content.take(100)}")
     }
 
     internal fun HttpRequestBuilder.applyAuth() {
@@ -241,6 +243,8 @@ class ApiClient(private val baseUrl: String) {
     val authModule by lazy { AuthModule(this) }
     val userModule by lazy { UserModule(this) }
     val songModule by lazy { SongModule(this) }
+    val playHistoryModule by lazy { PlayHistoryModule(this) }
+    val publishModule by lazy { PublishModule(this) }
     val playlistModule by lazy { PlaylistModule(this) }
     val versionModule by lazy { VersionModule(this) }
 }
