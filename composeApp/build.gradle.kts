@@ -175,10 +175,10 @@ android {
     signingConfigs {
         if (System.getenv("IS_CI") == "true") {
             register("release") {
-                storeFile = file(System.getenv("KEYSTORE_FILE"))
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEYSTORE_KEY_ALIAS")
-                keyPassword = System.getenv("KEYSTORE_KEY_PASSWORD")
+                storeFile = file(System.getenv("ANDROID_KEYSTORE_FILE"))
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
             }
         }
     }
@@ -228,9 +228,9 @@ compose.desktop {
 
                 bundleID = "world.hachimi.app"
                 iconFile.set(rootProject.file("icons/icon.icns"))
-                // TODO: Set signing
             }
             linux {
+                packageName = "hachimi-world" // Linux does not support Chinese characters
                 iconFile.set(rootProject.file("icons/icon.png"))
             }
         }
