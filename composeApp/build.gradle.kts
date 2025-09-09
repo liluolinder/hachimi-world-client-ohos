@@ -218,6 +218,7 @@ compose.desktop {
                 modules("jdk.unsupported", "java.naming")
 
                 windows {
+                    packageName = "Hachimi World"
                     upgradeUuid = "1544B476-25C9-4A01-705E-B374B14B2F1B"
                     perUserInstall = true
                     dirChooser = true
@@ -227,7 +228,7 @@ compose.desktop {
                 }
                 macOS {
                     appCategory = "public.app-category.entertainment"
-
+                    packageName = "基米天堂"
                     bundleID = "world.hachimi.app"
                     iconFile.set(rootProject.file("icons/icon.icns"))
                 }
@@ -244,6 +245,7 @@ compose.desktop {
                     modules("jdk.unsupported", "java.naming")
 
                     windows {
+                        packageName = "Hachimi World Dev"
                         upgradeUuid = "8AD88FC9-A6A2-478D-9E80-FF735EE15785"
                         perUserInstall = true
                         dirChooser = true
@@ -252,9 +254,9 @@ compose.desktop {
                         iconFile.set(rootProject.file("icons/icon.ico"))
                     }
                     macOS {
-                        appCategory = "public.app-category.entertainment"
-
+                        packageName = "基米天堂 Dev"
                         bundleID = "world.hachimi.app.dev"
+                        appCategory = "public.app-category.entertainment"
                         iconFile.set(rootProject.file("icons/icon.icns"))
                     }
                     linux {
