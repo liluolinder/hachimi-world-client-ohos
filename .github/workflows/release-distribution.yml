@@ -3,7 +3,9 @@ on:
   push:
     branches:
       - main
-
+concurrency:
+  group: release-distributions
+  cancel-in-progress: true
 jobs:
   build-macos:
     runs-on: macos-latest
@@ -49,7 +51,7 @@ jobs:
           source_dir: composeApp/build/compose/binaries/main/dmg/
           destination_dir: distribution/macos/
   build-windows:
-    runs-on: windows-2022
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
