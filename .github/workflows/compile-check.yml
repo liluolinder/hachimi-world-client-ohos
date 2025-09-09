@@ -4,6 +4,13 @@ on:
     branches:
       - dev
   pull_request:
+    types:
+      - opened
+    branches:
+      - dev
+concurrency:
+  group: compile-check-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build-jvm:
     runs-on: ubuntu-latest
