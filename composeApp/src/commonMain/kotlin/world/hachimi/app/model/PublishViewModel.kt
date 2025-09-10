@@ -77,7 +77,7 @@ class PublishViewModel(
         val name: String?,
     )
 
-    val externalLinks = mutableStateListOf<SongModule.PublishReq.ExternalLink>()
+    val externalLinks = mutableStateListOf<SongModule.ExternalLink>()
     var publishedSongId by mutableStateOf<String?>(null)
         private set
     var showSuccessDialog by mutableStateOf(false)
@@ -343,7 +343,7 @@ class PublishViewModel(
     }
 
     fun addLink(platform: String, link: String) {
-        externalLinks.add(SongModule.PublishReq.ExternalLink(platform, link))
+        externalLinks.add(SongModule.ExternalLink(platform, link))
     }
 
     fun removeLink(index: Int) {

@@ -38,7 +38,7 @@ private const val TAG = "ApiClient"
  */
 class ApiClient(private val baseUrl: String) {
     companion object {
-        const val VERSION: Int = 250905
+        const val VERSION: Int = 250910
     }
 
     @OptIn(ExperimentalSerializationApi::class)
