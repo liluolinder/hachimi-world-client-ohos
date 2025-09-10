@@ -29,6 +29,7 @@ class RecentPlayViewModel(
     private var cursor: Instant? = null
 
     fun mounted() {
+        // We call refresh for every branch because the init and refresh logic are the same (for now)
         if (initializeStatus == InitializeStatus.INIT) {
             refresh()
         } else {
@@ -87,9 +88,6 @@ class RecentPlayViewModel(
             return@launch
         } finally {
             loading = false
-            if (initializeStatus == InitializeStatus.INIT) {
-                initializeStatus = InitializeStatus.FAILED
-            }
         }
     }
 

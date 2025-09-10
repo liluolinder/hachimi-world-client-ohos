@@ -41,7 +41,12 @@ class MyArtworkViewModel(
         private set
 
     fun mounted() {
-        refresh()
+        if (initializeStatus == InitializeStatus.INIT) {
+            refresh()
+        } else {
+            // TODO[opt](UX): Should we add button to manually refresh?
+            refresh()
+        }
     }
 
     fun dispose() {
@@ -57,14 +62,16 @@ class MyArtworkViewModel(
                 total = data.total
                 _items.clear()
                 _items.addAll(data.data)
-                initializeStatus = InitializeStatus.LOADED
+                if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.LOADED
             } else {
                 val err = resp.err()
                 global.alert(err.msg)
+                if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
             }
         } catch (e: Exception) {
             global.alert(e.message)
             Logger.e("my_artwork", "Failed to fetch my artwork", e)
+            if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
         } finally {
             loading = false
         }
