@@ -38,7 +38,7 @@ private const val TAG = "ApiClient"
  */
 class ApiClient(private val baseUrl: String) {
     companion object {
-        const val VERSION: Int = 250905
+        const val VERSION: Int = 250910
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -126,7 +126,7 @@ class ApiClient(private val baseUrl: String) {
             val requestId = generateRequestId()
             Logger.d(TAG, "GET(requestId=${requestId}) to $path")
             val resp = httpClient.get(url) {
-                if (auth) applyAuth()
+                applyAuth()
                 applyRequestId(requestId)
             }.body<HttpResponse>()
             val data = checkAndDecode<T>(resp, path, requestId)
@@ -140,7 +140,7 @@ class ApiClient(private val baseUrl: String) {
             val requestId = generateRequestId()
             Logger.d(TAG, "GET(requestId=${requestId}) $path")
             val resp = httpClient.get(url) {
-                if (auth) applyAuth()
+                applyAuth()
                 applyRequestId(requestId)
 
                 val encoded = json.encodeToJsonElement(query)

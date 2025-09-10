@@ -22,9 +22,9 @@ fun SideNavigation(
             global.nav.push(Route.Root.Home)
         })
         if (global.isLoggedIn) {
-            NavItem("最近点赞", selected = content == Route.Root.RecentLike, onSelectedChange = {
+            /*NavItem("最近点赞", selected = content == Route.Root.RecentLike, onSelectedChange = {
                 global.nav.push(Route.Root.RecentLike)
-            })
+            })*/
             NavItem("最近播放", selected = content == Route.Root.RecentPlay, onSelectedChange = {
                 global.nav.push(Route.Root.RecentPlay)
             })
@@ -32,17 +32,17 @@ fun SideNavigation(
             NavItem("我的歌单", selected = content is Route.Root.MyPlaylist, onSelectedChange = {
                 global.nav.push(Route.Root.MyPlaylist.Default)
             })
-            NavItem("我的关注", selected = content == Route.Root.MySubscribe, onSelectedChange = {
+            /*NavItem("我的关注", selected = content == Route.Root.MySubscribe, onSelectedChange = {
                 global.nav.push(Route.Root.MySubscribe)
-            })
+            })*/
 
             NavItem("创作中心", selected = content is Route.Root.CreationCenter, onSelectedChange = {
                 global.nav.push(Route.Root.CreationCenter.Default)
             })
 
-            NavItem("委员会中心", selected = content == Route.Root.CommitteeCenter, onSelectedChange = {
+            /*NavItem("委员会中心", selected = content == Route.Root.CommitteeCenter, onSelectedChange = {
                 global.nav.push(Route.Root.CommitteeCenter)
-            })
+            })*/
             NavItem("维护者中心", selected = content is Route.Root.ContributorCenter, onSelectedChange = {
                 global.nav.push(Route.Root.ContributorCenter.Default)
             })

@@ -36,7 +36,7 @@ class MainViewModel(
     }
 
     fun retry() {
-        initializeStatus == InitializeStatus.INIT
+        initializeStatus = InitializeStatus.INIT
         getRecommendSongs()
     }
 

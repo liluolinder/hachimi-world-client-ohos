@@ -19,6 +19,7 @@ import androidx.compose.ui.util.fastForEach
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
+import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlayerUIState
 import world.hachimi.app.model.SongDetailInfo
@@ -278,7 +279,10 @@ private fun rememberTestPlayerState(): PlayerUIState {
                     uploaderUid = 100000,
                     uploaderName = "",
                     playCount = 0,
-                    likeCount = 0
+                    likeCount = 0,
+                    externalLinks = listOf(
+                        SongModule.ExternalLink("bilibili", "https://xxxxxxx")
+                    )
                 )
             )
             hasSong = true

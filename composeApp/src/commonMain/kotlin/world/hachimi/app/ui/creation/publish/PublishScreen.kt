@@ -15,11 +15,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +31,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,10 +41,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import coil3.compose.AsyncImage
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.ui.creation.publish.components.FormItem
 import world.hachimi.app.ui.creation.publish.components.TagEdit
@@ -51,6 +59,7 @@ import kotlin.time.Duration.Companion.seconds
 fun PublishScreen(
     vm: PublishViewModel = koinViewModel()
 ) {
+    val global = koinInject<GlobalStore>()
     Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Column(
             modifier = Modifier.fillMaxWidth().wrapContentWidth().widthIn(max = 700.dp).padding(24.dp),
@@ -186,7 +195,7 @@ fun PublishScreen(
                         value = vm.originId,
                         onValueChange = { vm.originId = it },
                         singleLine = true,
-                        supportingText = { Text("如果原作是站内作品，填写 ID 即可，无需再填写标题与链接")}
+                        supportingText = { Text("如果原作是站内作品，填写 ID 即可，无需再填写标题与链接") }
                     )
                 }
                 FormItem(header = { Text("原作标题") }) {
@@ -214,7 +223,7 @@ fun PublishScreen(
                         value = vm.deriveId,
                         onValueChange = { vm.deriveId = it },
                         singleLine = true,
-                        supportingText = { Text("如果二作是站内作品，填写 ID 即可，则无需再填写标题与链接")}
+                        supportingText = { Text("如果二作是站内作品，填写 ID 即可，则无需再填写标题与链接") }
                     )
                 }
                 FormItem(header = { Text("二作标题") }) {
@@ -249,9 +258,9 @@ fun PublishScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("角色: ${item.role}")
-                        Text("名称: ${item.name}")
-                        Text("UID: ${item.uid}")
+                        Text(text=item.role, modifier = Modifier.width(120.dp), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        Text(text= item.name ?: "uid: ${item.uid}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+
                         IconButton(onClick = { vm.removeStaff(index) }) {
                             Icon(Icons.Default.Remove, contentDescription = "Remove")
                         }
@@ -268,8 +277,19 @@ fun PublishScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("平台: ${item.platform}")
-                        Text("链接: ${item.url}")
+                        Text(
+                            modifier = Modifier.width(120.dp),
+                            text = translatePlatformLabel(item.platform),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = item.url,
+                            overflow = TextOverflow.MiddleEllipsis,
+                            style = MaterialTheme.typography.bodySmall
+                        )
 
                         IconButton(onClick = { vm.removeLink(index) }) {
                             Icon(Icons.Default.Remove, contentDescription = "Remove")
@@ -280,27 +300,66 @@ fun PublishScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    var platform by remember { mutableStateOf("") }
+                    var platform by remember { mutableStateOf<String?>(null) }
                     var link by remember { mutableStateOf("") }
-                    OutlinedTextField(
-                        modifier = Modifier.width(180.dp),
-                        value = platform,
-                        onValueChange = { platform = it },
-                        label = { Text("平台") },
-                        singleLine = true
-                    )
+                    Box {
+                        var dropdown by remember { mutableStateOf(false) }
+                        TextButton(onClick = { dropdown = true }, modifier = Modifier.width(120.dp)) {
+                            Text(
+                                platform?.let {
+                                    translatePlatformLabel(it)
+                                } ?: "选择平台"
+                            )
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "ArrowDropDown")
+                        }
+                        DropdownMenu(dropdown, onDismissRequest = { dropdown = false }) {
+                            DropdownMenuItem(
+                                text = { Text("B站") },
+                                onClick = {
+                                    platform = "bilibili"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("niconico") },
+                                onClick = {
+                                    platform = "niconico"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("YouTube") },
+                                onClick = {
+                                    platform = "youtube"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("抖音") },
+                                onClick = {
+                                    platform = "douyin"
+                                    dropdown = false
+                                }
+                            )
+                        }
+                    }
                     OutlinedTextField(
                         modifier = Modifier.weight(1f),
                         value = link,
                         onValueChange = { link = it },
-                        label = { Text("URL") },
+                        label = { Text("链接") },
+                        placeholder = { Text("https://xxxxxx")},
                         singleLine = true
                     )
                     IconButton(onClick = {
-                        if (platform.isNotBlank() && link.isNotBlank()) {
-                            vm.addLink(platform, link)
-                            platform = ""
-                            link = ""
+                        platform?.let {
+                            if (it.isNotBlank() && link.startsWith("https://")) {
+                                vm.addLink(it, link)
+                                platform = null
+                                link = ""
+                            } else {
+                                global.alert("请选择平台并输入正确的链接")
+                            }
                         }
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Add")
@@ -395,4 +454,15 @@ private fun AddStaffDialog(vm: PublishViewModel) {
             }
         }
     )
+}
+
+@Stable
+@Composable
+private fun translatePlatformLabel(label: String): String = when (label) {
+    // TODO: i18n
+    "bilibili" -> "B站"
+    "douyin" -> "抖音"
+    "youtube" -> "YouTube"
+    "niconico" -> "niconico"
+    else -> label
 }

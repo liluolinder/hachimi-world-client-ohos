@@ -16,7 +16,7 @@ import world.hachimi.app.logging.Logger
 class PlaylistViewModel(
     private val api: ApiClient,
     private val global: GlobalStore
-): ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.IO)) {
     // Playlist related states
     // Store at here because the footer player is shared across multiple screens
     var initializeStatus by mutableStateOf(InitializeStatus.INIT)
@@ -29,12 +29,10 @@ class PlaylistViewModel(
     var addingToPlaylistOperating by mutableStateOf(false)
 
     fun mounted() {
-        if (initializeStatus == InitializeStatus.INIT) {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            if (initializeStatus == InitializeStatus.INIT) {
                 refreshPlaylist()
-            }
-        } else {
-            viewModelScope.launch {
+            } else {
                 refreshPlaylist()
             }
         }
@@ -74,16 +72,16 @@ class PlaylistViewModel(
             if (resp.ok) {
                 val data = resp.okData<PlaylistModule.ListResp>()
                 playlists = data.playlists
-                initializeStatus = InitializeStatus.LOADED
+                if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.LOADED
             } else {
                 val data = resp.errData<CommonError>()
                 global.alert(data.msg)
-                initializeStatus = InitializeStatus.FAILED
+                if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
             }
         } catch (e: Exception) {
             Logger.e("player", "Failed to play playlist", e)
             global.alert(e.message)
-            initializeStatus = InitializeStatus.INIT
+            if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
         } finally {
             playlistIsLoading = false
         }
@@ -93,10 +91,12 @@ class PlaylistViewModel(
         viewModelScope.launch {
             addingToPlaylistOperating = true
             try {
-                val resp = api.playlistModule.addSong(PlaylistModule.AddSongReq(
-                    playlistId = selectedPlaylistId ?: return@launch,
-                    songId = toBeAddedSongId ?: return@launch
-                ))
+                val resp = api.playlistModule.addSong(
+                    PlaylistModule.AddSongReq(
+                        playlistId = selectedPlaylistId ?: return@launch,
+                        songId = toBeAddedSongId ?: return@launch
+                    )
+                )
                 if (resp.ok) {
                     showPlaylistDialog = false
                 } else {

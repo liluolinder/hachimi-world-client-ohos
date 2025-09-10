@@ -50,6 +50,7 @@ class SongModule(
         val uploaderName: String,
         val playCount: Long,
         val likeCount: Long,
+        val externalLinks: List<ExternalLink>
     )
 
     @Serializable
@@ -75,6 +76,12 @@ class SongModule(
         val artist: String?,
         val url: String?,
         val originType: Int,
+    )
+
+    @Serializable
+    data class ExternalLink(
+        val platform: String,
+        val url: String,
     )
 
     @Serializable
@@ -161,12 +168,6 @@ class SongModule(
             val role: String,
             val uid: Long?,
             val name: String?,
-        )
-
-        @Serializable
-        data class ExternalLink(
-            val platform: String,
-            val url: String,
         )
     }
 
