@@ -20,6 +20,7 @@ import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route.Auth
 import world.hachimi.app.nav.Route.Root
 import world.hachimi.app.ui.auth.AuthScreen
+import world.hachimi.app.ui.component.UpgradeDialog
 import world.hachimi.app.ui.player.PlayerScreen
 import world.hachimi.app.ui.root.RootScreen
 import world.hachimi.app.ui.theme.AppTheme
@@ -54,6 +55,7 @@ fun App() {
                 }
             }
             ClientApiVersionIncompatibleDialog(global)
+            UpgradeDialog(global)
         }
     }
 }
@@ -100,4 +102,19 @@ private fun ClientApiVersionIncompatibleDialog(global: GlobalStore) {
             },
         )
     }
+}
+
+@Composable
+private fun UpgradeDialog(global: GlobalStore) {
+    if (global.showUpdateDialog) UpgradeDialog(
+        currentVersion = global.currentVersion,
+        newVersion = global.newVersionInfo!!.versionName,
+        changelog = global.newVersionInfo!!.changelog,
+        onDismiss = {
+            global.dismissUpgrade()
+        },
+        onConfirm = {
+            global.confirmUpgrade()
+        }
+    )
 }

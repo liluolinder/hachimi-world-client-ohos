@@ -23,11 +23,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
 import org.jetbrains.compose.resources.StringResource
+import world.hachimi.app.BuildKonfig
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.AuthError
 import world.hachimi.app.api.AuthenticationListener
 import world.hachimi.app.api.CommonError
+import world.hachimi.app.api.err
 import world.hachimi.app.api.module.SongModule
+import world.hachimi.app.api.module.VersionModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.getPlatform
 import world.hachimi.app.logging.Logger
@@ -124,6 +127,9 @@ class GlobalStore(
         }
         scope.launch {
             checkMinApiVersion()
+        }
+        scope.launch {
+            checkUpdate()
         }
     }
 
@@ -489,5 +495,45 @@ class GlobalStore(
             Logger.e("player", "Failed to check min API version", e)
             alert("Failed to check min API version")
         }
+    }
+
+    var checkingUpdate by mutableStateOf(false)
+        private set
+    var showUpdateDialog by mutableStateOf(false)
+        private set
+    var currentVersion by mutableStateOf(BuildKonfig.VERSION_NAME)
+        private set
+    var newVersionInfo by mutableStateOf<VersionModule.LatestVersionResp?>(null)
+        private set
+    private suspend fun checkUpdate() {
+        checkingUpdate = true
+        try {
+            val variant = getPlatform().variant
+            val resp = api.versionModule.latest(VersionModule.LatestVersionReq(variant))
+            if (resp.ok) {
+                val data = resp.ok()
+                if (data != null && data.versionNumber > BuildKonfig.VERSION_CODE) {
+                    newVersionInfo = data
+                    showUpdateDialog = true
+                }
+            } else {
+                alert(resp.err().msg)
+            }
+        } catch (e: Exception) {
+            Logger.e("global", "Failed to check update", e)
+            alert("检查更新失败")
+        } finally {
+            checkingUpdate = false
+        }
+    }
+
+    fun dismissUpgrade() {
+        // TODO: ignore this version anymore
+        showUpdateDialog = false
+    }
+
+    fun confirmUpgrade() {
+        showUpdateDialog = false
+        getPlatform().openUrl(newVersionInfo!!.url)
     }
 }
