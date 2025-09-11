@@ -1,13 +1,14 @@
 name: Release Distributions
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [ closed ]
+    branches: [ main ]
 concurrency:
   group: release-distributions
   cancel-in-progress: true
 jobs:
   build-macos:
+    if: github.event.pull_request.merged == true
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,9 +33,21 @@ jobs:
         with:
           name: jpackage-logs
           path: composeApp/build/compose/logs/
+      - name: Get versions
+        shell: bash
+        run: |
+          VERSIONS=$(./gradlew printVersions --quiet)
+          VERSION_NAME=$(echo $VERSIONS | awk '{print $1}')
+          VERSION_CODE=$(echo $VERSIONS | awk '{print $2}')
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
       - name: Rename output
+        shell: bash
         working-directory: composeApp/build/compose/binaries/main/dmg/
-        run: mv *.dmg hachimi-world-latest.dmg
+        run: |
+          FILE_NAME=hachimi-world-${VERSION_NAME}-${VERSION_CODE}.dmg
+          mv *.dmg $FILE_NAME
+          echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -50,7 +63,39 @@ jobs:
           aws_bucket: ${{ secrets.S3_BUCKET }}
           source_dir: composeApp/build/compose/binaries/main/dmg/
           destination_dir: distribution/macos/
+      - name: Send publish request
+        shell: bash
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          echo $PR_BODY > changelog.txt
+          DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/macos/$FILE_NAME"
+          # Prepare data
+          JSON_DATA=$(jq -n \
+          --arg name "$VERSION_NAME" \
+          --argjson code $VERSION_CODE \
+          --arg url "$DOWNLOAD_URL" \
+          --rawfile changelog changelog.txt \
+          '{
+            version_name: $name,
+            version_number: $code,
+            url: $url,
+            changelog: $changelog,
+            variant: "release-macos",
+            release_time: (now | todateiso8601)
+          }')
+          echo "Sending webhook to PUBLISH_VERSION_URL"
+          echo "Payload: $JSON_DATA"
+
+          # Send webhook
+          curl --fail -X POST \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.PUBLISH_VERSION_TOKEN }}" \
+          -d "$JSON_DATA" \
+          "${{ secrets.PUBLISH_VERSION_URL }}"
+
   build-windows:
+    if: github.event.pull_request.merged == true
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,9 +120,21 @@ jobs:
         with:
           name: jpackage-logs
           path: composeApp/build/compose/logs/
+      - name: Get versions
+        shell: bash
+        run: |
+          VERSIONS=$(./gradlew printVersions --quiet)
+          VERSION_NAME=$(echo $VERSIONS | awk '{print $1}')
+          VERSION_CODE=$(echo $VERSIONS | awk '{print $2}')
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
       - name: Rename output
+        shell: bash
         working-directory: composeApp/build/compose/binaries/main/msi/
-        run: mv *.msi hachimi-world-latest.msi
+        run: |
+          FILE_NAME=hachimi-world-${VERSION_NAME}-${VERSION_CODE}.msi
+          mv *.msi $FILE_NAME
+          echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -93,7 +150,38 @@ jobs:
           aws_bucket: ${{ secrets.S3_BUCKET }}
           source_dir: composeApp/build/compose/binaries/main/msi/
           destination_dir: distribution/windows/
+      - name: Send publish request
+        shell: bash
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          echo $PR_BODY > changelog.txt
+          DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/windows/$FILE_NAME"
+          # Prepare data
+          JSON_DATA=$(jq -n \
+          --arg name "$VERSION_NAME" \
+          --argjson code $VERSION_CODE \
+          --arg url "$DOWNLOAD_URL" \
+          --rawfile changelog changelog.txt \
+          '{
+            version_name: $name,
+            version_number: $code,
+            url: $url,
+            changelog: $changelog,
+            variant: "release-windows",
+            release_time: (now | todateiso8601)
+          }')
+          echo "Sending webhook to PUBLISH_VERSION_URL"
+          echo "Payload: $JSON_DATA"
+
+          # Send webhook
+          curl --fail -X POST \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.PUBLISH_VERSION_TOKEN }}" \
+          -d "$JSON_DATA" \
+          "${{ secrets.PUBLISH_VERSION_URL }}"
   build-linux:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -118,9 +206,21 @@ jobs:
         with:
           name: jpackage-logs
           path: composeApp/build/compose/logs/
+      - name: Get versions
+        shell: bash
+        run: |
+          VERSIONS=$(./gradlew printVersions --quiet)
+          VERSION_NAME=$(echo $VERSIONS | awk '{print $1}')
+          VERSION_CODE=$(echo $VERSIONS | awk '{print $2}')
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
       - name: Rename output
+        shell: bash
         working-directory: composeApp/build/compose/binaries/main/deb/
-        run: mv *.deb hachimi-world-latest.deb
+        run: |
+          FILE_NAME=hachimi-world-${VERSION_NAME}-${VERSION_CODE}.deb
+          mv *.deb $FILE_NAME
+          echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -136,7 +236,38 @@ jobs:
           aws_bucket: ${{ secrets.S3_BUCKET }}
           source_dir: composeApp/build/compose/binaries/main/deb/
           destination_dir: distribution/linux/
+      - name: Send publish request
+        shell: bash
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          echo $PR_BODY > changelog.txt
+          DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/linux/$FILE_NAME"
+          # Prepare data
+          JSON_DATA=$(jq -n \
+          --arg name "$VERSION_NAME" \
+          --argjson code $VERSION_CODE \
+          --arg url "$DOWNLOAD_URL" \
+          --rawfile changelog changelog.txt \
+          '{
+            version_name: $name,
+            version_number: $code,
+            url: $url,
+            changelog: $changelog,
+            variant: "release-linux",
+            release_time: (now | todateiso8601)
+          }')
+          echo "Sending webhook to PUBLISH_VERSION_URL"
+          echo "Payload: $JSON_DATA"
+
+          # Send webhook
+          curl --fail -X POST \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.PUBLISH_VERSION_TOKEN }}" \
+          -d "$JSON_DATA" \
+          "${{ secrets.PUBLISH_VERSION_URL }}"
   build-android:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -177,9 +308,21 @@ jobs:
         with:
           name: jpackage-logs
           path: build/reports/problems
+      - name: Get versions
+        shell: bash
+        run: |
+          VERSIONS=$(./gradlew printVersions --quiet)
+          VERSION_NAME=$(echo $VERSIONS | awk '{print $1}')
+          VERSION_CODE=$(echo $VERSIONS | awk '{print $2}')
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
       - name: Rename output
+        shell: bash
         working-directory: composeApp/build/outputs/apk/release/
-        run: mv *.apk hachimi-world-latest.apk
+        run: |
+          FILE_NAME=hachimi-world-${VERSION_NAME}-${VERSION_CODE}.apk
+          mv *.apk $FILE_NAME
+          echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -195,3 +338,33 @@ jobs:
           aws_bucket: ${{ secrets.S3_BUCKET }}
           source_dir: composeApp/build/outputs/apk/release/
           destination_dir: distribution/android/
+      - name: Send publish request
+        shell: bash
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          echo $PR_BODY > changelog.txt
+          DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/android/$FILE_NAME"
+          # Prepare data
+          JSON_DATA=$(jq -n \
+          --arg name "$VERSION_NAME" \
+          --argjson code $VERSION_CODE \
+          --arg url "$DOWNLOAD_URL" \
+          --rawfile changelog changelog.txt \
+          '{
+            version_name: $name,
+            version_number: $code,
+            url: $url,
+            changelog: $changelog,
+            variant: "release-android",
+            release_time: (now | todateiso8601)
+          }')
+          echo "Sending webhook to PUBLISH_VERSION_URL"
+          echo "Payload: $JSON_DATA"
+
+          # Send webhook
+          curl --fail -X POST \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.PUBLISH_VERSION_TOKEN }}" \
+          -d "$JSON_DATA" \
+          "${{ secrets.PUBLISH_VERSION_URL }}"
