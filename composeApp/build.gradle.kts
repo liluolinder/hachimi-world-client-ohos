@@ -299,3 +299,7 @@ buildkonfig {
         buildConfigField(Type.STRING, "API_BASE_URL", props.getProperty("app.release.apiBaseUrl"))
     }
 }
+
+tasks.register("printVersions") {
+    println(gitVersionName.get() + " " + gitVersionCode.get() + " " + gitVersionNameShort.get())
+}

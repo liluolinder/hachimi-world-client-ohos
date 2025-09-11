@@ -9,7 +9,7 @@ import java.net.URI
 object JVMPlatform : Platform {
     override val name: String = "JVM"
     override val platformVersion: String = System.getProperty("java.version")
-
+    override val variant: String = getVariant()
     private val appName = BuildKonfig.APP_PACKAGE_NAME
 
     override fun getCacheDir(): File {
@@ -39,3 +39,14 @@ object JVMPlatform : Platform {
 }
 
 actual fun getPlatform(): Platform = JVMPlatform
+
+private fun getVariant(): String {
+    val type = BuildKonfig.BUILD_TYPE
+    val platform = when(hostOs) {
+        OS.Windows -> "windows"
+        OS.MacOS -> "macos"
+        OS.Linux -> "linux"
+        else -> "unknown"
+    }
+    return "$type-$platform"
+}

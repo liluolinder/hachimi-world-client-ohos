@@ -11,6 +11,8 @@ import androidx.core.net.toUri
 class AndroidPlatform : Platform {
     override val name: String = "Android"
     override val platformVersion: String = Build.VERSION.SDK_INT.toString()
+    override val variant: String = "${BuildKonfig.BUILD_TYPE}-android"
+
     override fun getCacheDir(): File {
         return applicationContext.cacheDir
     }

@@ -5,6 +5,7 @@ import java.io.File
 interface Platform {
     val name: String
     val platformVersion: String
+    val variant: String
     fun getCacheDir(): File
     fun getDataDir(): File
     fun openUrl(url: String)
