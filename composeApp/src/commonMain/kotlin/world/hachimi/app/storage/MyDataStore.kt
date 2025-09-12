@@ -7,7 +7,7 @@ interface MyDataStore {
     suspend fun <T: Any> delete(key: PreferenceKey<T>)
 }
 
-expect class PreferenceKey<T> {
+expect class PreferenceKey<T: Any> {
     val name: String
 }
 
