@@ -5,6 +5,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import kotlinx.browser.document
 import world.hachimi.app.font.WithFont
+import world.hachimi.app.ui.App
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
