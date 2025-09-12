@@ -1,6 +1,7 @@
 package world.hachimi.app
 
 import io.github.vinceglb.filekit.PlatformFile
+import kotlinx.browser.window
 
 class WasmPlatform : Platform {
     override val name: String = "wasm"
@@ -16,7 +17,7 @@ class WasmPlatform : Platform {
     }
 
     override fun openUrl(url: String) {
-        TODO("Not yet implemented")
+        window.open(url, target = "_blank")
     }
 }
 
