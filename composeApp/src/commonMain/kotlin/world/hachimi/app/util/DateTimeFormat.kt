@@ -197,5 +197,5 @@ fun formatSongDuration(duration: Duration): String {
     val minutesPart = seconds / 60
     val secondsPart = seconds % 60
     val padding = if (secondsPart < 10) "0" else ""
-    return "${minutesPart}:${padding}$secondsPart)}"
+    return "${minutesPart}:${padding}$secondsPart"
 }
