@@ -94,11 +94,12 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.koin.compose.viewmodelNavigation)
 
-            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.client.encoding)
             implementation(libs.ktor.serialization.kotlinx.json)
 
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
 
             implementation(libs.coil.compose)
@@ -126,6 +127,8 @@ kotlin {
 //            implementation(libs.androidx.sqlite.bundled)
             implementation(libs.mp3spi)
             implementation(libs.jflac)
+        }
+        wasmJsMain.dependencies {
 
         }
     }
