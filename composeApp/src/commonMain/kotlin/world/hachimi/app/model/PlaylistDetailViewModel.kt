@@ -24,7 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 class PlaylistDetailViewModel(
     private val api: ApiClient,
     private val global: GlobalStore
-) : ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.Default)) {
     var loading by mutableStateOf(false)
         private set
     var playlistId by mutableStateOf<Long?>(null)

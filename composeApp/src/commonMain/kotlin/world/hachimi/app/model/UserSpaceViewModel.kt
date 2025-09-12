@@ -23,7 +23,7 @@ import world.hachimi.app.logging.Logger
 class UserSpaceViewModel(
     private val api: ApiClient,
     private val global: GlobalStore
-) : ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.Default)) {
     var loading by mutableStateOf(false)
         private set
     var profile by mutableStateOf<UserModule.ProfileResp?>(null)

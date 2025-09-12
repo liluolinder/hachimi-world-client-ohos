@@ -65,7 +65,7 @@ class GlobalStore(
 
     val playerState = PlayerUIState()
 
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.Default)
     val snackbarHostState = SnackbarHostState()
 
     val musicQueue = mutableStateListOf<MusicQueueItem>()
@@ -82,14 +82,14 @@ class GlobalStore(
     )
 
     fun initialize() {
-        scope.launch(Dispatchers.IO) {
+        scope.launch(Dispatchers.Default) {
             coroutineScope {
                 launch { this@GlobalStore.darkMode = dataStore.get(PreferencesKeys.SETTINGS_DARK_MODE) }
                 launch { loadLoginStatus() }
             }
             initialized = true
         }
-        scope.launch(Dispatchers.IO) {
+        scope.launch(Dispatchers.Default) {
             player.addListener(object : Player.Listener {
                 override fun onEvent(event: PlayEvent) {
                     when (event) {
@@ -400,7 +400,7 @@ class GlobalStore(
                 playerState.hasSong = true
                 playerState.updateCurrentMillis(0L)
 
-                val coverBytes = async<ByteArray>(Dispatchers.IO) {
+                val coverBytes = async<ByteArray>(Dispatchers.Default) {
                     api.httpClient.get(data.coverUrl).bodyAsBytes()
                 }
                 val filename = data.audioUrl.substringAfterLast("/")

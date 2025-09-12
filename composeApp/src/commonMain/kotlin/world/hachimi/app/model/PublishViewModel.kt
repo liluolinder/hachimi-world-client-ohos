@@ -29,7 +29,7 @@ import kotlin.random.Random
 class PublishViewModel(
     private val global: GlobalStore,
     private val api: ApiClient
-) : ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.Default)) {
     var title by mutableStateOf("")
     var subtitle by mutableStateOf("")
     val tags = mutableStateListOf<SongModule.TagItem>()
