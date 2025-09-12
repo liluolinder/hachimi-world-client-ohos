@@ -30,13 +30,14 @@ import world.hachimi.app.player.AndroidPlayer
 import world.hachimi.app.player.Player
 import world.hachimi.app.service.PlaybackService
 import world.hachimi.app.storage.MyDataStore
+import world.hachimi.app.storage.MyDataStoreImpl
 
 val appModule = module {
     single {
         ApiClient(BuildKonfig.API_BASE_URL)
     }
     single { getPreferencesDataStore() }
-    single { MyDataStore(get()) }
+    single { MyDataStoreImpl(get()) }
     single<Player> {
         val sessionToken = SessionToken(androidContext(), ComponentName(androidContext(), PlaybackService::class.java))
         val controllerFuture = MediaController.Builder(androidContext(), sessionToken).buildAsync()
