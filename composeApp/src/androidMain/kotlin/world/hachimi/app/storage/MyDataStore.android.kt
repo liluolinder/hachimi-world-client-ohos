@@ -9,11 +9,11 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-actual class PreferenceKey<T> {
+actual class PreferenceKey<T: Any> {
     actual val name: String
-    val key: androidx.datastore.preferences.core.Preferences.Key<T>
+    val key: Preferences.Key<T>
 
-    constructor(name: String, key: androidx.datastore.preferences.core.Preferences.Key<T>) {
+    constructor(name: String, key: Preferences.Key<T>) {
         this.name = name
         this.key = key
     }
