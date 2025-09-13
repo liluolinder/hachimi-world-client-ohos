@@ -61,15 +61,16 @@ fun WithFont(
                 fontsLoaded.value = true
             } catch (e: JsException) {
                 val exception = e.thrownValue as? DOMException?
-                when (exception?.code) {
+                when (exception?.name) {
                     "NotAllowedError", "SecurityError" ->  {
                         error.value = FontLoadError.PermissionDenied
                         window.alert("请授予字体访问权限，前往 [浏览器设置 - 隐私与安全 - 网站设置] 查看权限设定")
                     }
-                    "SecurityError" -> window.alert("请授予字体访问权限，前往 [浏览器设置 - 隐私与安全 - 网站设置] 查看权限设定")
+                    else -> {
+                        error.value = FontLoadError.NotSupported
+                        window.alert("加载字体失败，当前仅支持 PC 端 Chrome / Edge 浏览器最新版本，不支持 Firefox, Safari 浏览器")
+                    }
                 }
-                error.value = FontLoadError.NotSupported
-                window.alert("加载字体失败，当前仅支持 PC 端 Chrome / Edge 浏览器最新版本，不支持 Firefox, Safari 浏览器")
             } catch (_: Throwable) {
                 error.value = FontLoadError.NotSupported
                 window.alert("加载字体失败，当前仅支持 PC 端 Chrome / Edge 浏览器最新版本，不支持 Firefox, Safari 浏览器")
