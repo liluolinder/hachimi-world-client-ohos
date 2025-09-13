@@ -15,8 +15,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import kotlinx.browser.window
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.w3c.fetch.Response
@@ -37,14 +38,14 @@ fun WithFont(
     val fontFamilyResolver = LocalFontFamilyResolver.current
 
     LaunchedEffect(Unit) {
-        val fontFamily = loadFonts()
-        fontFamilyResolver.preload(fontFamily)
-        // TODO: Remove this delay
-        delay(500)
-        fontsLoaded.value = true
+        withContext(Dispatchers.Default) {
+            val fontFamily = loadFonts()
+            fontFamilyResolver.preload(fontFamily)
+            fontsLoaded.value = true
+        }
     }
     if (fontsLoaded.value) {
-       content()
+        content()
     } else {
         Box(Modifier.fillMaxSize()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
@@ -64,14 +65,12 @@ fun ArrayBuffer.toByteArray(): ByteArray {
     return jsInt8ArrayToKotlinByteArray(source)
 }
 
-@JsFun(
-    """ (src, size, dstAddr) => {
-        const mem8 = new Int8Array(wasmExports.memory.buffer, dstAddr, size);
-        mem8.set(src);
-    }
-"""
+internal fun jsExportInt8ArrayToWasm(src: Int8Array, size: Int, dstAddr: Int): Unit = js(
+    """{
+    const mem8 = new Int8Array(wasmExports.memory.buffer, dstAddr, size);
+    mem8.set(src);
+}"""
 )
-internal external fun jsExportInt8ArrayToWasm(src: Int8Array, size: Int, dstAddr: Int)
 
 internal fun jsInt8ArrayToKotlinByteArray(x: Int8Array): ByteArray {
     val size = x.length
@@ -106,9 +105,9 @@ private val preferredCJKFontFamilies = linkedSetOf("Microsoft YaHei", "PingFang 
 private val preferredEmojiFontFamilies = linkedSetOf("Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji");
 
 // Demibold Italic
-private fun parseFontStyle(styleString: String) : Pair<FontWeight, FontStyle> {
+private fun parseFontStyle(styleString: String): Pair<FontWeight, FontStyle> {
     val part = styleString.split(" ");
-    val weight = when(part[0].lowercase()) {
+    val weight = when (part[0].lowercase()) {
         "thin", "hairline" -> FontWeight.Thin
         "extralight", "ultralight" -> FontWeight.ExtraLight
         "light" -> FontWeight.Light
@@ -122,7 +121,7 @@ private fun parseFontStyle(styleString: String) : Pair<FontWeight, FontStyle> {
     }
 
     val style = part.getOrNull(2)?.let {
-        when(it.lowercase()) {
+        when (it.lowercase()) {
             "italic", "oblique" -> FontStyle.Italic
             else -> FontStyle.Normal
         }
@@ -160,7 +159,7 @@ suspend fun loadLocalFonts(): List<LoadedLocalFont> {
 
         val reader = FileReader()
         reader.readAsArrayBuffer(blob)
-        suspendCoroutine<Unit> {cont ->
+        suspendCoroutine<Unit> { cont ->
             reader.addEventListener("loadend") {
                 cont.resume(Unit)
             }
