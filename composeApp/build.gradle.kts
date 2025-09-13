@@ -58,6 +58,9 @@ kotlin {
                 }
             }
         }
+        compilerOptions {
+            freeCompilerArgs.add("-Xwasm-attach-js-exception")
+        }
         binaries.executable()
     }
 
@@ -129,7 +132,7 @@ kotlin {
             implementation(libs.jflac)
         }
         wasmJsMain.dependencies {
-
+            implementation(npm("howler", "2.2.4"))
         }
     }
 }
