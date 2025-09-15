@@ -5,25 +5,13 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import okio.Path.Companion.toOkioPath
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import world.hachimi.app.BuildKonfig
 import world.hachimi.app.JVMPlatform
 import world.hachimi.app.api.ApiClient
-import world.hachimi.app.model.AuthViewModel
-import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.model.GlobalStore
-import world.hachimi.app.model.MainViewModel
-import world.hachimi.app.model.MyArtworkViewModel
-import world.hachimi.app.model.PlaylistDetailViewModel
-import world.hachimi.app.model.PlaylistViewModel
-import world.hachimi.app.model.RecentPlayViewModel
-import world.hachimi.app.model.ReviewDetailViewModel
-import world.hachimi.app.model.ReviewViewModel
-import world.hachimi.app.model.SearchViewModel
-import world.hachimi.app.model.UserSpaceViewModel
-import world.hachimi.app.player.Player
 import world.hachimi.app.player.JVMPlayer
+import world.hachimi.app.player.Player
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.MyDataStoreImpl
 import world.hachimi.app.storage.SongCache
@@ -38,17 +26,7 @@ val appModule = module {
 
     singleOf(::GlobalStore)
 
-    viewModelOf(::MainViewModel)
-    viewModelOf(::AuthViewModel)
-    viewModelOf(::PublishViewModel)
-    viewModelOf(::MyArtworkViewModel)
-    viewModelOf(::SearchViewModel)
-    viewModelOf(::UserSpaceViewModel)
-    viewModelOf(::PlaylistViewModel)
-    viewModelOf(::PlaylistDetailViewModel)
-    viewModelOf(::RecentPlayViewModel)
-    viewModelOf(::ReviewViewModel)
-    viewModelOf(::ReviewDetailViewModel)
+    applyViewModels()
 }
 
 private fun getPreferencesDataStore(): DataStore<Preferences> {

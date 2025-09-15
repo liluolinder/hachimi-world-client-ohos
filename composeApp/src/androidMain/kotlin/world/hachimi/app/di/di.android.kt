@@ -10,12 +10,11 @@ import io.github.vinceglb.filekit.AndroidFile
 import okio.Path.Companion.toOkioPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import world.hachimi.app.BuildKonfig
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.getPlatform
-import world.hachimi.app.model.*
+import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.player.AndroidPlayer
 import world.hachimi.app.player.Player
 import world.hachimi.app.service.PlaybackService
@@ -37,17 +36,7 @@ val appModule = module {
 
     singleOf(::GlobalStore)
 
-    viewModelOf(::MainViewModel)
-    viewModelOf(::AuthViewModel)
-    viewModelOf(::PublishViewModel)
-    viewModelOf(::MyArtworkViewModel)
-    viewModelOf(::SearchViewModel)
-    viewModelOf(::UserSpaceViewModel)
-    viewModelOf(::PlaylistViewModel)
-    viewModelOf(::PlaylistDetailViewModel)
-    viewModelOf(::RecentPlayViewModel)
-    viewModelOf(::ReviewViewModel)
-    viewModelOf(::ReviewDetailViewModel)
+    applyViewModels()
 }
 
 private fun getPreferencesDataStore(): DataStore<Preferences> {
