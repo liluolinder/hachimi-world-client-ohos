@@ -77,7 +77,7 @@ class AuthViewModel(
     private var countdownJob: Job? = null
 
     private fun startCountdownJob() {
-        viewModelScope.launch(Dispatchers.Default) {
+        countdownJob = viewModelScope.launch(Dispatchers.Default) {
             while (isActive) {
                 regCodeRemainSecs -= 1
                 delay(1000)
@@ -292,5 +292,9 @@ class AuthViewModel(
             waitForCaptcha()
             doRegister()
         }
+    }
+
+    fun forgetPassword() {
+        global.nav.push(Route.ForgetPassword)
     }
 }

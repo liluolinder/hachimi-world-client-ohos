@@ -3,6 +3,7 @@ package world.hachimi.app.di
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
 import world.hachimi.app.model.AuthViewModel
+import world.hachimi.app.model.ForgetPasswordViewModel
 import world.hachimi.app.model.MainViewModel
 import world.hachimi.app.model.MyArtworkViewModel
 import world.hachimi.app.model.PlaylistDetailViewModel
@@ -26,4 +27,5 @@ fun Module.applyViewModels() {
     viewModelOf(::RecentPlayViewModel)
     viewModelOf(::ReviewViewModel)
     viewModelOf(::ReviewDetailViewModel)
+    viewModelOf(::ForgetPasswordViewModel)
 }

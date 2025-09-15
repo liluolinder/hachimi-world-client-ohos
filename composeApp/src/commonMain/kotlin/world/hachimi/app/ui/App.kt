@@ -18,8 +18,10 @@ import io.github.vinceglb.filekit.coil.addPlatformFileSupport
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route.Auth
+import world.hachimi.app.nav.Route.ForgetPassword
 import world.hachimi.app.nav.Route.Root
 import world.hachimi.app.ui.auth.AuthScreen
+import world.hachimi.app.ui.auth.ForgetPasswordScreen
 import world.hachimi.app.ui.component.UpgradeDialog
 import world.hachimi.app.ui.player.PlayerScreen
 import world.hachimi.app.ui.root.RootScreen
@@ -42,6 +44,7 @@ fun App() {
                     when(rootDestination) {
                         is Root -> RootScreen(rootDestination)
                         is Auth -> AuthScreen(rootDestination.initialLogin)
+                        is ForgetPassword -> ForgetPasswordScreen()
                     }
 
                     AnimatedVisibility(visible = global.playerExpanded, modifier = Modifier.fillMaxSize()) {
