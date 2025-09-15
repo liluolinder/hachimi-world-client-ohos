@@ -122,6 +122,7 @@ class PublishViewModel(
             val audio = FileKit.openFilePicker(
                 type = FileKitType.File("mp3", "flac")
             )
+            Logger.d("publish", "Picked audio file: ${audio?.name}, ${audio?.size()} bytes")
             if (audio != null) {
                 // 1. Validate
                 val size = audio.size()
@@ -129,7 +130,7 @@ class PublishViewModel(
                     global.alert("音频文件过大，最大支持20MB")
                     return@launch
                 }
-                val buffer = Buffer().apply { audio.readBytes() }
+                val buffer = Buffer().apply { write(audio.readBytes()) }
 
                 // 2. Upload
                 val data = try {
@@ -184,7 +185,7 @@ class PublishViewModel(
                     global.alert("图片过大，最大支持 10MB")
                     return@launch
                 }
-                val buffer = Buffer().apply { image.readBytes() }
+                val buffer = Buffer().apply { write(image.readBytes()) }
                 coverImage = image
 
                 // 2. Upload
