@@ -15,7 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.io.buffered
+import kotlinx.io.Buffer
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.err
@@ -29,7 +29,7 @@ import kotlin.random.Random
 class PublishViewModel(
     private val global: GlobalStore,
     private val api: ApiClient
-) : ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.Default)) {
     var title by mutableStateOf("")
     var subtitle by mutableStateOf("")
     val tags = mutableStateListOf<SongModule.TagItem>()
@@ -122,6 +122,7 @@ class PublishViewModel(
             val audio = FileKit.openFilePicker(
                 type = FileKitType.File("mp3", "flac")
             )
+            Logger.d("publish", "Picked audio file: ${audio?.name}, ${audio?.size()} bytes")
             if (audio != null) {
                 // 1. Validate
                 val size = audio.size()
@@ -129,7 +130,7 @@ class PublishViewModel(
                     global.alert("音频文件过大，最大支持20MB")
                     return@launch
                 }
-                val buffer = audio.source().buffered()
+                val buffer = Buffer().apply { write(audio.readBytes()) }
 
                 // 2. Upload
                 val data = try {
@@ -184,7 +185,7 @@ class PublishViewModel(
                     global.alert("图片过大，最大支持 10MB")
                     return@launch
                 }
-                val buffer = image.source().buffered()
+                val buffer = Buffer().apply { write(image.readBytes()) }
                 coverImage = image
 
                 // 2. Upload

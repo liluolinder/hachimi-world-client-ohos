@@ -38,4 +38,5 @@ sealed class Route {
         data object Settings: Root()
     }
     data class Auth(val initialLogin: Boolean = true) : Route()
+    data object ForgetPassword: Route()
 }

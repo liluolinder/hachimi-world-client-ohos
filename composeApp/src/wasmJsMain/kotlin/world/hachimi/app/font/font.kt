@@ -1,8 +1,14 @@
 package world.hachimi.app.font
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -14,17 +20,21 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.unit.dp
 import kotlinx.browser.window
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.w3c.fetch.Response
 import org.w3c.files.Blob
 import org.w3c.files.FileReader
+import world.hachimi.app.logging.Logger
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.js.Promise
+import kotlin.time.TimeSource
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
 
@@ -35,21 +45,69 @@ fun WithFont(
 ) {
     val fontsLoaded = remember { mutableStateOf(false) }
     val fontFamilyResolver = LocalFontFamilyResolver.current
+    val error = remember { mutableStateOf<FontLoadError?>(null) }
 
     LaunchedEffect(Unit) {
-        val fontFamily = loadFonts()
-        fontFamilyResolver.preload(fontFamily)
-        // TODO: Remove this delay
-        delay(500)
-        fontsLoaded.value = true
-    }
-    if (fontsLoaded.value) {
-       content()
-    } else {
-        Box(Modifier.fillMaxSize()) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        withContext(Dispatchers.Default) {
+            /*val result = handlePermission().await<PermissionStatus>()
+
+            if (result.state != "granted") {
+                error.value = FontLoadError.PermissionDenied
+                window.alert("请授予字体访问权限，前往 [浏览器设置 - 隐私与安全 - 网站设置] 查看权限设定")
+                return@withContext
+            }*/
+
+            try {
+                val fontFamily = loadFonts(true)
+                fontFamilyResolver.preload(fontFamily)
+                fontsLoaded.value = true
+            } catch (e: JsException) {
+                @Suppress("UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
+                val exception = e.thrownValue as? DOMException?
+                when (exception?.name) {
+                    "NotAllowedError", "SecurityError" -> {
+                        error.value = FontLoadError.PermissionDenied
+                        window.alert("请授予字体访问权限，前往 [浏览器设置 - 隐私与安全 - 网站设置] 查看权限设定")
+                    }
+                    else -> {
+                        error.value = FontLoadError.NotSupported
+                        window.alert("加载字体失败，当前仅支持 PC 端 Chrome / Edge 浏览器最新版本，不支持 Firefox, Safari 浏览器")
+                    }
+                }
+            } catch (_: Throwable) {
+                error.value = FontLoadError.NotSupported
+                window.alert("加载字体失败，当前仅支持 PC 端 Chrome / Edge 浏览器最新版本，不支持 Firefox, Safari 浏览器")
+            }
         }
     }
+    if (fontsLoaded.value) {
+        content()
+    } else {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
+                if (error.value == null) {
+                    CircularProgressIndicator()
+                } else {
+                    Icon(Icons.Default.Error, contentDescription = "Error")
+                    when (error.value) {
+                        FontLoadError.NotSupported -> Text("Not supported")
+                        FontLoadError.PermissionDenied -> Text("Permission denied")
+                        null -> {}
+                    }
+                }
+            }
+        }
+    }
+}
+
+external interface DOMException : JsAny {
+    val code: String
+    val message: String
+    val name: String
+}
+
+enum class FontLoadError {
+    NotSupported, PermissionDenied
 }
 
 @Composable
@@ -64,14 +122,12 @@ fun ArrayBuffer.toByteArray(): ByteArray {
     return jsInt8ArrayToKotlinByteArray(source)
 }
 
-@JsFun(
-    """ (src, size, dstAddr) => {
-        const mem8 = new Int8Array(wasmExports.memory.buffer, dstAddr, size);
-        mem8.set(src);
-    }
-"""
+internal fun jsExportInt8ArrayToWasm(src: Int8Array, size: Int, dstAddr: Int): Unit = js(
+    """{
+    const mem8 = new Int8Array(wasmExports.memory.buffer, dstAddr, size);
+    mem8.set(src);
+}"""
 )
-internal external fun jsExportInt8ArrayToWasm(src: Int8Array, size: Int, dstAddr: Int)
 
 internal fun jsInt8ArrayToKotlinByteArray(x: Int8Array): ByteArray {
     val size = x.length
@@ -94,21 +150,41 @@ external class FontData : JsAny {
     fun blob(): Promise<Blob>
 }
 
-@JsFun(
-    """ () => {
-        return window.queryLocalFonts()
+suspend fun FontData.readArrayBuffer(): ArrayBuffer {
+    val blob = blob().await<Blob>()
+    val reader = FileReader()
+    reader.readAsArrayBuffer(blob)
+    suspendCoroutine<Unit> { cont ->
+        reader.addEventListener("loadend") {
+            cont.resume(Unit)
+        }
     }
+    val buffer = reader.result as ArrayBuffer
+    return buffer
+}
+
+external interface PermissionStatus : JsAny {
+    val name: String
+    val state: String
+}
+
+fun handlePermission(): Promise<PermissionStatus> = js(
+    """
+  navigator.permissions.query({ name: "local-fonts" })
 """
 )
-external fun queryLocalFonts(): Promise<JsArray<FontData>>
+
+fun queryLocalFonts(): Promise<JsArray<FontData>> = js("window.queryLocalFonts()")
 
 private val preferredCJKFontFamilies = linkedSetOf("Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Noto Sans CJK");
 private val preferredEmojiFontFamilies = linkedSetOf("Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji");
 
 // Demibold Italic
-private fun parseFontStyle(styleString: String) : Pair<FontWeight, FontStyle> {
-    val part = styleString.split(" ");
-    val weight = when(part[0].lowercase()) {
+private fun parseFontStyle(styleString: String): Pair<FontWeight, FontStyle> {
+    val part = styleString.split(" ")
+    val weightPart = part[0].lowercase()
+    val stylePart = part.getOrNull(1)?.lowercase()
+    val weight = when (weightPart) {
         "thin", "hairline" -> FontWeight.Thin
         "extralight", "ultralight" -> FontWeight.ExtraLight
         "light" -> FontWeight.Light
@@ -121,8 +197,8 @@ private fun parseFontStyle(styleString: String) : Pair<FontWeight, FontStyle> {
         else -> FontWeight.Normal
     }
 
-    val style = part.getOrNull(2)?.let {
-        when(it.lowercase()) {
+    val style = stylePart?.let {
+        when (it) {
             "italic", "oblique" -> FontStyle.Italic
             else -> FontStyle.Normal
         }
@@ -138,43 +214,65 @@ data class LoadedLocalFont(
     val data: ArrayBuffer,
 )
 
-suspend fun loadLocalFonts(): List<LoadedLocalFont> {
+private suspend fun queryLocalFontMap(): Map<String, List<FontData>> {
     val fonts = try {
         queryLocalFonts().await<JsArray<FontData>>().toList()
     } catch (e: Exception) {
         error("Can't load fonts")
     }
     val fontMap = fonts.groupBy { it.family }
+    return fontMap
+}
+
+private suspend fun loadLocalCJKFonts(): List<LoadedLocalFont> {
+    val mark = TimeSource.Monotonic.markNow()
+
+    val fontMap = queryLocalFontMap()
 
     val firstFont = preferredCJKFontFamilies.firstNotNullOfOrNull {
         fontMap[it]
     } ?: error("Cant find CJK fonts in computer")
 
-    println("CJK font was found: ${firstFont.first().family}")
+    Logger.d("Font", "CJK font was found: ${firstFont.first().family}")
 
     val loaded = firstFont.map { fontData ->
-        println("Reading font: ${fontData.family}, ${fontData.style}, ${fontData.postscriptName}")
         val (weight, style) = parseFontStyle(fontData.style)
-
-        val blob = fontData.blob().await<Blob>()
-
-        val reader = FileReader()
-        reader.readAsArrayBuffer(blob)
-        suspendCoroutine<Unit> {cont ->
-            reader.addEventListener("loadend") {
-                cont.resume(Unit)
-            }
-        }
-
-        val buffer = reader.result as ArrayBuffer
+        Logger.d("Font", "Loading font ${fontData.postscriptName} ${fontData.style} -> Weight: ${weight.weight}, Style: $style")
+        val buffer = fontData.readArrayBuffer()
         LoadedLocalFont(fontData.family, weight, style, buffer)
+    }
+
+    mark.elapsedNow().inWholeMilliseconds.let {
+        Logger.d("Font", "Loaded CJK fonts in $it ms")
     }
 
     return loaded
 }
 
-suspend fun loadFonts(): FontFamily {
-    val fonts = loadLocalFonts()
+private suspend fun loadLocalEmojiFonts(): List<LoadedLocalFont> {
+    val mark = TimeSource.Monotonic.markNow()
+    val fontMap = queryLocalFontMap()
+
+    val emojiFonts = preferredEmojiFontFamilies.firstNotNullOfOrNull { fontMap[it] }
+        ?: error("Can't find emoji fonts in computer")
+
+    Logger.d("Font", "Emoji font was found: ${emojiFonts.first().family}")
+    val loadedEmoji = emojiFonts.map { fontData ->
+        val buffer = fontData.readArrayBuffer()
+        LoadedLocalFont(fontData.family, FontWeight.Normal, FontStyle.Normal, buffer)
+    }
+    mark.elapsedNow().inWholeMilliseconds.let {
+        Logger.d("Font", "Loaded emoji fonts in $it ms")
+    }
+    return loadedEmoji
+}
+
+suspend fun loadFonts(enableEmoji: Boolean): FontFamily {
+    var fonts = loadLocalCJKFonts()
+    if (enableEmoji) {
+        fonts = fonts + loadLocalEmojiFonts()
+    }
+
     val composeFonts = fonts.map { font ->
         Font(
             "${font.family} ${font.weight.weight} ${font.style}",
@@ -184,5 +282,6 @@ suspend fun loadFonts(): FontFamily {
         )
     }
     val fontFamily = FontFamily(composeFonts)
+    Logger.d("Font", "Fonts loaded successfully")
     return fontFamily
 }

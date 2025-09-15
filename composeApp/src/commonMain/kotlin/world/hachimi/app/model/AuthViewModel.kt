@@ -22,8 +22,6 @@ import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
 import world.hachimi.app.storage.MyDataStore
 import world.hachimi.app.storage.PreferencesKeys
-import java.awt.Desktop
-import java.net.URI
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 
@@ -31,7 +29,7 @@ class AuthViewModel(
     private val api: ApiClient,
     private val dataStore: MyDataStore,
     private val global: GlobalStore,
-) : ViewModel(CoroutineScope(Dispatchers.IO)) {
+) : ViewModel(CoroutineScope(Dispatchers.Default)) {
     var isOperating by mutableStateOf(false)
         private set
 
@@ -79,7 +77,7 @@ class AuthViewModel(
     private var countdownJob: Job? = null
 
     private fun startCountdownJob() {
-        viewModelScope.launch(Dispatchers.Default) {
+        countdownJob = viewModelScope.launch(Dispatchers.Default) {
             while (isActive) {
                 regCodeRemainSecs -= 1
                 delay(1000)
@@ -88,7 +86,7 @@ class AuthViewModel(
     }
 
     fun regSendEmailCode() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 isOperating = true
 
@@ -196,7 +194,7 @@ class AuthViewModel(
         }
     }
 
-    private suspend fun doRegister() = withContext(Dispatchers.IO) {
+    private suspend fun doRegister() = withContext(Dispatchers.Default) {
         try {
             isOperating = true
             val resp = api.authModule.registerEmail(
@@ -294,5 +292,9 @@ class AuthViewModel(
             waitForCaptcha()
             doRegister()
         }
+    }
+
+    fun forgetPassword() {
+        global.nav.push(Route.ForgetPassword)
     }
 }

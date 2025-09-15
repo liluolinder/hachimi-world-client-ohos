@@ -98,4 +98,17 @@ class AuthModule(
 
     suspend fun submitCaptcha(req: SubmitCaptchaReq): WebResult<Unit>
         = client.post("/auth/captcha/submit", req, auth = false)
+
+
+    @Serializable
+    data class ResetPasswordReq(
+        val email: String,
+        val code: String,
+        val newPassword: String,
+        val logoutAllDevices: Boolean,
+        val captchaKey: String,
+    )
+
+    suspend fun resetPassword(req: ResetPasswordReq): WebResult<Unit>
+        = client.post("/auth/reset_password", req, auth = false)
 }
