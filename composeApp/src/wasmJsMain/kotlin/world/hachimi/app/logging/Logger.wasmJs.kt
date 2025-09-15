@@ -1,20 +1,24 @@
 package world.hachimi.app.logging
 
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
+@OptIn(ExperimentalTime::class)
 actual object Logger {
     actual inline fun e(tag: String, message: String, throwable: Throwable?) {
-        println("[ERROR]($tag) $message ${throwable?.stackTraceToString()}")
+        println("${Clock.System.now()}  ERROR [$tag] $message ${throwable?.stackTraceToString()}")
     }
 
     actual inline fun w(tag: String, message: String, throwable: Throwable?) {
-        println("[WARNING]($tag) $message ${throwable?.stackTraceToString()}")
+        println("${Clock.System.now()}  WARNING [$tag] $message ${throwable?.stackTraceToString()}")
     }
 
     actual inline fun d(tag: String, message: String) {
-        println("[DEBUG]($tag) $message")
+        println("${Clock.System.now()}  DEBUG [$tag] $message")
     }
 
     actual inline fun i(tag: String, message: String) {
-        println("[INFO]($tag) $message")
+        println("${Clock.System.now()}  INFO [$tag] $message")
     }
 
 }
