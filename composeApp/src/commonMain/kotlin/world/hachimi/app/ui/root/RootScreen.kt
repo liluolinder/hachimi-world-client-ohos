@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
-import world.hachimi.app.ui.committee.CommitteeCenterScreen
+import world.hachimi.app.ui.component.DevelopingPage
 import world.hachimi.app.ui.component.Logo
 import world.hachimi.app.ui.component.NeedLoginScreen
 import world.hachimi.app.ui.contributor.ContributorCenterScreen
@@ -42,12 +42,12 @@ fun RootScreen(routeContent: Route.Root) {
                 when (routeContent) {
                     Route.Root.Home -> HomeScreen()
                     is Route.Root.Search -> SearchScreen(routeContent.query)
-                    Route.Root.RecentLike -> if (global.isLoggedIn) {} else NeedLoginScreen()
+                    Route.Root.RecentLike -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
                     Route.Root.RecentPlay -> if (global.isLoggedIn) RecentPlayScreen() else NeedLoginScreen()
                     is Route.Root.MyPlaylist -> if (global.isLoggedIn) PlaylistRouteScreen(routeContent) else NeedLoginScreen()
-                    Route.Root.MySubscribe -> if (global.isLoggedIn) {} else NeedLoginScreen()
+                    Route.Root.MySubscribe -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
                     is Route.Root.CreationCenter -> if (global.isLoggedIn) CreationCenterScreen(routeContent) else NeedLoginScreen()
-                    Route.Root.CommitteeCenter -> if (global.isLoggedIn) CommitteeCenterScreen() else NeedLoginScreen()
+                    Route.Root.CommitteeCenter -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
                     is Route.Root.ContributorCenter -> if (global.isLoggedIn) ContributorCenterScreen(routeContent) else NeedLoginScreen()
                     Route.Root.UserSpace -> UserSpaceScreen()
                     Route.Root.Settings -> SettingsScreen()
