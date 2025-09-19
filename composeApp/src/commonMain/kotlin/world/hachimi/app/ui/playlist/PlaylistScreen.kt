@@ -26,6 +26,7 @@ import world.hachimi.app.model.PlaylistViewModel
 import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.component.LoadingPage
 import world.hachimi.app.ui.component.ReloadPage
+import world.hachimi.app.ui.playlist.components.PlaylistItem
 
 @Composable
 fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
@@ -34,11 +35,11 @@ fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
         onDispose { vm.dispose() }
     }
     val global = koinInject<GlobalStore>()
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        Text(modifier = Modifier.fillMaxWidth(), text = "我的歌单", style = MaterialTheme.typography.titleLarge)
+    Column(Modifier.fillMaxSize()) {
+        Text(modifier = Modifier.fillMaxWidth().padding(top = 24.dp, start = 24.dp), text = "我的歌单", style = MaterialTheme.typography.titleLarge)
+
+        Spacer(Modifier.height(24.dp))
+
         AnimatedContent(vm.initializeStatus, modifier = Modifier.weight(1f)) {
             when (it) {
                 InitializeStatus.INIT -> LoadingPage()
@@ -46,10 +47,16 @@ fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
                 InitializeStatus.LOADED -> Box(Modifier.fillMaxSize()) {
                     if (vm.playlists.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("空空如也")
-                    } else LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize()) {
+                    } else LazyVerticalGrid(
+                        modifier = Modifier.fillMaxSize(),
+                        columns = GridCells.Adaptive(minSize = 180.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
                         itemsIndexed(vm.playlists, key = { index, item -> item.id }) { index, item ->
                             PlaylistItem(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 coverUrl = item.coverUrl,
                                 title = item.name,
                                 songCount = item.songsCount,
@@ -69,56 +76,3 @@ fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
     }
 }
 
-@Composable
-private fun PlaylistItem(
-    coverUrl: String?,
-    title: String,
-    songCount: Int,
-    createTime: Instant,
-    onEnter: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(modifier = modifier, onClick = onEnter) {
-        Column {
-            Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {
-                    AsyncImage(
-                        modifier = Modifier.fillMaxSize(),
-                        model = coverUrl,
-                        contentDescription = "Playlist Cover Image",
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Row(
-                    Modifier.align(Alignment.BottomStart).padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.secondary,
-                        shape = MaterialTheme.shapes.small,
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            text = "$songCount 首", style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            }
-
-            Column(Modifier.padding(vertical = 8.dp, horizontal = 8.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
-                /*Text(
-                    text = author,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )*/
-            }
-        }
-    }
-}
