@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -35,6 +37,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.ForgetPasswordViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.ui.auth.components.CaptchaDialog
+import world.hachimi.app.ui.auth.components.FormCard
+import world.hachimi.app.ui.insets.currentSafeAreaInsets
 import world.hachimi.app.ui.theme.PreviewTheme
 
 @Composable
@@ -44,113 +48,110 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
         onDispose { vm.dispose() }
     }
     val global = koinInject<GlobalStore>()
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().padding(top = currentSafeAreaInsets().top)) {
         IconButton(
-            modifier = Modifier.padding(24.dp).align(Alignment.TopStart),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 24.dp).align(Alignment.TopStart),
             onClick = { global.nav.back() }) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
-        Column(
-            modifier = Modifier.width(360.dp).align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+
+        FormCard(
+            modifier = Modifier
+                .padding(horizontal = 24.dp, vertical = 24.dp)
+                .widthIn(max = 512.dp)
+                .fillMaxWidth()
+                .align(Alignment.Center),
+            title = { Text("重置密码") },
+            subtitle = { Text("神也会忘记密码") },
         ) {
-            // Title
-            Text(
-                text = "重置密码",
-                style = MaterialTheme.typography.displayLarge
-            )
-            Text(
-                text = "神也会忘记密码",
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                TextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = vm.email,
+                    onValueChange = { vm.email = it },
+                    label = { Text("邮箱") },
+                    singleLine = true
+                )
+                TextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = vm.password,
+                    onValueChange = { vm.password = it },
+                    label = { Text("新密码") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                TextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = vm.passwordRepeat,
+                    onValueChange = { vm.passwordRepeat = it },
+                    label = { Text("确认密码") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation()
+                )
 
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                val enabled by remember {
+                    derivedStateOf {
+                        vm.email.isNotBlank() && vm.password.isNotBlank()
+                                && vm.password == vm.passwordRepeat
+                                && vm.verifyCode.isNotBlank()
+                    }
+                }
 
-
+                Column {
                     TextField(
                         modifier = Modifier.fillMaxWidth(),
-                        value = vm.email,
-                        onValueChange = { vm.email = it },
-                        label = { Text("邮箱") },
+                        value = vm.verifyCode,
+                        onValueChange = { vm.verifyCode = it },
+                        label = { Text("验证码") },
                         singleLine = true
                     )
-                    TextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = vm.password,
-                        onValueChange = { vm.password = it },
-                        label = { Text("密码") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation()
-                    )
-                    TextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = vm.passwordRepeat,
-                        onValueChange = { vm.passwordRepeat = it },
-                        label = { Text("确认密码") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation()
-                    )
 
-                    val enabled by remember {
-                        derivedStateOf {
-                            vm.email.isNotBlank() && vm.password.isNotBlank()
-                                    && vm.password == vm.passwordRepeat
-                                    && vm.verifyCode.isNotBlank()
-                        }
+                    val sendCodeEnabled by remember {
+                        derivedStateOf { vm.codeRemainSecs < 0 }
                     }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    TextButton(
+                        modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
+                        onClick = { vm.sendVerifyCode() },
+                        enabled = sendCodeEnabled && !vm.operating && vm.email.isNotBlank()
                     ) {
-                        TextField(
-                            modifier = Modifier.weight(1f),
-                            value = vm.verifyCode,
-                            onValueChange = { vm.verifyCode = it },
-                            label = { Text("验证码") },
-                            singleLine = true
+                        Text(
+                            if (sendCodeEnabled) "发送"
+                            else "重新发送 (${vm.codeRemainSecs} 秒)"
                         )
-
-                        val sendCodeEnabled by remember {
-                            derivedStateOf { vm.codeRemainSecs < 0 }
-                        }
-                        Button(
-                            onClick = { vm.sendVerifyCode() },
-                            enabled = sendCodeEnabled && !vm.operating && vm.email.isNotBlank()
-                        ) {
-                            Text(
-                                if (sendCodeEnabled) "发送"
-                                else "重新发送 (${vm.codeRemainSecs} 秒)"
-                            )
-                        }
                     }
+                }
+                Row(Modifier.fillMaxWidth()) {
+                    TextButton(modifier = Modifier, onClick = { global.nav.back() }) {
+                        Text("返回")
+                    }
+
+                    Spacer(Modifier.weight(1f))
+
                     Button(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.width(110.dp),
                         onClick = { vm.submit() },
                         enabled = enabled && !vm.operating
                     ) {
-                        Text("提交")
+                        Text("登录")
                     }
                 }
             }
+
+            if (vm.showSuccessDialog) AlertDialog(
+                onDismissRequest = { vm.closeDialog() },
+                confirmButton = {
+                    TextButton(onClick = { vm.closeDialog() }) {
+                        Text("确定")
+                    }
+                },
+                title = { Text("成功") },
+                text = { Text("已成功将您的密码重置") }
+            )
+
+            if (vm.showCaptchaDialog) CaptchaDialog(onConfirm = {
+                vm.captchaContinue()
+            })
         }
-
-        if (vm.showSuccessDialog) AlertDialog(
-            onDismissRequest = { vm.closeDialog() },
-            confirmButton = {
-                TextButton(onClick = { vm.closeDialog() }) {
-                    Text("确定")
-                }
-            },
-            title = { Text("成功") },
-            text = { Text("已成功将您的密码重置") }
-        )
-
-        if (vm.showCaptchaDialog) CaptchaDialog(onConfirm = {
-            vm.captchaContinue()
-        })
     }
 }
 
