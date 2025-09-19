@@ -13,6 +13,7 @@ import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.committee.CommitteeCenterScreen
 import world.hachimi.app.ui.component.Logo
+import world.hachimi.app.ui.component.NeedLoginScreen
 import world.hachimi.app.ui.contributor.ContributorCenterScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
 import world.hachimi.app.ui.home.HomeScreen
@@ -39,15 +40,15 @@ fun RootScreen(routeContent: Route.Root) {
         content = {
             AnimatedContent(routeContent) { routeContent ->
                 when (routeContent) {
-                    is Route.Root.Search -> SearchScreen(routeContent.query)
                     Route.Root.Home -> HomeScreen()
-                    Route.Root.RecentLike -> {}
-                    Route.Root.RecentPlay -> RecentPlayScreen()
-                    is Route.Root.MyPlaylist -> PlaylistRouteScreen(routeContent)
-                    Route.Root.MySubscribe -> {}
-                    is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)
-                    Route.Root.CommitteeCenter -> CommitteeCenterScreen()
-                    is Route.Root.ContributorCenter -> ContributorCenterScreen(routeContent)
+                    is Route.Root.Search -> SearchScreen(routeContent.query)
+                    Route.Root.RecentLike -> if (global.isLoggedIn) {} else NeedLoginScreen()
+                    Route.Root.RecentPlay -> if (global.isLoggedIn) RecentPlayScreen() else NeedLoginScreen()
+                    is Route.Root.MyPlaylist -> if (global.isLoggedIn) PlaylistRouteScreen(routeContent) else NeedLoginScreen()
+                    Route.Root.MySubscribe -> if (global.isLoggedIn) {} else NeedLoginScreen()
+                    is Route.Root.CreationCenter -> if (global.isLoggedIn) CreationCenterScreen(routeContent) else NeedLoginScreen()
+                    Route.Root.CommitteeCenter -> if (global.isLoggedIn) CommitteeCenterScreen() else NeedLoginScreen()
+                    is Route.Root.ContributorCenter -> if (global.isLoggedIn) ContributorCenterScreen(routeContent) else NeedLoginScreen()
                     Route.Root.UserSpace -> UserSpaceScreen()
                     Route.Root.Settings -> SettingsScreen()
                 }
