@@ -94,11 +94,16 @@ fun Lyrics(
                     if (it == 0) 1f else 0.48f
                 }
 
-                if (line.isBlank()) Icon(imageVector = Icons.Default.MusicNote, contentDescription = "Interlude",  modifier = Modifier.padding(vertical = 12.dp).size(28.dp).graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    transformOrigin = TransformOrigin(0f, 0.5f)
-                }) else Text(
+                if (line.isBlank()) Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = "Interlude",
+                    tint = LocalContentColor.current.copy(alpha = alpha),
+                    modifier = Modifier.padding(vertical = 12.dp).size(28.dp).graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0f, 0.5f)
+                    }
+                ) else Text(
                     modifier = Modifier.padding(vertical = 12.dp).graphicsLayer {
                         scaleX = scale
                         scaleY = scale
