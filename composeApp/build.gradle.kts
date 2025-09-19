@@ -169,12 +169,12 @@ val gitVersionNameShort = gitVersionName.map { it.substringBefore("-") }
 
 android {
     namespace = "world.hachimi.app"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "world.hachimi.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        targetSdk = 35
         versionCode = gitVersionCode.get()
         versionName = gitVersionName.get()
     }
