@@ -53,7 +53,7 @@ fun CompactTopAppBar(
 ) {
     Surface(Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).statusBarsPadding(),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).padding(top = currentSafeAreaInsets().top),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onExpandNavClick) {
