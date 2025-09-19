@@ -95,7 +95,13 @@ fun CompactFooterPlayer(modifier: Modifier) {
                 alignment = Alignment.CenterEnd,
                 onDismissRequest = { queueExpanded = false }
             ) {
-                MusicQueue(onClose = { queueExpanded = false })
+                MusicQueue(
+                    onClose = { queueExpanded = false },
+                    queue = global.musicQueue,
+                    playingSongId = global.playerState.songDisplayId,
+                    onPlayClick = { global.playSongInQueue(it) },
+                    onRemoveClick = { global.removeFromQueue(it) }
+                )
             }
 
             AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
@@ -182,9 +188,13 @@ fun ExpandedFooterPlayer() {
             alignment = Alignment.CenterEnd,
             onDismissRequest = { queueExpanded = false }
         ) {
-            MusicQueue(onClose = {
-                queueExpanded = false
-            })
+            MusicQueue(
+                onClose = { queueExpanded = false },
+                queue = global.musicQueue,
+                playingSongId = global.playerState.songDisplayId,
+                onPlayClick = { global.playSongInQueue(it) },
+                onRemoveClick = { global.removeFromQueue(it) }
+            )
         }
 
         AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
