@@ -1,22 +1,25 @@
 package world.hachimi.app.ui.player
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloseFullscreen
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastForEach
-import coil3.compose.AsyncImage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import world.hachimi.app.api.module.SongModule
@@ -75,18 +78,12 @@ fun CompactPlayerScreen(
 
     Column(Modifier.systemBarsPadding()) {
         Box(Modifier.fillMaxWidth().weight(1f)) {
-            if (displayingLyrics) {
-                Lyrics(
-                    modifier = Modifier.fillMaxWidth().clickable(
-                        indication = null,
-                        interactionSource = null,
-                        onClick = { displayingLyrics = false }
-                    ).padding(horizontal = 24.dp),
-                    currentLine = playerState.currentLyricsLine,
-                    lines = playerState.lyricsLines,
-                    fadeColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            } else Column(Modifier.padding(horizontal = 48.dp, vertical = 24.dp)) {
+            val lyricsAlpha by animateFloatAsState(if (displayingLyrics) 1f else 0f)
+            Column(
+                Modifier
+                    .graphicsLayer { alpha = 1f - lyricsAlpha }
+                    .padding(horizontal = 48.dp, vertical = 24.dp)
+            ) {
                 Album(
                     modifier = Modifier.fillMaxWidth().weight(1f).padding(vertical = 24.dp),
                     coverUrl = playerState.songCoverUrl,
@@ -108,7 +105,35 @@ fun CompactPlayerScreen(
                     style = MaterialTheme.typography.labelSmall,
                     color = LocalContentColor.current.copy(0.7f)
                 )
+
+                // Current lyric line
+                val lyricsLine =
+                    remember { derivedStateOf { playerState.lyricsLines.getOrNull(playerState.currentLyricsLine) } }
+
+                AnimatedContent(lyricsLine.value, modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth().wrapContentWidth(),
+                        text = it ?: ""
+                    )
+                }
             }
+
+            Lyrics(
+                modifier = Modifier.graphicsLayer {
+                    // Hide and do not consume pointer input
+                    this.scaleX = if (lyricsAlpha == 0f) 0f else 1f
+                    this.scaleY = if (lyricsAlpha == 0f) 0f else 1f
+                    this.alpha = lyricsAlpha
+                }.fillMaxWidth().clickable(
+                    indication = null,
+                    interactionSource = null,
+                    onClick = { displayingLyrics = false },
+                    enabled = displayingLyrics
+                ).padding(horizontal = 24.dp),
+                currentLine = playerState.currentLyricsLine,
+                lines = playerState.lyricsLines,
+                fadeColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         }
 
         Column(
@@ -120,15 +145,8 @@ fun CompactPlayerScreen(
             ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Current lyric line
-            if (!displayingLyrics) {
-                playerState.lyricsLines.getOrNull(playerState.currentLyricsLine)?.let { lyricsLine ->
-                    Text(text = lyricsLine)
-                }
-            }
-
             SongControl(
-                modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
                 isPlaying = playerState.isPlaying,
                 isLoading = playerState.isBuffering,
                 loadingProgress = playerState.downloadProgress,
