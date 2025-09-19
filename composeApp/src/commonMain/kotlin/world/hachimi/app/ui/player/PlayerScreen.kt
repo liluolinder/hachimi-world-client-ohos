@@ -23,11 +23,13 @@ import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlayerUIState
 import world.hachimi.app.model.SongDetailInfo
+import world.hachimi.app.ui.player.components.Album
 import world.hachimi.app.ui.player.components.Lyrics
 import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
 import world.hachimi.app.ui.theme.PreviewTheme
 import world.hachimi.app.util.PlatformBackHandler
+import world.hachimi.app.util.WindowSize
 
 @Composable
 fun PlayerScreen() {
@@ -37,7 +39,7 @@ fun PlayerScreen() {
     }
     BoxWithConstraints {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {
-            if (maxWidth < 600.dp) {
+            if (maxWidth < WindowSize.MEDIUM) {
                 CompactPlayerScreen(
                     playerState = global.playerState,
                     onShrinkClick = { global.shrinkPlayer() },
@@ -72,50 +74,41 @@ fun CompactPlayerScreen(
     var displayingLyrics by remember { mutableStateOf(false) }
 
     Column(Modifier.systemBarsPadding()) {
-        if (displayingLyrics) {
-            Lyrics(
-                modifier = Modifier.fillMaxWidth().weight(1f).clickable(
-                    indication = null,
-                    interactionSource = null,
-                    onClick = { displayingLyrics = false }
-                ).padding(horizontal = 24.dp),
-                currentLine = playerState.currentLyricsLine,
-                lines = playerState.lyricsLines,
-                fadeColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        } else Column(Modifier.weight(1f).padding(horizontal = 48.dp, vertical = 24.dp)) {
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
-                        .aspectRatio(1f, matchHeightConstraintsFirst = true),
-                    elevation = CardDefaults.cardElevation(12.dp),
-                    onClick = { displayingLyrics = true }
-                ) {
-                    AsyncImage(
-                        model = playerState.songCoverUrl,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            if (displayingLyrics) {
+                Lyrics(
+                    modifier = Modifier.fillMaxWidth().clickable(
+                        indication = null,
+                        interactionSource = null,
+                        onClick = { displayingLyrics = false }
+                    ).padding(horizontal = 24.dp),
+                    currentLine = playerState.currentLyricsLine,
+                    lines = playerState.lyricsLines,
+                    fadeColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            } else Column(Modifier.padding(horizontal = 48.dp, vertical = 24.dp)) {
+                Album(
+                    modifier = Modifier.fillMaxWidth().weight(1f).padding(vertical = 24.dp),
+                    coverUrl = playerState.songCoverUrl,
+                    onClick = { displayingLyrics = true },
+                )
+
+                Text(
+                    text = playerState.songTitle,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = playerState.songAuthor,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LocalContentColor.current.copy(0.6f)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "基米ID：${playerState.songDisplayId}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColor.current.copy(0.7f)
+                )
             }
-
-            Text(
-                text = playerState.songTitle,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = playerState.songAuthor,
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalContentColor.current.copy(0.6f)
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "基米ID：${playerState.songDisplayId}",
-                style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColor.current.copy(0.7f)
-            )
-
         }
 
         Column(
@@ -171,17 +164,12 @@ fun ExpandedPlayerScreen(
                     Column(Modifier.align(Alignment.End).padding(48.dp)) {
                         BoxWithConstraints(Modifier.wrapContentSize()) {
                             val size = min(maxHeight * 0.7f, maxWidth)
-                            ElevatedCard(
-                                modifier = Modifier.size(size),
-                                elevation = CardDefaults.cardElevation(12.dp)
-                            ) {
-                                AsyncImage(
-                                    model = playerState.songCoverUrl,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
+
+                            Album(
+                                playerState.songCoverUrl,
+                                onClick = {},
+                                modifier = Modifier.size(size)
+                            )
                         }
 
                         Spacer(Modifier.height(16.dp))
