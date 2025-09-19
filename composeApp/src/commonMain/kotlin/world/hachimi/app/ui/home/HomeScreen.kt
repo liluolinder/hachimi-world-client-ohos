@@ -53,6 +53,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                                     author = item.uploaderName,
                                     tags = item.tags.map { it.name },
                                     likeCount = item.likeCount,
+                                    playCount = item.playCount,
                                     onClick = {
                                         global.insertToQueue(item.displayId, true, false)
                                     },
