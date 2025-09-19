@@ -135,6 +135,10 @@ kotlin {
             implementation(npm("howler", "2.2.4"))
         }
     }
+
+    compilerOptions {
+        optIn.add("kotlin.time.ExperimentalTime")
+    }
 }
 
 ksp {
