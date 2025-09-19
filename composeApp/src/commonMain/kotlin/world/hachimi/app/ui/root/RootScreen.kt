@@ -31,7 +31,7 @@ fun RootScreen(routeContent: Route.Root) {
     val global = koinInject<GlobalStore>()
     AdaptiveScreen(
         navigationContent = { onChange ->
-            SideNavigation(global, routeContent, onChange = {
+            SideNavigation(content = routeContent, onChange = {
                 global.nav.push(it)
                 onChange(it)
             })
