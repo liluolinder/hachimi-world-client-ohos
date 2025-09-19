@@ -1,3 +1,4 @@
+# TODO: Let the steps reusable by using composite action
 name: Release Distributions
 on:
   pull_request:
@@ -69,6 +70,11 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           echo $PR_BODY > changelog.txt
+          # Step 1: Replace \r\n with \n
+          sed 's/\r\n/\n/g' changelog.txt > changelog_tmp.txt
+          # Step 2: Replace standalone \r with \n
+          sed 's/\r/\n/g' changelog_tmp.txt > changelog_fixed.txt
+          mv changelog_fixed.txt changelog.txt
           DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/macos/$FILE_NAME"
           # Prepare data
           JSON_DATA=$(jq -n \
@@ -156,6 +162,11 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           echo $PR_BODY > changelog.txt
+          # Step 1: Replace \r\n with \n
+          sed 's/\r\n/\n/g' changelog.txt > changelog_tmp.txt
+          # Step 2: Replace standalone \r with \n
+          sed 's/\r/\n/g' changelog_tmp.txt > changelog_fixed.txt
+          mv changelog_fixed.txt changelog.txt
           DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/windows/$FILE_NAME"
           # Prepare data
           JSON_DATA=$(jq -n \
@@ -242,6 +253,11 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           echo $PR_BODY > changelog.txt
+          # Step 1: Replace \r\n with \n
+          sed 's/\r\n/\n/g' changelog.txt > changelog_tmp.txt
+          # Step 2: Replace standalone \r with \n
+          sed 's/\r/\n/g' changelog_tmp.txt > changelog_fixed.txt
+          mv changelog_fixed.txt changelog.txt
           DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/linux/$FILE_NAME"
           # Prepare data
           JSON_DATA=$(jq -n \
@@ -344,6 +360,11 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           echo $PR_BODY > changelog.txt
+          # Step 1: Replace \r\n with \n
+          sed 's/\r\n/\n/g' changelog.txt > changelog_tmp.txt
+          # Step 2: Replace standalone \r with \n
+          sed 's/\r/\n/g' changelog_tmp.txt > changelog_fixed.txt
+          mv changelog_fixed.txt changelog.txt
           DOWNLOAD_URL="https://${{ secrets.S3_DOMAIN }}/distribution/android/$FILE_NAME"
           # Prepare data
           JSON_DATA=$(jq -n \

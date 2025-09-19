@@ -8,7 +8,7 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.headersOf
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.io.Source
 import kotlinx.serialization.Serializable
 import world.hachimi.app.api.ApiClient

@@ -3,14 +3,16 @@ package world.hachimi.app.util
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
-import kotlinx.datetime.*
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.abs
-import kotlin.ranges.coerceIn
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
+import kotlin.time.Instant
 
 @Composable
 fun formatTime(instant: Instant, distance: Boolean = false, thresholdDay: Int = 7, precise: Boolean = true): String {

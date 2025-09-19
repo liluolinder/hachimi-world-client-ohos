@@ -11,8 +11,9 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
-import world.hachimi.app.ui.committee.CommitteeCenterScreen
+import world.hachimi.app.ui.component.DevelopingPage
 import world.hachimi.app.ui.component.Logo
+import world.hachimi.app.ui.component.NeedLoginScreen
 import world.hachimi.app.ui.contributor.ContributorCenterScreen
 import world.hachimi.app.ui.creation.CreationCenterScreen
 import world.hachimi.app.ui.home.HomeScreen
@@ -30,21 +31,24 @@ import world.hachimi.app.ui.userspace.UserSpaceScreen
 fun RootScreen(routeContent: Route.Root) {
     val global = koinInject<GlobalStore>()
     AdaptiveScreen(
-        navigationContent = {
-            SideNavigation(global, routeContent)
+        navigationContent = { onChange ->
+            SideNavigation(content = routeContent, onChange = {
+                global.nav.push(it)
+                onChange(it)
+            })
         },
         content = {
             AnimatedContent(routeContent) { routeContent ->
                 when (routeContent) {
-                    is Route.Root.Search -> SearchScreen(routeContent.query)
                     Route.Root.Home -> HomeScreen()
-                    Route.Root.RecentLike -> {}
-                    Route.Root.RecentPlay -> RecentPlayScreen()
-                    is Route.Root.MyPlaylist -> PlaylistRouteScreen(routeContent)
-                    Route.Root.MySubscribe -> {}
-                    is Route.Root.CreationCenter -> CreationCenterScreen(routeContent)
-                    Route.Root.CommitteeCenter -> CommitteeCenterScreen()
-                    is Route.Root.ContributorCenter -> ContributorCenterScreen(routeContent)
+                    is Route.Root.Search -> SearchScreen(routeContent.query)
+                    Route.Root.RecentLike -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
+                    Route.Root.RecentPlay -> if (global.isLoggedIn) RecentPlayScreen() else NeedLoginScreen()
+                    is Route.Root.MyPlaylist -> if (global.isLoggedIn) PlaylistRouteScreen(routeContent) else NeedLoginScreen()
+                    Route.Root.MySubscribe -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
+                    is Route.Root.CreationCenter -> if (global.isLoggedIn) CreationCenterScreen(routeContent) else NeedLoginScreen()
+                    Route.Root.CommitteeCenter -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
+                    is Route.Root.ContributorCenter -> if (global.isLoggedIn) ContributorCenterScreen(routeContent) else NeedLoginScreen()
                     Route.Root.UserSpace -> UserSpaceScreen()
                     Route.Root.Settings -> SettingsScreen()
                 }
@@ -56,21 +60,30 @@ fun RootScreen(routeContent: Route.Root) {
 
 @Composable
 private fun AdaptiveScreen(
-    navigationContent: @Composable () -> Unit,
+    navigationContent: @Composable (onChange: (Route) -> Unit) -> Unit,
     content: @Composable () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     BoxWithConstraints {
         if (maxWidth < 600.dp) { // Compact
-            CompactScreen(navigationContent, content)
+            CompactScreen({state ->
+                navigationContent {
+                    scope.launch {
+                        state.close()
+                    }
+                }
+            }, content)
         } else {
-            ExpandedScreen(navigationContent, content)
+            ExpandedScreen({
+                navigationContent({})
+            }, content)
         }
     }
 }
 
 @Composable
 private fun CompactScreen(
-    navigationContent: @Composable () -> Unit,
+    navigationContent: @Composable (drawerState: DrawerState) -> Unit,
     content: @Composable () -> Unit,
     global: GlobalStore = koinInject()
 ) {
@@ -82,7 +95,7 @@ private fun CompactScreen(
             ModalDrawerSheet(Modifier.width(300.dp)) {
                 Logo(Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp))
                 Box(Modifier.padding(12.dp)) {
-                    navigationContent()
+                    navigationContent(drawerState)
                 }
             }
         }

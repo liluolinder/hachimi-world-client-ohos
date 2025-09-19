@@ -1,33 +1,38 @@
 package world.hachimi.app.ui.player
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloseFullscreen
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastForEach
-import coil3.compose.AsyncImage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlayerUIState
 import world.hachimi.app.model.SongDetailInfo
+import world.hachimi.app.ui.player.components.Album
 import world.hachimi.app.ui.player.components.Lyrics
 import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
 import world.hachimi.app.ui.theme.PreviewTheme
 import world.hachimi.app.util.PlatformBackHandler
+import world.hachimi.app.util.WindowSize
 
 @Composable
 fun PlayerScreen() {
@@ -37,7 +42,7 @@ fun PlayerScreen() {
     }
     BoxWithConstraints {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {
-            if (maxWidth < 600.dp) {
+            if (maxWidth < WindowSize.MEDIUM) {
                 CompactPlayerScreen(
                     playerState = global.playerState,
                     onShrinkClick = { global.shrinkPlayer() },
@@ -72,50 +77,63 @@ fun CompactPlayerScreen(
     var displayingLyrics by remember { mutableStateOf(false) }
 
     Column(Modifier.systemBarsPadding()) {
-        if (displayingLyrics) {
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            val lyricsAlpha by animateFloatAsState(if (displayingLyrics) 1f else 0f)
+            Column(
+                Modifier
+                    .graphicsLayer { alpha = 1f - lyricsAlpha }
+                    .padding(horizontal = 48.dp, vertical = 24.dp)
+            ) {
+                Album(
+                    modifier = Modifier.fillMaxWidth().weight(1f).padding(vertical = 24.dp),
+                    coverUrl = playerState.songCoverUrl,
+                    onClick = { displayingLyrics = true },
+                )
+
+                Text(
+                    text = playerState.songTitle,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = playerState.songAuthor,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LocalContentColor.current.copy(0.6f)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "基米ID：${playerState.songDisplayId}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColor.current.copy(0.7f)
+                )
+
+                // Current lyric line
+                val lyricsLine =
+                    remember { derivedStateOf { playerState.lyricsLines.getOrNull(playerState.currentLyricsLine) } }
+
+                AnimatedContent(lyricsLine.value, modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth().wrapContentWidth(),
+                        text = it ?: ""
+                    )
+                }
+            }
+
             Lyrics(
-                modifier = Modifier.fillMaxWidth().weight(1f).clickable(
+                modifier = Modifier.graphicsLayer {
+                    // Hide and do not consume pointer input
+                    this.scaleX = if (lyricsAlpha == 0f) 0f else 1f
+                    this.scaleY = if (lyricsAlpha == 0f) 0f else 1f
+                    this.alpha = lyricsAlpha
+                }.fillMaxWidth().clickable(
                     indication = null,
                     interactionSource = null,
-                    onClick = { displayingLyrics = false }
+                    onClick = { displayingLyrics = false },
+                    enabled = displayingLyrics
                 ).padding(horizontal = 24.dp),
                 currentLine = playerState.currentLyricsLine,
                 lines = playerState.lyricsLines,
                 fadeColor = MaterialTheme.colorScheme.surfaceVariant
             )
-        } else Column(Modifier.weight(1f).padding(horizontal = 48.dp, vertical = 24.dp)) {
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
-                        .aspectRatio(1f, matchHeightConstraintsFirst = true),
-                    elevation = CardDefaults.cardElevation(12.dp),
-                    onClick = { displayingLyrics = true }
-                ) {
-                    AsyncImage(
-                        model = playerState.songCoverUrl,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-
-            Text(
-                text = playerState.songTitle,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = playerState.songAuthor,
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalContentColor.current.copy(0.6f)
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "基米ID：${playerState.songDisplayId}",
-                style = MaterialTheme.typography.labelSmall,
-                color = LocalContentColor.current.copy(0.7f)
-            )
-
         }
 
         Column(
@@ -127,15 +145,8 @@ fun CompactPlayerScreen(
             ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Current lyric line
-            if (!displayingLyrics) {
-                playerState.lyricsLines.getOrNull(playerState.currentLyricsLine)?.let { lyricsLine ->
-                    Text(text = lyricsLine)
-                }
-            }
-
             SongControl(
-                modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
                 isPlaying = playerState.isPlaying,
                 isLoading = playerState.isBuffering,
                 loadingProgress = playerState.downloadProgress,
@@ -171,17 +182,12 @@ fun ExpandedPlayerScreen(
                     Column(Modifier.align(Alignment.End).padding(48.dp)) {
                         BoxWithConstraints(Modifier.wrapContentSize()) {
                             val size = min(maxHeight * 0.7f, maxWidth)
-                            ElevatedCard(
-                                modifier = Modifier.size(size),
-                                elevation = CardDefaults.cardElevation(12.dp)
-                            ) {
-                                AsyncImage(
-                                    model = playerState.songCoverUrl,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
+
+                            Album(
+                                playerState.songCoverUrl,
+                                onClick = {},
+                                modifier = Modifier.size(size)
+                            )
                         }
 
                         Spacer(Modifier.height(16.dp))

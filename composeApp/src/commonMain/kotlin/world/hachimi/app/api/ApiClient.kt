@@ -13,8 +13,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -28,6 +26,8 @@ import world.hachimi.app.api.module.VersionModule
 import world.hachimi.app.logging.Logger
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -197,8 +197,8 @@ class ApiClient(private val baseUrl: String) {
                                 refreshToken = data.refreshToken
                                 authListener.onTokenChange(data.accessToken, data.refreshToken)
                             } else {
-                                Logger.w(TAG, "refreshToken: Refreshing token returns error")
                                 val data = result.errData<CommonError>()
+                                Logger.w(TAG, "refreshToken: Refreshing token returns error: ${data.code}, ${data.msg}")
                                 authListener.onAuthenticationError(
                                     AuthError.RefreshTokenError(
                                         requestId,

@@ -96,7 +96,7 @@ class AndroidPlayer(
         // TODO[refactor]: This is a workaround to get uri. Consider to use network uri or other ways in the future.
         val audioFile = withContext(Dispatchers.IO) {
             val cacheDir = (getPlatform().getCacheDir().androidFile as AndroidFile.FileWrapper)
-            cacheDir.file.resolve("playing").also {
+            cacheDir.file.resolve("playing.${item.format}").also {
                 it.writeBytes(item.audioBytes)
             }
         }

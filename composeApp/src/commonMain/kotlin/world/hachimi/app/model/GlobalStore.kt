@@ -29,6 +29,7 @@ import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.AuthError
 import world.hachimi.app.api.AuthenticationListener
 import world.hachimi.app.api.CommonError
+import world.hachimi.app.api.DefaultAuthenticationListener
 import world.hachimi.app.api.err
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.VersionModule
@@ -179,18 +180,16 @@ class GlobalStore(
         }
     }
 
-    fun logout() {
-        scope.launch {
-            dataStore.delete(PreferencesKeys.USER_UID)
-            dataStore.delete(PreferencesKeys.USER_NAME)
-            dataStore.delete(PreferencesKeys.USER_AVATAR)
-            dataStore.delete(PreferencesKeys.AUTH_ACCESS_TOKEN)
-            dataStore.delete(PreferencesKeys.AUTH_REFRESH_TOKEN)
-            api.setToken(null, null)
-            nav.replace(Route.Root.Home)
-            isLoggedIn = false
-            userInfo = null
-        }
+    fun logout() = scope.launch {
+        api.setToken(null, null)
+        dataStore.delete(PreferencesKeys.USER_UID)
+        dataStore.delete(PreferencesKeys.USER_NAME)
+        dataStore.delete(PreferencesKeys.USER_AVATAR)
+        dataStore.delete(PreferencesKeys.AUTH_ACCESS_TOKEN)
+        dataStore.delete(PreferencesKeys.AUTH_REFRESH_TOKEN)
+        nav.replace(Route.Root.Home)
+        isLoggedIn = false
+        userInfo = null
     }
 
     @Deprecated("Use alert with i18n instead")
@@ -368,7 +367,6 @@ class GlobalStore(
     }
 
     fun setLoginUser(uid: Long, name: String, avatarUrl: String?) {
-        // TODO: Store user here
         Snapshot.withMutableSnapshot {
             userInfo = UserInfo(
                 uid = uid,
@@ -407,6 +405,7 @@ class GlobalStore(
                     api.httpClient.get(data.coverUrl).bodyAsBytes()
                 }
                 val filename = data.audioUrl.substringAfterLast("/")
+                val extension = filename.substringAfterLast(".")
 
                 val cache = songCache.get(filename)
                 val buffer = if (cache != null) {
@@ -455,6 +454,7 @@ class GlobalStore(
                     artist = data.uploaderName,
                     audioBytes = buffer.readByteArray(),
                     coverBytes = coverBytes.await(),
+                    format = extension
                 ), autoPlay = true)
 
                 // Touch playing

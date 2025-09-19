@@ -13,14 +13,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Female
+import androidx.compose.material.icons.filled.Male
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,6 +40,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.UserSpaceViewModel
+import world.hachimi.app.util.fillMaxWithLimit
 
 @Composable
 fun UserSpaceScreen(vm: UserSpaceViewModel = koinViewModel()) {
@@ -49,10 +52,10 @@ fun UserSpaceScreen(vm: UserSpaceViewModel = koinViewModel()) {
     }
     val global = koinInject<GlobalStore>()
     Column(
-        modifier = Modifier.fillMaxSize().wrapContentSize().widthIn(max = 1000.dp).padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        Modifier.fillMaxWithLimit().padding(horizontal = 24.dp).verticalScroll(rememberScrollState())
     ) {
+        Spacer(Modifier.height(24.dp))
+
         Row(Modifier.fillMaxWidth()) {
             Text(modifier = Modifier.weight(1f), text = "神人空间", style = MaterialTheme.typography.titleLarge)
             TextButton(onClick = { global.logout() }) {
@@ -60,7 +63,9 @@ fun UserSpaceScreen(vm: UserSpaceViewModel = koinViewModel()) {
             }
         }
 
-        if (vm.loading) {
+        Spacer(Modifier.height(24.dp))
+
+        if (vm.loading) Box(Modifier.fillMaxWidth().weight(1f)) {
             CircularProgressIndicator()
         } else vm.profile?.let { profile ->
             Row(Modifier.fillMaxWidth()) {
@@ -85,29 +90,27 @@ fun UserSpaceScreen(vm: UserSpaceViewModel = koinViewModel()) {
                         }
                     }
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        modifier = Modifier.clickable {
-                            vm.editUsername()
-                        },
-                        text = profile.username
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = when (profile.gender) {
-                            0 -> "男"
-                            1 -> "女"
-                            else -> "保密"
-                        }, style = MaterialTheme.typography.bodySmall
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text("Lv.4", style = MaterialTheme.typography.bodySmall)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            modifier = Modifier.clickable { vm.editUsername() },
+                            text = profile.username,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Box(Modifier.size(16.dp)) {
+                            when (profile.gender) {
+                                0 -> Icon(Icons.Default.Male, contentDescription = "Male")
+                                1 -> Icon(Icons.Default.Female, contentDescription = "Female")
+                            }
+                        }
+                    }
                 }
 
                 Spacer(Modifier.width(24.dp))
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = "UID: ${profile.uid}", style = MaterialTheme.typography.bodyLarge)
-                    Text(text = "介绍", style = MaterialTheme.typography.bodyLarge)
+                    Text(text = "UID: ${profile.uid}", style = MaterialTheme.typography.labelMedium)
+                    Text(text = "介绍", style = MaterialTheme.typography.labelMedium)
 
                     Card(
                         modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 120.dp),
@@ -121,17 +124,20 @@ fun UserSpaceScreen(vm: UserSpaceViewModel = koinViewModel()) {
                     }
                 }
             }
+
+            Text(text = "全部作品", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 24.dp))
+            Card(Modifier.fillMaxWidth().height(400.dp)) {
+
+            }
+
+
+            Text(text = "创建的歌单", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 24.dp))
+
+            Card(Modifier.fillMaxWidth().height(400.dp)) {
+
+            }
         }
-
-        Text(text = "全部作品", style = MaterialTheme.typography.titleLarge)
-        Card(Modifier.fillMaxWidth().height(400.dp)) {
-
-        }
-
-        Text(text = "创建的歌单", style = MaterialTheme.typography.titleLarge)
-        Card(Modifier.fillMaxWidth().height(400.dp)) {
-
-        }
+        Spacer(Modifier.height(24.dp))
 
         if (vm.showEditBio) AlertDialog(
             onDismissRequest = { vm.cancelEdit() },

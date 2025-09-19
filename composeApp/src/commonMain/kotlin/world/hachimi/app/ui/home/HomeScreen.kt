@@ -31,11 +31,11 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Text(
-                modifier = Modifier.padding(top = 24.dp, start = 16.dp),
+                modifier = Modifier.padding(top = 24.dp, start = 24.dp),
                 text ="推荐音乐", style = MaterialTheme.typography.titleLarge
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(24.dp))
 
             AnimatedContent(vm.initializeStatus, modifier = Modifier.fillMaxSize()) {
                 when (it) {
@@ -44,19 +44,26 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                     InitializeStatus.LOADED -> {
                         if (vm.songs.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text("空空如也")
-                        } else LazyVerticalGrid(GridCells.Adaptive(minSize = 180.dp), modifier = Modifier.fillMaxSize(),) {
+                        } else LazyVerticalGrid(
+                            modifier = Modifier.fillMaxSize(),
+                            columns = GridCells.Adaptive(minSize = 160.dp),
+                            contentPadding = PaddingValues(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
                             itemsIndexed(vm.songs, key = { index, item -> item.id }) { index, item ->
                                 SongCard(
+                                    modifier = Modifier.fillMaxWidth(),
                                     coverUrl = item.coverUrl,
                                     title = item.title,
                                     subtitle = item.subtitle,
                                     author = item.uploaderName,
                                     tags = item.tags.map { it.name },
                                     likeCount = item.likeCount,
+                                    playCount = item.playCount,
                                     onClick = {
                                         global.insertToQueue(item.displayId, true, false)
                                     },
-                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
                                 )
                             }
                         }

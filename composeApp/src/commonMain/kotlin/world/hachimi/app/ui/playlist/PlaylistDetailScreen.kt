@@ -1,5 +1,6 @@
 package world.hachimi.app.ui.playlist
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -37,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import coil3.compose.AsyncImage
@@ -72,7 +75,7 @@ fun PlaylistDetailScreen(
             vm.playlistInfo?.let { info ->
                 Row {
                     Card(
-                        modifier = Modifier.size(300.dp),
+                        modifier = Modifier.size(128.dp),
                         onClick = { vm.editCover() },
                         enabled = !vm.coverUploading
                     ) {
@@ -87,47 +90,62 @@ fun PlaylistDetailScreen(
                                 if (vm.coverUploadingProgress == 0f || vm.coverUploadingProgress == 1f) CircularProgressIndicator()
                                 else CircularProgressIndicator(progress = { vm.coverUploadingProgress })
                             }
+                            if (!info.isPublic) {
+                                Card(
+                                    modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
+                                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primary)) {
+                                    Text(
+                                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
+                                        text = "私有", style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
                         }
                     }
-                    Spacer(Modifier.width(42.dp))
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = info.name,
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                            IconButton(onClick = { vm.edit() }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit")
-                            }
-                        }
-                        OutlinedCard(Modifier.fillMaxWidth().height(160.dp)) {
-                            Text(
-                                modifier = Modifier.padding(16.dp),
-                                text = info.description ?: "暂无介绍",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                        if (!info.isPublic) {
-                            Card(colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primary)) {
-                                Text(
-                                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-                                    text = "私有", style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-                        }
-                        Button(
+
+                    Column(modifier = Modifier.weight(1f).padding(start = 24.dp).height(120.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable(onClick = { vm.edit() })) {
+                        Text(
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = { vm.playAll() }
-                        ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-                            Spacer(Modifier.width(16.dp))
-                            Text("播放全部")
-                        }
+                            text = info.name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            text = info.description ?: "暂无介绍",
+                            style = MaterialTheme.typography.bodySmall,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
 
-                Text(text = "歌曲列表 (${vm.songs.size})", style = MaterialTheme.typography.titleLarge)
+
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "歌曲列表", style = MaterialTheme.typography.titleLarge
+                    )
+
+                    Text(
+                        modifier = Modifier.padding(start = 16.dp),
+                        text = "${vm.songs.size} 首",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        modifier = Modifier,
+                        onClick = { vm.playAll() }
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                        Spacer(Modifier.width(16.dp))
+                        Text("播放全部")
+                    }
+                }
 
                 vm.songs.fastForEach {
                     SongItem(
