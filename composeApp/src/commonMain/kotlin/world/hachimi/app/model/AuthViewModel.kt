@@ -17,6 +17,7 @@ import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.AuthModule
 import world.hachimi.app.api.module.UserModule
+import world.hachimi.app.api.ok
 import world.hachimi.app.getPlatform
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.nav.Route
@@ -177,11 +178,16 @@ class AuthViewModel(
                 dataStore.set(PreferencesKeys.AUTH_ACCESS_TOKEN, data.token.accessToken)
                 dataStore.set(PreferencesKeys.AUTH_REFRESH_TOKEN, data.token.refreshToken)
 
+                val profile = api.userModule.profile(data.uid)
+                if (!profile.ok) {
+                    global.alert(profile.errData<CommonError>().msg)
+                    return
+                }
+                val profileData = profile.ok()
                 // Save login status
-                dataStore.set(PreferencesKeys.USER_UID, data.uid)
-                dataStore.set(PreferencesKeys.USER_NAME, data.username)
-                global.setLoginUser(data.uid, data.username, null)
-
+                dataStore.set(PreferencesKeys.USER_UID, profileData.uid)
+                dataStore.set(PreferencesKeys.USER_NAME, profileData.username)
+                global.setLoginUser(data.uid, data.username, profileData.avatarUrl)
                 global.nav.replace(Route.Root.Home)
             } else {
                 global.alert(resp.errData<CommonError>().msg)
