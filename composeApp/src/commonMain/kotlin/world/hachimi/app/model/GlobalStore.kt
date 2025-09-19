@@ -407,6 +407,7 @@ class GlobalStore(
                     api.httpClient.get(data.coverUrl).bodyAsBytes()
                 }
                 val filename = data.audioUrl.substringAfterLast("/")
+                val extension = filename.substringAfterLast(".")
 
                 val cache = songCache.get(filename)
                 val buffer = if (cache != null) {
@@ -455,6 +456,7 @@ class GlobalStore(
                     artist = data.uploaderName,
                     audioBytes = buffer.readByteArray(),
                     coverBytes = coverBytes.await(),
+                    format = extension
                 ), autoPlay = true)
 
                 // Touch playing

@@ -49,6 +49,7 @@ data class SongItem(
     val artist: String,
     val audioBytes: ByteArray,
     val coverBytes: ByteArray? = null,
+    val format: String
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
