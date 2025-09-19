@@ -197,8 +197,8 @@ class ApiClient(private val baseUrl: String) {
                                 refreshToken = data.refreshToken
                                 authListener.onTokenChange(data.accessToken, data.refreshToken)
                             } else {
-                                Logger.w(TAG, "refreshToken: Refreshing token returns error")
                                 val data = result.errData<CommonError>()
+                                Logger.w(TAG, "refreshToken: Refreshing token returns error: ${data.code}, ${data.msg}")
                                 authListener.onAuthenticationError(
                                     AuthError.RefreshTokenError(
                                         requestId,
