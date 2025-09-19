@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.awaitDragOrCancellation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -47,7 +48,7 @@ fun SongProgress(
         )
         Box(
             Modifier.weight(1f).height(6.dp)
-                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), CircleShape)
                 .pointerInput(Unit) {
                     awaitEachGesture {
                         val down = awaitFirstDown()
@@ -72,7 +73,7 @@ fun SongProgress(
                 }
         ) {
             val progress = if (isDragging) draggingProgress else animatedPlayingProgress
-            Box(Modifier.fillMaxWidth(progress).height(6.dp).background(MaterialTheme.colorScheme.primary))
+            Box(Modifier.fillMaxWidth(progress).height(6.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
         }
         Text(
             text = formatSongDuration(durationMillis.milliseconds),
