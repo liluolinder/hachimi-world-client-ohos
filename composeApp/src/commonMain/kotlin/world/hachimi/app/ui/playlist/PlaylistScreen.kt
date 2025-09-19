@@ -49,7 +49,7 @@ fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
                         Text("空空如也")
                     } else LazyVerticalGrid(
                         modifier = Modifier.fillMaxSize(),
-                        columns = GridCells.Adaptive(minSize = 180.dp),
+                        columns = GridCells.Adaptive(minSize = 160.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp),
                         horizontalArrangement = Arrangement.spacedBy(24.dp)
