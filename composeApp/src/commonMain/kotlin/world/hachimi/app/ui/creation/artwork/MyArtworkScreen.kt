@@ -22,6 +22,8 @@ import world.hachimi.app.api.module.PublishModule
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.MyArtworkViewModel
 import world.hachimi.app.nav.Route
+import world.hachimi.app.ui.component.LoadingPage
+import world.hachimi.app.ui.component.ReloadPage
 import world.hachimi.app.util.formatTime
 
 @Composable
@@ -44,70 +46,64 @@ fun MyArtworkScreen(
 
     AnimatedContent(vm.initializeStatus, modifier = Modifier.fillMaxSize()) {
         when(it) {
-            MyArtworkViewModel.InitializeStatus.INIT -> Box(Modifier.fillMaxSize()) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
-
-            MyArtworkViewModel.InitializeStatus.FAILED -> Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("出错了")
-                    Button(onClick = { vm.refresh() }) {
-                        Text("重试")
-                    }
-                }
-            }
-
-            MyArtworkViewModel.InitializeStatus.LOADED -> LazyColumn(
-                state = scrollState,
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = "我的作品 (${vm.total})",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-
-                        Button(onClick = {
-                            global.nav.push(Route.Root.CreationCenter.Publish)
-                        }) {
-                            Text("发布作品")
-                        }
-                    }
-                }
-                itemsIndexed(vm.items, key = { _, item -> item.reviewId }) { index, item ->
-                    ArtworkItem(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                        coverUrl = item.coverUrl,
-                        title = item.title,
-                        subtitle = item.subtitle,
-                        submitTime = item.submitTime,
-                        status = when (item.status) {
-                            PublishModule.SongPublishReviewBrief.STATUS_PENDING -> "待审核"
-                            PublishModule.SongPublishReviewBrief.STATUS_APPROVED -> "通过"
-                            PublishModule.SongPublishReviewBrief.STATUS_REJECTED -> "驳回"
-                            else -> "未知"
-                        },
-                        onEditClick = {
-                            // TODO
-                        }
+            MyArtworkViewModel.InitializeStatus.INIT -> LoadingPage()
+            MyArtworkViewModel.InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.refresh()} )
+            MyArtworkViewModel.InitializeStatus.LOADED -> Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = "我的作品 (${vm.total})",
+                        style = MaterialTheme.typography.titleLarge
                     )
-                }
-                item {
-                    if (vm.noMoreData) Box(Modifier.fillMaxWidth(), Alignment.Center) {
-                        Text(
-                            text = "没有更多了",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+
+                    Button(onClick = {
+                        global.nav.push(Route.Root.CreationCenter.Publish)
+                    }) {
+                        Text("发布作品")
                     }
                 }
-                item {
-                    if (vm.loading) Box(Modifier.fillMaxWidth(), Alignment.Center) {
-                        CircularProgressIndicator()
+
+                if (vm.items.isEmpty()) {
+                    Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("什么都没有，快发布你的第一个作品吧！")
+                    }
+                } else LazyColumn(
+                    state = scrollState,
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    itemsIndexed(vm.items, key = { _, item -> item.reviewId }) { index, item ->
+                        ArtworkItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            coverUrl = item.coverUrl,
+                            title = item.title,
+                            subtitle = item.subtitle,
+                            submitTime = item.submitTime,
+                            status = when (item.status) {
+                                PublishModule.SongPublishReviewBrief.STATUS_PENDING -> "待审核"
+                                PublishModule.SongPublishReviewBrief.STATUS_APPROVED -> "通过"
+                                PublishModule.SongPublishReviewBrief.STATUS_REJECTED -> "驳回"
+                                else -> "未知"
+                            },
+                            onEditClick = {
+                                // TODO
+                            }
+                        )
+                    }
+                    item {
+                        if (vm.noMoreData) Box(Modifier.fillMaxWidth(), Alignment.Center) {
+                            Text(
+                                text = "没有更多了",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                    item {
+                        if (vm.loading) Box(Modifier.fillMaxWidth(), Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
             }
