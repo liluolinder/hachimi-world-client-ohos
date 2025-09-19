@@ -29,6 +29,7 @@ import world.hachimi.app.getPlatform
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.component.Logo
+import world.hachimi.app.ui.insets.currentSafeAreaInsets
 import world.hachimi.app.ui.theme.PreviewTheme
 
 @Composable
@@ -88,7 +89,9 @@ fun CompactTopAppBar(
 fun ExpandedTopAppBar(global: GlobalStore) {
     Surface(Modifier.fillMaxWidth(), shadowElevation = 2.dp) {
         Row(
-            modifier = Modifier.statusBarsPadding().padding(start = 24.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+            modifier = Modifier
+                .padding(top = currentSafeAreaInsets().top)
+                .padding(start = 24.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
