@@ -144,9 +144,11 @@ fun AuthScreen(
                                 visualTransformation = PasswordVisualTransformation()
                             )
 
-                            val enabled by derivedStateOf {
-                                vm.regEmail.isNotBlank() && vm.regPassword.isNotBlank()
-                                        && vm.regPassword == vm.regPasswordRepeat
+                            val enabled by remember {
+                                derivedStateOf {
+                                    vm.regEmail.isNotBlank() && vm.regPassword.isNotBlank()
+                                            && vm.regPassword == vm.regPasswordRepeat
+                                }
                             }
                             Button(
                                 modifier = Modifier.fillMaxWidth(),

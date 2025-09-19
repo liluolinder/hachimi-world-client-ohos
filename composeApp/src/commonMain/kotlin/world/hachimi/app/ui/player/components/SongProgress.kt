@@ -25,8 +25,8 @@ fun SongProgress(
     modifier: Modifier = Modifier,
 ) {
     var isDragging by remember { mutableStateOf(false) }
-    val playingProgress by derivedStateOf {
-        (currentMillis.toDouble() / durationMillis).toFloat().coerceIn(0f, 1f)
+    val playingProgress by remember {
+        derivedStateOf { (currentMillis.toDouble() / durationMillis).toFloat().coerceIn(0f, 1f) }
     }
     var draggingProgress by remember { mutableStateOf(0f) }
     var offsetX by remember { mutableStateOf(0f) }

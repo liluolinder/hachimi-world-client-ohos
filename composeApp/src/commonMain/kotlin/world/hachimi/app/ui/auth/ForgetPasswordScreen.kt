@@ -20,6 +20,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -80,10 +81,12 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
                         visualTransformation = PasswordVisualTransformation()
                     )
 
-                    val enabled by derivedStateOf {
-                        vm.email.isNotBlank() && vm.password.isNotBlank()
-                                && vm.password == vm.passwordRepeat
-                                && vm.verifyCode.isNotBlank()
+                    val enabled by remember {
+                        derivedStateOf {
+                            vm.email.isNotBlank() && vm.password.isNotBlank()
+                                    && vm.password == vm.passwordRepeat
+                                    && vm.verifyCode.isNotBlank()
+                        }
                     }
 
                     Row(
@@ -98,7 +101,9 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
                             singleLine = true
                         )
 
-                        val sendCodeEnabled by derivedStateOf { vm.codeRemainSecs < 0 }
+                        val sendCodeEnabled by remember {
+                            derivedStateOf { vm.codeRemainSecs < 0 }
+                        }
                         Button(
                             onClick = { vm.sendVerifyCode() },
                             enabled = sendCodeEnabled && !vm.operating && vm.email.isNotBlank()
