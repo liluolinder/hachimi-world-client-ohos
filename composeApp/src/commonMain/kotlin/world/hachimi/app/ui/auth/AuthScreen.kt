@@ -10,14 +10,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.AuthViewModel
+import world.hachimi.app.model.GlobalStore
 
 @Composable
 fun AuthScreen(
@@ -30,9 +35,15 @@ fun AuthScreen(
             vm.unmount()
         }
     }
+    val global = koinInject<GlobalStore>()
     var isLogin by remember(displayLoginAsInitial) { mutableStateOf(displayLoginAsInitial) }
 
     Box(Modifier.fillMaxSize()) {
+        IconButton(
+            modifier = Modifier.padding(24.dp).align(Alignment.TopStart),
+            onClick = { global.nav.back() }) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
         Column(
             modifier = Modifier.width(360.dp).align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,

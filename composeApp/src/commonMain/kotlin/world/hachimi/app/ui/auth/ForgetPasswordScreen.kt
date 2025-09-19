@@ -8,8 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -26,8 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.ForgetPasswordViewModel
+import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.ui.auth.components.CaptchaDialog
 import world.hachimi.app.ui.theme.PreviewTheme
 
@@ -37,7 +43,13 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
         vm.mounted()
         onDispose { vm.dispose() }
     }
+    val global = koinInject<GlobalStore>()
     Box(Modifier.fillMaxSize()) {
+        IconButton(
+            modifier = Modifier.padding(24.dp).align(Alignment.TopStart),
+            onClick = { global.nav.back() }) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
         Column(
             modifier = Modifier.width(360.dp).align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
