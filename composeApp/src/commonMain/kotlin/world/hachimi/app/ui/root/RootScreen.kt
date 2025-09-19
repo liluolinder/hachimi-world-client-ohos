@@ -30,8 +30,11 @@ import world.hachimi.app.ui.userspace.UserSpaceScreen
 fun RootScreen(routeContent: Route.Root) {
     val global = koinInject<GlobalStore>()
     AdaptiveScreen(
-        navigationContent = {
-            SideNavigation(global, routeContent)
+        navigationContent = { onChange ->
+            SideNavigation(global, routeContent, onChange = {
+                global.nav.push(it)
+                onChange(it)
+            })
         },
         content = {
             AnimatedContent(routeContent) { routeContent ->
@@ -56,21 +59,30 @@ fun RootScreen(routeContent: Route.Root) {
 
 @Composable
 private fun AdaptiveScreen(
-    navigationContent: @Composable () -> Unit,
+    navigationContent: @Composable (onChange: (Route) -> Unit) -> Unit,
     content: @Composable () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     BoxWithConstraints {
         if (maxWidth < 600.dp) { // Compact
-            CompactScreen(navigationContent, content)
+            CompactScreen({state ->
+                navigationContent {
+                    scope.launch {
+                        state.close()
+                    }
+                }
+            }, content)
         } else {
-            ExpandedScreen(navigationContent, content)
+            ExpandedScreen({
+                navigationContent({})
+            }, content)
         }
     }
 }
 
 @Composable
 private fun CompactScreen(
-    navigationContent: @Composable () -> Unit,
+    navigationContent: @Composable (drawerState: DrawerState) -> Unit,
     content: @Composable () -> Unit,
     global: GlobalStore = koinInject()
 ) {
@@ -82,7 +94,7 @@ private fun CompactScreen(
             ModalDrawerSheet(Modifier.width(300.dp)) {
                 Logo(Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp))
                 Box(Modifier.padding(12.dp)) {
-                    navigationContent()
+                    navigationContent(drawerState)
                 }
             }
         }

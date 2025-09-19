@@ -15,41 +15,42 @@ import world.hachimi.app.nav.Route
 @Composable
 fun SideNavigation(
     global: GlobalStore,
-    content: Route
+    content: Route,
+    onChange: (Route) -> Unit = {},
 ) {
     Column(Modifier.defaultMinSize(minWidth = 300.dp)) {
         NavItem("首页", selected = content == Route.Root.Home, onSelectedChange = {
-            global.nav.push(Route.Root.Home)
+            onChange(Route.Root.Home)
         })
         if (global.isLoggedIn) {
             /*NavItem("最近点赞", selected = content == Route.Root.RecentLike, onSelectedChange = {
-                global.nav.push(Route.Root.RecentLike)
+                onChange(Route.Root.RecentLike)
             })*/
             NavItem("最近播放", selected = content == Route.Root.RecentPlay, onSelectedChange = {
-                global.nav.push(Route.Root.RecentPlay)
+                onChange(Route.Root.RecentPlay)
             })
 
             NavItem("我的歌单", selected = content is Route.Root.MyPlaylist, onSelectedChange = {
-                global.nav.push(Route.Root.MyPlaylist.Default)
+                onChange(Route.Root.MyPlaylist.Default)
             })
             /*NavItem("我的关注", selected = content == Route.Root.MySubscribe, onSelectedChange = {
-                global.nav.push(Route.Root.MySubscribe)
+               onChange(Route.Root.MySubscribe)
             })*/
 
             NavItem("创作中心", selected = content is Route.Root.CreationCenter, onSelectedChange = {
-                global.nav.push(Route.Root.CreationCenter.Default)
+                onChange(Route.Root.CreationCenter.Default)
             })
 
             /*NavItem("委员会中心", selected = content == Route.Root.CommitteeCenter, onSelectedChange = {
-                global.nav.push(Route.Root.CommitteeCenter)
+                onChange(Route.Root.CommitteeCenter)
             })*/
             NavItem("维护者中心", selected = content is Route.Root.ContributorCenter, onSelectedChange = {
-                global.nav.push(Route.Root.ContributorCenter.Default)
+                onChange(Route.Root.ContributorCenter.Default)
             })
         }
         Spacer(Modifier.weight(1f))
         NavItem("设置", selected = content is Route.Root.Settings, onSelectedChange = {
-            global.nav.push(Route.Root.Settings)
+            onChange(Route.Root.Settings)
         })
     }
 }
