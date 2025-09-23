@@ -55,6 +55,7 @@ class ApiClient(private val baseUrl: String) {
         install(ContentNegotiation) {
             json(json)
         }
+        install(HttpCache)
     }
 
     private val authLock = Mutex()
