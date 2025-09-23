@@ -134,7 +134,7 @@ class JVMPlayer() : Player {
             clip.stop()
             clip.close()
             stream.close()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("PlayerImpl", "release: Error closing resources", e)
         }
     }

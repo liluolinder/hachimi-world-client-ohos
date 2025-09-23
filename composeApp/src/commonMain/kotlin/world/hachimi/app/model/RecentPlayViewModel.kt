@@ -79,7 +79,7 @@ class RecentPlayViewModel(
                 }
                 return@launch
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("recent", "Failed to fetch recent play history", e)
             global.alert(e.message)
             if (initializeStatus == InitializeStatus.INIT) {

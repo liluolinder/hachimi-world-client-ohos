@@ -182,7 +182,7 @@ class ApiClient(private val baseUrl: String) {
                                     deviceInfo = "Desktop Client" // TODO: Get device info
                                 )
                             )
-                        } catch (e: Exception) {
+                        } catch (e: Throwable) {
                             Logger.e(TAG, "refreshToken: Error requesting to refreshing token", e)
                             error("Error requesting to refreshing token: ${e.message}")
                         }
@@ -298,7 +298,7 @@ sealed class AuthError {
     /**
      * Unknown exception during authentication procedure
      */
-    data class UnknownError(val requestId: String, val endpoint: String, val exception: Exception) : AuthError()
+    data class UnknownError(val requestId: String, val endpoint: String, val exception: Throwable) : AuthError()
 }
 
 object DefaultAuthenticationListener : AuthenticationListener {

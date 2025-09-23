@@ -95,7 +95,7 @@ class PlayerUIState() {
             this.lrcSegments = result
             lyricsLines = lrcSegments.map { it.spans.first().text }
             timedLyricsEnabled = true
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("player", "Failed to parse lyrics", e)
             lyricsLines = content.lines()
             timedLyricsEnabled = false

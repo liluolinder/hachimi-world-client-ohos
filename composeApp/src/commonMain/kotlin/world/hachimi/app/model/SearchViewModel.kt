@@ -59,7 +59,7 @@ class SearchViewModel(
                     val err = resp.errData<CommonError>()
                     global.alert(err.msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("search", "Failed to search", e)
                 global.alert(e.message)
             } finally {

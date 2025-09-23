@@ -299,7 +299,7 @@ class GlobalStore(
                     val err = resp.errData<CommonError>()
                     alert(err.msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("player", "Failed to insert song to queue", e)
                 alert(e.message)
             } finally {
@@ -467,7 +467,7 @@ class GlobalStore(
                 alert(resp.errData<CommonError>().msg)
                 return@coroutineScope
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("player", "Failed to play song", e)
             alert(e.message)
             return@coroutineScope
@@ -493,7 +493,7 @@ class GlobalStore(
             if (ApiClient.VERSION < data.minVersion) {
                 showApiVersionIncompatible = true
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("player", "Failed to check min API version", e)
             alert("Failed to check min API version")
         }
@@ -521,7 +521,7 @@ class GlobalStore(
             } else {
                 alert(resp.err().msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("global", "Failed to check update", e)
             alert("检查更新失败")
         } finally {

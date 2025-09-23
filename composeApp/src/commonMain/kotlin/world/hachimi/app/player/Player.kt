@@ -39,7 +39,7 @@ sealed class PlayEvent {
     /**
      * Might happen during playing while downloading
      */
-    data class Error(val e: Exception) : PlayEvent()
+    data class Error(val e: Throwable) : PlayEvent()
     data class Seek(val position: Long) : PlayEvent()
 }
 

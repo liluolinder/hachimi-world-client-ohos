@@ -51,7 +51,7 @@ class ReviewDetailViewModel(
                 global.alert(resp.err().msg)
                 initializeStatus = InitializeStatus.FAILED
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("review_detail", "Failed to fetch review detail", e)
             global.alert(e.message)
             initializeStatus = InitializeStatus.FAILED
@@ -80,7 +80,7 @@ class ReviewDetailViewModel(
             } else {
                 global.alert(resp.err().msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("review_detail", "Failed to approve review", e)
             global.alert(e.message)
         } finally {
@@ -102,7 +102,7 @@ class ReviewDetailViewModel(
             } else {
                 global.alert(resp.err().msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("review_detail", "Failed to approve review", e)
             global.alert(e.message)
         } finally {

@@ -52,7 +52,7 @@ class ForgetPasswordViewModel(
                 val err = resp.errData<CommonError>()
                 global.alert(err.msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e(TAG, "Failed to send verify code", e)
             global.alert("发送验证码失败，请稍后再试")
         } finally {
@@ -81,7 +81,7 @@ class ForgetPasswordViewModel(
                 val err = resp.errData<CommonError>()
                 global.alert(err.msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e(TAG, "Failed to reset password", e)
             global.alert("重置密码失败，请稍后再试")
         }
@@ -102,7 +102,7 @@ class ForgetPasswordViewModel(
                 try {
                     getPlatform().openUrl(data.url)
                     showCaptchaDialog = true
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e(TAG, "Failed to open captcha url", e)
                     return
                 }
@@ -110,7 +110,7 @@ class ForgetPasswordViewModel(
                 val err = resp.errData<CommonError>()
                 global.alert(err.msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e(TAG, "Failed to generate captcha", e)
             global.alert("人机验证失败，请稍后重试")
         } finally {
