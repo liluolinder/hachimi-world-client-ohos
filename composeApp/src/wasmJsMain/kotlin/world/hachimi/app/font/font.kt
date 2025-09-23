@@ -18,18 +18,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.HttpHeaders
+import io.ktor.utils.io.readAvailable
+import io.ktor.utils.io.readBuffer
+import kotlinx.browser.localStorage
 import kotlinx.browser.window
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
 import kotlinx.coroutines.withContext
+import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
+import org.w3c.dom.get
 import org.w3c.fetch.Response
 import org.w3c.files.Blob
 import org.w3c.files.FileReader
+import world.hachimi.app.api.ApiClient
 import world.hachimi.app.logging.Logger
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -57,7 +70,7 @@ fun WithFont(
                 return@withContext
             }*/
 
-            try {
+            /*try {
                 val fontFamily = loadFonts(true)
                 fontFamilyResolver.preload(fontFamily)
                 fontsLoaded.value = true
@@ -77,6 +90,16 @@ fun WithFont(
             } catch (_: Throwable) {
                 error.value = FontLoadError.NotSupported
                 window.alert("加载字体失败，当前仅支持 PC 端 Chrome / Edge 浏览器最新版本，不支持 Firefox, Safari 浏览器")
+            }*/
+
+            try {
+                val fontFamily = loadFontsFromWeb(true)
+                fontFamilyResolver.preload(fontFamily)
+                fontsLoaded.value = true
+            } catch (e: Throwable) {
+                error.value = FontLoadError.NotSupported
+                Logger.e("Font", "Failed to load fonts from web", e)
+                window.alert("加载字体失败")
             }
         }
     }
@@ -217,7 +240,7 @@ data class LoadedLocalFont(
 private suspend fun queryLocalFontMap(): Map<String, List<FontData>> {
     val fonts = try {
         queryLocalFonts().await<JsArray<FontData>>().toList()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         error("Can't load fonts")
     }
     val fontMap = fonts.groupBy { it.family }
@@ -284,4 +307,49 @@ suspend fun loadFonts(enableEmoji: Boolean): FontFamily {
     val fontFamily = FontFamily(composeFonts)
     Logger.d("Font", "Fonts loaded successfully")
     return fontFamily
+}
+
+suspend fun loadFontsFromWeb(enableEmoji: Boolean): FontFamily {
+    val client = HttpClient {
+        install(HttpCache)
+    }
+    val downloadResponse = client.get("https://storage.hachimi.world/fonts/MiSansVF.ttf")
+    val contentLength = downloadResponse.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+    val buffer = if (contentLength != null) {
+        val buffer = Buffer()
+        Logger.i("global", "Has content length")
+        val channel = downloadResponse.bodyAsChannel()
+        var totalBytesRead = 0L
+
+        while (true) {
+            val byteBuffer = ByteArray(4096)
+            val bytesRead = channel.readAvailable(byteBuffer, 0, byteBuffer.size)
+
+            if (bytesRead == -1) break
+
+            totalBytesRead += bytesRead
+            buffer.write(byteBuffer, 0, bytesRead)
+            val progress = totalBytesRead.toDouble() / contentLength.toDouble()
+            Logger.i("font", "Download progress: $progress")
+        }
+        buffer
+    } else {
+        // Oh, copy occurs here
+        Logger.w("font", "No content length")
+        downloadResponse.bodyAsChannel().readBuffer()
+    }
+
+    val bytes = buffer.readByteArray()
+    val weights = listOf(FontWeight.Light, FontWeight.Thin, FontWeight.Normal, FontWeight.Medium, FontWeight.Bold)
+
+    val fonts = weights.map { weight ->
+        Font(
+            identity = "MiSansVF",
+            data = bytes,
+            variationSettings = FontVariation.Settings(
+                FontVariation.weight(weight.weight),
+            )
+        )
+    }
+    return FontFamily(fonts)
 }
