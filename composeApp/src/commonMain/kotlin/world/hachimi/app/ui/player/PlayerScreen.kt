@@ -133,6 +133,13 @@ fun CompactPlayerScreen(
                 lines = playerState.lyricsLines,
                 fadeColor = MaterialTheme.colorScheme.surfaceVariant
             )
+
+            IconButton(
+                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+                onClick = onShrinkClick
+            ) {
+                Icon(Icons.Default.CloseFullscreen, "Shrink")
+            }
         }
 
         Column(
@@ -320,16 +327,14 @@ private fun PreviewExpanded() {
 @Composable
 private fun PreviewCompact() {
     val playerUIState = rememberTestPlayerState()
-    Box(Modifier.requiredWidth(1200.dp)) {
-        PreviewTheme(background = true) {
-            CompactPlayerScreen(
-                playerState = playerUIState,
-                onShrinkClick = {},
-                onPlayOrPauseClick = {},
-                onPreviousClick = {},
-                onNextClick = {},
-                onProgressChange = {}
-            )
-        }
+    PreviewTheme(background = true) {
+        CompactPlayerScreen(
+            playerState = playerUIState,
+            onShrinkClick = {},
+            onPlayOrPauseClick = {},
+            onPreviousClick = {},
+            onNextClick = {},
+            onProgressChange = {}
+        )
     }
 }
