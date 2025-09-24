@@ -3,10 +3,8 @@ package world.hachimi.app.model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import world.hachimi.app.api.module.PlaylistModule
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
-import world.hachimi.app.player.SongItem
 import world.hachimi.app.util.LrcParser
 
 typealias SongDetailInfo = SongModule.DetailResp
@@ -17,9 +15,16 @@ typealias SongDetailInfo = SongModule.DetailResp
 class PlayerUIState() {
     // Status
     var hasSong by mutableStateOf(false)
-    var isFetching by mutableStateOf(false)
+
+    /**
+     * Getting audio metadata
+     */
+    var fetchingMetadata by mutableStateOf(false)
+    /**
+     * Downloading audio data
+     */
+    var buffering by mutableStateOf(false)
     var isPlaying by mutableStateOf(false)
-    var isBuffering by mutableStateOf(false)
     var downloadProgress by mutableStateOf(0f)
     var currentMillis by mutableStateOf(0L)
         private set
@@ -95,7 +100,7 @@ class PlayerUIState() {
             this.lrcSegments = result
             lyricsLines = lrcSegments.map { it.spans.first().text }
             timedLyricsEnabled = true
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("player", "Failed to parse lyrics", e)
             lyricsLines = content.lines()
             timedLyricsEnabled = false

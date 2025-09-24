@@ -3,6 +3,7 @@ package world.hachimi.app
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.window.ComposeViewport
 import kotlinx.browser.document
 import org.koin.core.context.startKoin
@@ -23,6 +24,11 @@ fun main() {
     ComposeViewport(document.body!!) {
         LaunchedEffect(Unit) {
             document.querySelector("#loading")?.remove()
+        }
+        BackHandler {
+            if (global.nav.backStack.size > 1) {
+                global.nav.back()
+            }
         }
         WithFont {
             if (global.initialized) {

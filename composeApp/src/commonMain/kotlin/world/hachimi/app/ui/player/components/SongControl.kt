@@ -1,5 +1,7 @@
 package world.hachimi.app.ui.player.components
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -14,6 +16,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -22,7 +25,7 @@ fun SongControl(
     modifier: Modifier = Modifier,
     isPlaying: Boolean,
     isLoading: Boolean,
-    loadingProgress: Float,
+    loadingProgress: () -> Float,
     onPlayPauseClick: () -> Unit,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
@@ -36,16 +39,20 @@ fun SongControl(
         }
         IconButton(onClick = onPlayPauseClick, colors = IconButtonDefaults.filledIconButtonColors()) {
             if (isLoading) {
-                if (loadingProgress == 0f) CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = LocalContentColor.current,
-                    strokeWidth = 2.dp
-                ) else {
-                    CircularProgressIndicator(
+                val animatedProgress by animateFloatAsState(targetValue = loadingProgress())
+                val showProgress = animatedProgress > 0f && animatedProgress < 1f
+
+                Crossfade(showProgress) {
+                    if (it) CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = LocalContentColor.current,
+                        trackColor = LocalContentColor.current.copy(alpha = 0.12f),
                         strokeWidth = 2.dp,
-                        progress = { loadingProgress }
+                        progress = { animatedProgress }
+                    ) else CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = LocalContentColor.current,
+                        strokeWidth = 2.dp
                     )
                 }
             } else {

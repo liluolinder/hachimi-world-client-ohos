@@ -50,14 +50,14 @@ class PlaylistViewModel(
     }
 
     fun addToPlaylist() {
-        if (!global.playerState.hasSong) return
+        if (!global.player.playerState.hasSong) return
         if (!global.isLoggedIn) {
             global.alert("歌单功能登录后可用")
             return
         }
 
         viewModelScope.launch {
-            toBeAddedSongId = global.playerState.songId
+            toBeAddedSongId = global.player.playerState.songId
             selectedPlaylistId = null
             showPlaylistDialog = true
             refreshPlaylist()
@@ -78,7 +78,7 @@ class PlaylistViewModel(
                 global.alert(data.msg)
                 if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("player", "Failed to play playlist", e)
             global.alert(e.message)
             if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
@@ -102,7 +102,7 @@ class PlaylistViewModel(
                 } else {
                     global.alert(resp.errData<CommonError>().msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("player", "Failed to add playlist", e)
                 global.alert(e.message)
             } finally {
@@ -143,7 +143,7 @@ class PlaylistViewModel(
                 } else {
                     global.alert(resp.errData<CommonError>().msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("player", "Failed to create playlist", e)
                 global.alert(e.message)
             } finally {

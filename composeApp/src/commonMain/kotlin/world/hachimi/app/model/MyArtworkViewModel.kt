@@ -68,7 +68,7 @@ class MyArtworkViewModel(
                 global.alert(err.msg)
                 if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             global.alert(e.message)
             Logger.e("my_artwork", "Failed to fetch my artwork", e)
             if (initializeStatus == InitializeStatus.INIT) initializeStatus = InitializeStatus.FAILED
@@ -94,7 +94,7 @@ class MyArtworkViewModel(
                 val err = resp.err()
                 global.alert(err.msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             global.alert(e.message)
             Logger.e("my_artwork", "Failed to fetch my artwork", e)
         } finally {

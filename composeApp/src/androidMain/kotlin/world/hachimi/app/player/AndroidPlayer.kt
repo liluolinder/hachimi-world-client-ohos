@@ -25,7 +25,7 @@ class AndroidPlayer(
         controllerFuture.addListener({
             val controller = try {
                 controllerFuture.get()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("player", "Failed to get MediaController", e)
                 // TODO: Should we notify user or just throw?
                 throw e

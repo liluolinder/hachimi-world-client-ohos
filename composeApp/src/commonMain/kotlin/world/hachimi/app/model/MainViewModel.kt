@@ -58,7 +58,7 @@ class MainViewModel(
                         initializeStatus = InitializeStatus.FAILED
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("home", "Failed to get recommend songs", e)
                 global.alert("获取推荐音乐失败：${e.message}")
                 if (initializeStatus == InitializeStatus.INIT) {

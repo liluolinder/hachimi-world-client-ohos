@@ -2,6 +2,7 @@ package world.hachimi.app.api
 
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.cache.*
 import io.ktor.client.plugins.compression.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -16,13 +17,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
-import world.hachimi.app.api.module.AuthModule
-import world.hachimi.app.api.module.PlayHistoryModule
-import world.hachimi.app.api.module.PlaylistModule
-import world.hachimi.app.api.module.PublishModule
-import world.hachimi.app.api.module.SongModule
-import world.hachimi.app.api.module.UserModule
-import world.hachimi.app.api.module.VersionModule
+import world.hachimi.app.api.module.*
 import world.hachimi.app.logging.Logger
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -55,6 +50,7 @@ class ApiClient(private val baseUrl: String) {
         install(ContentNegotiation) {
             json(json)
         }
+        install(HttpCache)
     }
 
     private val authLock = Mutex()
@@ -83,7 +79,11 @@ class ApiClient(private val baseUrl: String) {
         header("X-Request-Id", id)
     }
 
-    internal suspend inline fun <reified T> postWith(path: String, auth: Boolean = true, crossinline block: HttpRequestBuilder.() -> Unit): WebResult<T> {
+    internal suspend inline fun <reified T> postWith(
+        path: String,
+        auth: Boolean = true,
+        crossinline block: HttpRequestBuilder.() -> Unit
+    ): WebResult<T> {
         return withContext(Dispatchers.Default) {
             if (auth) refreshToken()
 
@@ -182,7 +182,7 @@ class ApiClient(private val baseUrl: String) {
                                     deviceInfo = "Desktop Client" // TODO: Get device info
                                 )
                             )
-                        } catch (e: Exception) {
+                        } catch (e: Throwable) {
                             Logger.e(TAG, "refreshToken: Error requesting to refreshing token", e)
                             error("Error requesting to refreshing token: ${e.message}")
                         }
@@ -208,7 +208,7 @@ class ApiClient(private val baseUrl: String) {
                                 )
                             }
                         } else {
-                            Logger.w(TAG, "refreshToken: Refreshing token failed")
+                            Logger.w(TAG, "Refreshing token failed with ${resp.status}")
                             authListener.onAuthenticationError(
                                 AuthError.ErrorHttpResponse(
                                     requestId,
@@ -223,7 +223,11 @@ class ApiClient(private val baseUrl: String) {
         }
     }
 
-    internal suspend inline fun <reified T> checkAndDecode(resp: HttpResponse, endpoint: String, requestId: String): WebResult<T> {
+    internal suspend inline fun <reified T> checkAndDecode(
+        resp: HttpResponse,
+        endpoint: String,
+        requestId: String
+    ): WebResult<T> {
         if (resp.status == HttpStatusCode.OK) {
             return resp.body<WebResult<T>>()
         } else if (resp.status == HttpStatusCode.Unauthorized) {
@@ -276,7 +280,8 @@ sealed class AuthError {
      *
      * But could happen when Api Client access a protected endpoint without setting `auth` to `true`
      */
-    data class UnauthorizedDuringRequest(val requestId: String, val endpoint: String, val response: HttpResponse) : AuthError()
+    data class UnauthorizedDuringRequest(val requestId: String, val endpoint: String, val response: HttpResponse) :
+        AuthError()
 
     /**
      * If server returns HTTP status error during refreshing token
@@ -298,7 +303,7 @@ sealed class AuthError {
     /**
      * Unknown exception during authentication procedure
      */
-    data class UnknownError(val requestId: String, val endpoint: String, val exception: Exception) : AuthError()
+    data class UnknownError(val requestId: String, val endpoint: String, val exception: Throwable) : AuthError()
 }
 
 object DefaultAuthenticationListener : AuthenticationListener {

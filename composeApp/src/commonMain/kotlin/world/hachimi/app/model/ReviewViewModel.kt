@@ -75,7 +75,7 @@ class ReviewViewModel(
                     initializeStatus = InitializeStatus.FAILED
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("review", "Failed to fetch review", e)
             global.alert(e.message)
             initializeStatus = InitializeStatus.FAILED

@@ -98,7 +98,7 @@ class AuthViewModel(
                     return@launch
                 }
                 regCodeRemainSecs = 60
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("auth", "Failed to send email code", e)
                 global.alert(e.message)
             } finally {
@@ -145,7 +145,7 @@ class AuthViewModel(
                 } else {
                     global.alert(resp.errData<CommonError>().msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 global.alert(e.message)
             } finally {
                 isOperating = false
@@ -192,7 +192,7 @@ class AuthViewModel(
             } else {
                 global.alert(resp.errData<CommonError>().msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("auth", "Failed to login", e)
             global.alert(e.message)
         } finally {
@@ -233,7 +233,7 @@ class AuthViewModel(
             } else {
                 global.alert(resp.errData<CommonError>().msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("auth", "Failed to register", e)
             global.alert(e.message)
         } finally {
@@ -254,7 +254,7 @@ class AuthViewModel(
                 captchaKey = data.captchaKey
                 try {
                     getPlatform().openUrl(data.url)
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("auth", "Failed to open captcha url", e)
                     return
                 }
@@ -262,7 +262,7 @@ class AuthViewModel(
                 val err = resp.errData<CommonError>()
                 global.alert(err.msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("auth", "Failed to generate captcha captcha", e)
             global.alert(e.message)
         } finally {

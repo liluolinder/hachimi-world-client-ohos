@@ -34,9 +34,10 @@ class PublishViewModel(
     var subtitle by mutableStateOf("")
     val tags = mutableStateListOf<SongModule.TagItem>()
     var description by mutableStateOf("")
+    var lyricsType by mutableStateOf(0)
     var lyrics by mutableStateOf("")
 
-    var creationType by mutableStateOf(0)
+    var creationType by mutableStateOf(1)
     var originId by mutableStateOf("")
     var originTitle by mutableStateOf("")
     var originLink by mutableStateOf("")
@@ -150,7 +151,7 @@ class PublishViewModel(
                     }
 
                     resp.okData<SongModule.UploadAudioFileResp>()
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("creation", "Failed to upload audio file", e)
                     global.alert(e.message)
                     return@launch
@@ -206,7 +207,7 @@ class PublishViewModel(
                     }
 
                     resp.okData<SongModule.UploadImageResp>()
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("creation", "Failed to upload cover image", e)
                     global.alert(e.message)
                     return@launch
@@ -258,7 +259,7 @@ class PublishViewModel(
                     }
                 } catch (_: CancellationException) {
                     // Do nothing, it's just canceled
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("publish", "Failed to search tag", e)
                     global.alert(e.message)
                 } finally {
@@ -320,7 +321,7 @@ class PublishViewModel(
                     } else {
                         global.alert(resp.err().msg)
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("publish", "Failed to create tag", e)
                     global.alert(e.message)
                 } finally {
@@ -390,7 +391,7 @@ class PublishViewModel(
                     title = title,
                     subtitle = subtitle,
                     description = description,
-                    lyrics = lyrics,
+                    lyrics = lyrics.takeIf { lyricsType != 2 } ?: "",
                     tagIds = tags.map { it.id },
                     creationInfo = creationInfo,
                     productionCrew = crew,
@@ -406,7 +407,7 @@ class PublishViewModel(
                 val data = resp.errData<CommonError>()
                 global.alert(data.msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("creation", "Failed to publish song", e)
             global.alert(e.message)
         } finally {
@@ -451,7 +452,7 @@ class PublishViewModel(
                         global.alert(data.msg)
                         return@launch
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("publish", "Failed to get user info", e)
                     global.alert("获取用户信息失败")
                     return@launch
@@ -494,16 +495,18 @@ class PublishViewModel(
             // Do nothing
         }
 
-        if (lyrics.isBlank()) {
+        if (lyricsType != 2 && lyrics.isBlank()) {
             global.alert("请填写歌词")
             return false
         }
 
-        try {
-            LrcParser.parse(lyrics)
-        } catch (e: Exception) {
-            global.alert("请填写正确的 LRC 格式歌词，暂不支持歌词元数据")
-            return false
+        if (lyricsType == 0) {
+            try {
+                LrcParser.parse(lyrics)
+            } catch (e: Throwable) {
+                global.alert("请填写正确的 LRC 格式歌词，并移除歌名、作者、描述等标签")
+                return false
+            }
         }
 
         if (creationType > 0) {

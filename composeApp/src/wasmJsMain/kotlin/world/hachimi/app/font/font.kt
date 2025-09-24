@@ -1,43 +1,59 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package world.hachimi.app.font
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.core.*
 import kotlinx.browser.window
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
 import kotlinx.coroutines.withContext
+import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
+import org.koin.compose.koinInject
 import org.w3c.fetch.Response
 import org.w3c.files.Blob
 import org.w3c.files.FileReader
 import world.hachimi.app.logging.Logger
+import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.ui.LocalDarkMode
+import world.hachimi.app.ui.theme.AppTheme
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.js.Promise
 import kotlin.time.TimeSource
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
-
 
 @Composable
 fun WithFont(
@@ -46,6 +62,15 @@ fun WithFont(
     val fontsLoaded = remember { mutableStateOf(false) }
     val fontFamilyResolver = LocalFontFamilyResolver.current
     val error = remember { mutableStateOf<FontLoadError?>(null) }
+    var bytesRead by remember { mutableLongStateOf(0L) }
+    var bytesTotal by remember { mutableStateOf<Long?>(null) }
+    val progress by remember {
+        derivedStateOf {
+            bytesTotal?.let {
+                (bytesRead.toFloat() / it.toFloat()).coerceIn(0f, 1f)
+            } ?: 0f
+        }
+    }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
@@ -57,7 +82,7 @@ fun WithFont(
                 return@withContext
             }*/
 
-            try {
+            /*try {
                 val fontFamily = loadFonts(true)
                 fontFamilyResolver.preload(fontFamily)
                 fontsLoaded.value = true
@@ -77,22 +102,54 @@ fun WithFont(
             } catch (_: Throwable) {
                 error.value = FontLoadError.NotSupported
                 window.alert("加载字体失败，当前仅支持 PC 端 Chrome / Edge 浏览器最新版本，不支持 Firefox, Safari 浏览器")
+            }*/
+
+            try {
+                val fontFamily = loadFontsFromWeb(true, onProgress = { a, b ->
+                    bytesRead = a
+                    bytesTotal = b
+                })
+                fontFamilyResolver.preload(fontFamily)
+                fontsLoaded.value = true
+            } catch (e: Throwable) {
+                error.value = FontLoadError.NotSupported
+                Logger.e("Font", "Failed to load fonts from web", e)
+                window.alert("加载字体失败")
             }
         }
     }
     if (fontsLoaded.value) {
         content()
     } else {
-        Box(Modifier.fillMaxSize(), Alignment.Center) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
-                if (error.value == null) {
-                    CircularProgressIndicator()
-                } else {
-                    Icon(Icons.Default.Error, contentDescription = "Error")
-                    when (error.value) {
-                        FontLoadError.NotSupported -> Text("Not supported")
-                        FontLoadError.PermissionDenied -> Text("Permission denied")
-                        null -> {}
+        val global = koinInject<GlobalStore>()
+        val darkMode = global.darkMode ?: isSystemInDarkTheme()
+        AppTheme(darkTheme = darkMode) {
+            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+                    ) {
+                        if (error.value == null) {
+                            val bytesTotal = bytesTotal
+                            if (bytesTotal != null) {
+                                val animatedProgress = animateFloatAsState(targetValue = progress)
+                                CircularProgressIndicator(progress = { animatedProgress.value })
+
+                                Text("${formatBytes(bytesRead)} / ${ formatBytes(bytesTotal) }")
+                            } else {
+                                CircularProgressIndicator()
+
+                                Text("Loading...")
+                            }
+                        } else {
+                            Icon(Icons.Default.Error, contentDescription = "Error")
+                            when (error.value) {
+                                FontLoadError.NotSupported -> Text("Not supported")
+                                FontLoadError.PermissionDenied -> Text("Permission denied")
+                                else -> {}
+                            }
+                        }
                     }
                 }
             }
@@ -217,7 +274,7 @@ data class LoadedLocalFont(
 private suspend fun queryLocalFontMap(): Map<String, List<FontData>> {
     val fonts = try {
         queryLocalFonts().await<JsArray<FontData>>().toList()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         error("Can't load fonts")
     }
     val fontMap = fonts.groupBy { it.family }
@@ -237,7 +294,10 @@ private suspend fun loadLocalCJKFonts(): List<LoadedLocalFont> {
 
     val loaded = firstFont.map { fontData ->
         val (weight, style) = parseFontStyle(fontData.style)
-        Logger.d("Font", "Loading font ${fontData.postscriptName} ${fontData.style} -> Weight: ${weight.weight}, Style: $style")
+        Logger.d(
+            "Font",
+            "Loading font ${fontData.postscriptName} ${fontData.style} -> Weight: ${weight.weight}, Style: $style"
+        )
         val buffer = fontData.readArrayBuffer()
         LoadedLocalFont(fontData.family, weight, style, buffer)
     }
@@ -284,4 +344,58 @@ suspend fun loadFonts(enableEmoji: Boolean): FontFamily {
     val fontFamily = FontFamily(composeFonts)
     Logger.d("Font", "Fonts loaded successfully")
     return fontFamily
+}
+
+suspend fun loadFontsFromWeb(
+    enableEmoji: Boolean,
+    onProgress: (bytesRead: Long, bytesTotal: Long?) -> Unit
+): FontFamily {
+    val client = HttpClient()
+    /*val contentLength = client.head("https://storage.hachimi.world/fonts/MiSansVF.ttf")
+        .headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: -1
+    Logger.d("Font", "Content length: $contentLength bytes")*/
+    val contentLength = 20_093_424L // MiSansVF.ttf file size
+    val buffer = client.prepareGet("https://storage.hachimi.world/fonts/MiSansVF.ttf").execute {
+        val buffer = Buffer()
+        val channel = it.bodyAsChannel()
+        var totalBytesRead = 0L
+
+        while (!channel.exhausted()) {
+            val chunk = channel.readRemaining(1024 * 8)
+            totalBytesRead += chunk.remaining
+            chunk.transferTo(buffer)
+            onProgress(totalBytesRead, contentLength)
+        }
+        buffer
+    }
+
+    val bytes = buffer.readByteArray()
+    val weights = listOf(FontWeight.Light, FontWeight.Thin, FontWeight.Normal, FontWeight.Medium, FontWeight.Bold)
+
+    val fonts = weights.map { weight ->
+        Font(
+            identity = "MiSansVF w_${weight.weight}",
+            data = bytes,
+            variationSettings = FontVariation.Settings(
+                FontVariation.weight(weight.weight),
+            )
+        )
+    }
+    return FontFamily(fonts)
+}
+
+@Stable
+private fun formatBytes(bytes: Long): String {
+    if (bytes == 0L) return "0 MB"
+    return ((bytes.toFloat() / (1024 * 1024) * 10).toInt()).toString()
+        .toCharArray()
+        .toMutableList()
+        .also {
+            if (it.size < 2) {
+                it.add(0, '0')
+            }
+            it.add(it.lastIndex, '.')
+        }
+        .joinToString("")
+        .plus(" MB")
 }

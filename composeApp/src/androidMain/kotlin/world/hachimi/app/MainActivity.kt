@@ -21,8 +21,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val global = koinInject<GlobalStore>()
 
-            BackHandler(enabled = global.nav.backStack.isNotEmpty()) {
-                global.nav.back()
+            BackHandler {
+                if (global.nav.backStack.size > 1) {
+                    global.nav.back()
+                } else {
+                    finish()
+                }
             }
             App()
         }

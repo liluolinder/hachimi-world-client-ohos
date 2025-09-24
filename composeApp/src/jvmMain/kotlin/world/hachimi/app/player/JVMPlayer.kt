@@ -6,7 +6,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import world.hachimi.app.logging.Logger
 import java.io.ByteArrayInputStream
-import java.net.URI
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.Clip
@@ -134,7 +133,7 @@ class JVMPlayer() : Player {
             clip.stop()
             clip.close()
             stream.close()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("PlayerImpl", "release: Error closing resources", e)
         }
     }

@@ -79,7 +79,7 @@ class RecentPlayViewModel(
                 }
                 return@launch
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("recent", "Failed to fetch recent play history", e)
             global.alert(e.message)
             if (initializeStatus == InitializeStatus.INIT) {
@@ -92,6 +92,6 @@ class RecentPlayViewModel(
     }
 
     fun play(item: PlayHistoryModule.PlayHistoryItem) {
-        global.insertToQueue(item.songInfo.displayId, true, false)
+        global.player.insertToQueue(item.songInfo.displayId, true, false)
     }
 }

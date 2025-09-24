@@ -3,6 +3,7 @@ package world.hachimi.app.ui.creation.publish.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.LocalTextStyle
@@ -16,7 +17,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun FormItem(
     header: @Composable () -> Unit,
-    subtitle: (@Composable () -> Unit)? = null,
+    subtitle: (@Composable RowScope.() -> Unit)? = null,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {

@@ -77,7 +77,7 @@ class UserSpaceViewModel(
                         global.alert(error.msg)
                         return@launch
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("creation", "Failed to upload image image", e)
                     global.alert(e.message)
                     return@launch
@@ -111,7 +111,7 @@ class UserSpaceViewModel(
                     val err = resp.errData<CommonError>()
                     global.alert(err.msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("userspace", "Failed to update profile", e)
                 global.alert(e.message)
             } finally {
@@ -148,7 +148,7 @@ class UserSpaceViewModel(
                     val err = resp.errData<CommonError>()
                     global.alert(err.msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("userspace", "Failed to update profile", e)
                 global.alert(e.message)
             } finally {
@@ -176,7 +176,7 @@ class UserSpaceViewModel(
                     val err = resp.errData<CommonError>()
                     global.alert(err.msg)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Logger.e("userspace", "Failed to fetch profile", e)
                 global.alert(e.message)
             } finally {

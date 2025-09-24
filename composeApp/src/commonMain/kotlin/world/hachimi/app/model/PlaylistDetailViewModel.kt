@@ -81,7 +81,7 @@ class PlaylistDetailViewModel(
                         val data = resp.errData<CommonError>()
                         global.alert(data.msg)
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("playlist", "Failed to edit playlist", e)
                     global.alert(e.message)
                 } finally {
@@ -107,7 +107,7 @@ class PlaylistDetailViewModel(
                     coverUrl = it.coverUrl
                 )
             }
-            global.playAll(items)
+            global.player.playAll(items)
         }
     }
 
@@ -122,7 +122,7 @@ class PlaylistDetailViewModel(
             } else {
                 global.alert(resp.errData<CommonError>().msg)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Logger.e("playlist detail", "Failed to refresh playlist detail", e)
             global.alert(e.message)
         } finally {
@@ -161,7 +161,7 @@ class PlaylistDetailViewModel(
                         global.alert(error.msg)
                         return@launch
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e("playlist", "Failed to set cover image", e)
                     global.alert(e.message)
                     return@launch
