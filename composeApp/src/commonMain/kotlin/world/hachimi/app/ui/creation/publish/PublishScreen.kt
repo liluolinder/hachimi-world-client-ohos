@@ -48,6 +48,7 @@ import androidx.compose.ui.util.fastForEachIndexed
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import world.hachimi.app.getPlatform
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.ui.creation.publish.components.FormItem
@@ -157,9 +158,28 @@ fun PublishScreen(
             FormItem(
                 header = { Text("歌词") },
                 subtitle = {
-                    Text("为了良好的用户体验，请使用 LRC 格式的歌词，暂不支持 LRC 歌词元数据")
+                    Text("建议使用LRC格式的滚动歌词", modifier = Modifier.weight(1f))
+                    TextButton(onClick = {
+                        getPlatform().openUrl("https://lrc-maker.github.io/")
+                    }) {
+                        Text("制作工具")
+                    }
                 }
             ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = vm.lyricsType == 0, onClick = { vm.lyricsType = 0 })
+                    Text("LRC歌词", style = MaterialTheme.typography.labelLarge)
+
+                    RadioButton(selected = vm.lyricsType == 1, onClick = { vm.lyricsType = 1 })
+                    Text("文本歌词", style = MaterialTheme.typography.labelLarge)
+
+                    RadioButton(selected = vm.lyricsType == 2, onClick = { vm.lyricsType = 2 })
+                    Text("不填写", style = MaterialTheme.typography.labelLarge)
+                }
+                if (vm.lyricsType == 2) {
+                    Text("强烈建议至少使用文本歌词")
+                }
+
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = vm.lyrics,
@@ -203,7 +223,8 @@ fun PublishScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originTitle,
                         onValueChange = { vm.originTitle = it },
-                        singleLine = true
+                        singleLine = true,
+                        supportingText = { Text("如 D大调卡农") }
                     )
                 }
                 FormItem(header = { Text("原作链接") }) {
@@ -211,7 +232,8 @@ fun PublishScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originLink,
                         onValueChange = { vm.originLink = it },
-                        singleLine = true
+                        singleLine = true,
+                        supportingText = { Text("建议填写") }
                     )
                 }
             }
@@ -417,12 +439,12 @@ private fun AddStaffDialog(vm: PublishViewModel) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     RadioButton(selected = type == 0, onClick = { type = 0 })
-                    Text(text = "已注册用户")
+                    Text(text = "站内用户")
                     RadioButton(selected = type == 1, onClick = {
                         vm.addStaffUid = ""
                         type = 1
                     })
-                    Text(text = "未注册用户")
+                    Text(text = "站外用户")
                 }
 
                 if (type == 0) OutlinedTextField(

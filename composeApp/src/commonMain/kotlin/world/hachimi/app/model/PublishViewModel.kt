@@ -34,9 +34,10 @@ class PublishViewModel(
     var subtitle by mutableStateOf("")
     val tags = mutableStateListOf<SongModule.TagItem>()
     var description by mutableStateOf("")
+    var lyricsType by mutableStateOf(0)
     var lyrics by mutableStateOf("")
 
-    var creationType by mutableStateOf(0)
+    var creationType by mutableStateOf(1)
     var originId by mutableStateOf("")
     var originTitle by mutableStateOf("")
     var originLink by mutableStateOf("")
@@ -499,11 +500,13 @@ class PublishViewModel(
             return false
         }
 
-        try {
-            LrcParser.parse(lyrics)
-        } catch (e: Throwable) {
-            global.alert("请填写正确的 LRC 格式歌词，暂不支持歌词元数据")
-            return false
+        if (lyricsType == 0) {
+            try {
+                LrcParser.parse(lyrics)
+            } catch (e: Throwable) {
+                global.alert("请填写正确的 LRC 格式歌词，并移除歌名、作者、描述等标签")
+                return false
+            }
         }
 
         if (creationType > 0) {
