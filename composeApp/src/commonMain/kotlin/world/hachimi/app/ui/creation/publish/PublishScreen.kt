@@ -176,11 +176,12 @@ fun PublishScreen(
                     RadioButton(selected = vm.lyricsType == 2, onClick = { vm.lyricsType = 2 })
                     Text("不填写", style = MaterialTheme.typography.labelLarge)
                 }
+
                 if (vm.lyricsType == 2) {
-                    Text("强烈建议至少使用文本歌词")
+                    Text("强烈建议至少使用文本歌词", color = MaterialTheme.colorScheme.error)
                 }
 
-                OutlinedTextField(
+                if (vm.lyricsType != 2) OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = vm.lyrics,
                     onValueChange = { vm.lyrics = it },
