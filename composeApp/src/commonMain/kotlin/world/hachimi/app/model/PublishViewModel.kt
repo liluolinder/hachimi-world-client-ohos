@@ -391,7 +391,7 @@ class PublishViewModel(
                     title = title,
                     subtitle = subtitle,
                     description = description,
-                    lyrics = lyrics,
+                    lyrics = lyrics.takeIf { lyricsType != 2 } ?: "",
                     tagIds = tags.map { it.id },
                     creationInfo = creationInfo,
                     productionCrew = crew,
@@ -495,7 +495,7 @@ class PublishViewModel(
             // Do nothing
         }
 
-        if (lyrics.isBlank()) {
+        if (lyricsType != 2 && lyrics.isBlank()) {
             global.alert("请填写歌词")
             return false
         }
