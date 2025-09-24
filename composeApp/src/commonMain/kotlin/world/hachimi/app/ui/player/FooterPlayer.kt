@@ -1,6 +1,8 @@
 package world.hachimi.app.ui.player
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -55,67 +58,80 @@ fun FooterPlayer() {
 fun CompactFooterPlayer(modifier: Modifier) {
     val global = koinInject<GlobalStore>()
     val playerState = global.player.playerState
-    Column(modifier.clickable(onClick = { global.expandPlayer() }).padding(horizontal = 24.dp, vertical = 12.dp)) {
-        Row(Modifier.height(60.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.aspectRatio(1f),
-                shape = MaterialTheme.shapes.medium,
-                color = LocalContentColor.current.copy(0.12f)
-            ) {
-                AsyncImage(
-                    modifier = Modifier.fillMaxSize(),
-                    model = playerState.songCoverUrl,
-                    contentDescription = "Cover",
-                    contentScale = ContentScale.Crop
-                )
+    Box(modifier.clickable(onClick = { global.expandPlayer() })) {
+        Column(Modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
+            Row(Modifier.height(60.dp), verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier.aspectRatio(1f),
+                    shape = MaterialTheme.shapes.medium,
+                    color = LocalContentColor.current.copy(0.12f)
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillMaxSize(),
+                        model = playerState.songCoverUrl,
+                        contentDescription = "Cover",
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                    Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(8.dp))
+                    Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
+                }
+
+                var queueExpanded by remember { mutableStateOf(false) }
+
+                // TODO[refactor](footer): I really should not write this garbage. Refactor later.
+                var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
+
+                IconButton(onClick = {
+                    tobeAddedSong = playerState.songId?.let { it to Random.nextLong() }
+                }) {
+                    Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
+                }
+
+                IconButton(onClick = { queueExpanded = true }) {
+                    Icon(Icons.AutoMirrored.Filled.QueueMusic, "Queue")
+                }
+
+                if (queueExpanded) Popup(
+                    alignment = Alignment.CenterEnd,
+                    onDismissRequest = { queueExpanded = false }
+                ) {
+                    MusicQueue(
+                        onClose = { queueExpanded = false },
+                        queue = global.player.musicQueue,
+                        playingSongId = global.player.playerState.songDisplayId,
+                        onPlayClick = { global.player.playSongInQueue(it) },
+                        onRemoveClick = { global.player.removeFromQueue(it) }
+                    )
+                }
+
+                AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
+                CreatePlaylistDialog()
             }
 
-            Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
-                Spacer(Modifier.height(8.dp))
-                Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
-            }
-
-            var queueExpanded by remember { mutableStateOf(false) }
-
-            // TODO[refactor](footer): I really should not write this garbage. Refactor later.
-            var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
-
-            IconButton(onClick = {
-                tobeAddedSong = playerState.songId?.let { it to Random.nextLong() }
-            }) {
-                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
-            }
-
-            IconButton(onClick = { queueExpanded = true }) {
-                Icon(Icons.AutoMirrored.Filled.QueueMusic, "Queue")
-            }
-
-            if (queueExpanded) Popup(
-                alignment = Alignment.CenterEnd,
-                onDismissRequest = { queueExpanded = false }
-            ) {
-                MusicQueue(
-                    onClose = { queueExpanded = false },
-                    queue = global.player.musicQueue,
-                    playingSongId = global.player.playerState.songDisplayId,
-                    onPlayClick = { global.player.playSongInQueue(it) },
-                    onRemoveClick = { global.player.removeFromQueue(it) }
-                )
-            }
-
-            AddToPlaylistDialog(tobeAddedSong?.first, tobeAddedSong?.second)
-            CreatePlaylistDialog()
+            SongProgress(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                durationMillis = playerState.songDurationSecs * 1000L,
+                currentMillis = playerState.currentMillis,
+                onProgressChange = {
+                    global.player.setSongProgress(it)
+                }
+            )
         }
+        val animatedProgress by animateFloatAsState(targetValue = playerState.downloadProgress)
+        val showProgress = animatedProgress > 0f && animatedProgress < 1f
 
-        SongProgress(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            durationMillis = playerState.songDurationSecs * 1000L,
-            currentMillis = playerState.currentMillis,
-            onProgressChange = {
-                global.player.setSongProgress(it)
-            }
-        )
+        if (playerState.fetchingMetadata || playerState.buffering) Crossfade(showProgress) {
+            if (it) LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                progress = { animatedProgress }
+            ) else LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
