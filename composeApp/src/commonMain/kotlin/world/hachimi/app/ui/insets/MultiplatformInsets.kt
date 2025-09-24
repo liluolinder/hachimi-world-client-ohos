@@ -2,6 +2,7 @@ package world.hachimi.app.ui.insets
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -25,7 +26,7 @@ fun currentSafeAreaInsets(): SafeAreaInsets {
         Platform.Windows, Platform.Linux -> SafeAreaInsets()
         Platform.Android -> {
             val density = LocalDensity.current
-            val insets = WindowInsets.statusBars
+            val insets = WindowInsets.safeDrawing
             val direction = LocalLayoutDirection.current
             SafeAreaInsets(
                 top = with(density) { insets.getTop(density).toDp() },
