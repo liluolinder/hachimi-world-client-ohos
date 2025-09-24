@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package world.hachimi.app.font
 
 import androidx.compose.foundation.layout.Arrangement
@@ -9,10 +11,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFontFamilyResolver
@@ -22,14 +21,11 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.cache.HttpCache
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.http.HttpHeaders
-import io.ktor.utils.io.readAvailable
-import io.ktor.utils.io.readBuffer
-import kotlinx.browser.localStorage
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.core.*
 import kotlinx.browser.window
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
@@ -38,11 +34,9 @@ import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
-import org.w3c.dom.get
 import org.w3c.fetch.Response
 import org.w3c.files.Blob
 import org.w3c.files.FileReader
-import world.hachimi.app.api.ApiClient
 import world.hachimi.app.logging.Logger
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -59,6 +53,15 @@ fun WithFont(
     val fontsLoaded = remember { mutableStateOf(false) }
     val fontFamilyResolver = LocalFontFamilyResolver.current
     val error = remember { mutableStateOf<FontLoadError?>(null) }
+    var bytesRead by remember { mutableLongStateOf(0L) }
+    var bytesTotal by remember { mutableStateOf<Long?>(null) }
+    val progress by remember {
+        derivedStateOf {
+            bytesTotal?.let {
+                (bytesRead.toFloat() / it.toFloat()).coerceIn(0f, 1f)
+            } ?: 0f
+        }
+    }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
@@ -93,7 +96,10 @@ fun WithFont(
             }*/
 
             try {
-                val fontFamily = loadFontsFromWeb(true)
+                val fontFamily = loadFontsFromWeb(true, onProgress = { a, b ->
+                    bytesRead = a
+                    bytesTotal = b
+                })
                 fontFamilyResolver.preload(fontFamily)
                 fontsLoaded.value = true
             } catch (e: Throwable) {
@@ -109,13 +115,19 @@ fun WithFont(
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
                 if (error.value == null) {
-                    CircularProgressIndicator()
+                    val bytesTotal = bytesTotal
+                    if (bytesTotal != null) {
+                        CircularProgressIndicator(progress = { progress })
+                        Text("${formatBytes(bytesRead)} / ${ formatBytes(bytesTotal) }")
+                    } else {
+                        CircularProgressIndicator()
+                    }
                 } else {
                     Icon(Icons.Default.Error, contentDescription = "Error")
                     when (error.value) {
                         FontLoadError.NotSupported -> Text("Not supported")
                         FontLoadError.PermissionDenied -> Text("Permission denied")
-                        null -> {}
+                        else -> {}
                     }
                 }
             }
@@ -260,7 +272,10 @@ private suspend fun loadLocalCJKFonts(): List<LoadedLocalFont> {
 
     val loaded = firstFont.map { fontData ->
         val (weight, style) = parseFontStyle(fontData.style)
-        Logger.d("Font", "Loading font ${fontData.postscriptName} ${fontData.style} -> Weight: ${weight.weight}, Style: $style")
+        Logger.d(
+            "Font",
+            "Loading font ${fontData.postscriptName} ${fontData.style} -> Weight: ${weight.weight}, Style: $style"
+        )
         val buffer = fontData.readArrayBuffer()
         LoadedLocalFont(fontData.family, weight, style, buffer)
     }
@@ -309,34 +324,27 @@ suspend fun loadFonts(enableEmoji: Boolean): FontFamily {
     return fontFamily
 }
 
-suspend fun loadFontsFromWeb(enableEmoji: Boolean): FontFamily {
-    val client = HttpClient {
-        install(HttpCache)
-    }
-    val downloadResponse = client.get("https://storage.hachimi.world/fonts/MiSansVF.ttf")
-    val contentLength = downloadResponse.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-    val buffer = if (contentLength != null) {
+suspend fun loadFontsFromWeb(
+    enableEmoji: Boolean,
+    onProgress: (bytesRead: Long, bytesTotal: Long?) -> Unit
+): FontFamily {
+    val client = HttpClient()
+    /*val contentLength = client.head("https://storage.hachimi.world/fonts/MiSansVF.ttf")
+        .headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: -1
+    Logger.d("Font", "Content length: $contentLength bytes")*/
+    val contentLength = 20_093_424L // MiSansVF.ttf file size
+    val buffer = client.prepareGet("https://storage.hachimi.world/fonts/MiSansVF.ttf").execute {
         val buffer = Buffer()
-        Logger.i("global", "Has content length")
-        val channel = downloadResponse.bodyAsChannel()
+        val channel = it.bodyAsChannel()
         var totalBytesRead = 0L
 
-        while (true) {
-            val byteBuffer = ByteArray(4096)
-            val bytesRead = channel.readAvailable(byteBuffer, 0, byteBuffer.size)
-
-            if (bytesRead == -1) break
-
-            totalBytesRead += bytesRead
-            buffer.write(byteBuffer, 0, bytesRead)
-            val progress = totalBytesRead.toDouble() / contentLength.toDouble()
-            Logger.i("font", "Download progress: $progress")
+        while (!channel.exhausted()) {
+            val chunk = channel.readRemaining(1024 * 8)
+            totalBytesRead += chunk.remaining
+            chunk.transferTo(buffer)
+            onProgress(totalBytesRead, contentLength)
         }
         buffer
-    } else {
-        // Oh, copy occurs here
-        Logger.w("font", "No content length")
-        downloadResponse.bodyAsChannel().readBuffer()
     }
 
     val bytes = buffer.readByteArray()
@@ -344,7 +352,7 @@ suspend fun loadFontsFromWeb(enableEmoji: Boolean): FontFamily {
 
     val fonts = weights.map { weight ->
         Font(
-            identity = "MiSansVF",
+            identity = "MiSansVF w_${weight.weight}",
             data = bytes,
             variationSettings = FontVariation.Settings(
                 FontVariation.weight(weight.weight),
@@ -352,4 +360,20 @@ suspend fun loadFontsFromWeb(enableEmoji: Boolean): FontFamily {
         )
     }
     return FontFamily(fonts)
+}
+
+@Stable
+private fun formatBytes(bytes: Long): String {
+    if (bytes == 0L) return "0 MB"
+    return ((bytes.toFloat() / (1024 * 1024) * 10).toInt()).toString()
+        .toCharArray()
+        .toMutableList()
+        .also {
+            if (it.size < 2) {
+                it.add(0, '0')
+            }
+            it.add(it.lastIndex, '.')
+        }
+        .joinToString("")
+        .plus(" MB")
 }
