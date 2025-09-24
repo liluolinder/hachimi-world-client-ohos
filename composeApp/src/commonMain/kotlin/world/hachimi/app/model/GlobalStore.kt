@@ -452,7 +452,7 @@ class GlobalStore(
                         downloadResponse.bodyAsChannel().readBuffer()
                     }
 
-                    songCache.save(buffer, filename)
+                    songCache.save(buffer.copy(), filename)
                     buffer
                 }
                 player.prepare(SongItem(
