@@ -36,7 +36,7 @@ fun FooterPlayer() {
     Surface(shadowElevation = 2.dp) {
         BoxWithConstraints {
             AnimatedVisibility(
-                visible = playerState.hasSong || playerState.isFetching,
+                visible = playerState.hasSong || playerState.fetchingMetadata,
                 modifier = Modifier.fillMaxWidth(),
                 enter = expandVertically(expandFrom = Alignment.Top),
                 exit = shrinkVertically()
@@ -150,7 +150,7 @@ fun ExpandedFooterPlayer() {
             SongControl(
                 modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
                 isPlaying = playerState.isPlaying,
-                isLoading = playerState.isBuffering,
+                isLoading = playerState.buffering,
                 loadingProgress = { playerState.downloadProgress },
                 onPlayPauseClick = { global.player.playOrPause() },
                 onPreviousClick = { global.player.queuePrevious() },

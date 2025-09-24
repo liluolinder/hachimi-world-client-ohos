@@ -147,7 +147,7 @@ fun CompactPlayerScreen(
             SongControl(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 isPlaying = playerState.isPlaying,
-                isLoading = playerState.isBuffering,
+                isLoading = playerState.buffering,
                 loadingProgress = { playerState.downloadProgress },
                 onPlayPauseClick = onPlayOrPauseClick,
                 onPreviousClick = onPreviousClick,
@@ -236,7 +236,7 @@ fun ExpandedPlayerScreen(
                 SongControl(
                     modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
                     isPlaying = playerState.isPlaying,
-                    isLoading = playerState.isBuffering,
+                    isLoading = playerState.buffering,
                     loadingProgress = { playerState.downloadProgress },
                     onPlayPauseClick = onPlayOrPauseClick,
                     onPreviousClick = onPreviousClick,

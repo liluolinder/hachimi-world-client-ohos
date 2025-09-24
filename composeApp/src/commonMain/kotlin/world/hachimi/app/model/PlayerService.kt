@@ -29,6 +29,7 @@ import kotlinx.io.readByteArray
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.module.SongModule
+import world.hachimi.app.api.ok
 import world.hachimi.app.getPlatform
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.model.GlobalStore.MusicQueueItem
@@ -90,161 +91,92 @@ class PlayerService(
             }
         }
     }
+
     /**
      * This is only for play current song. Not interested in the music queue.
      */
     private suspend fun play(displayId: String) = coroutineScope {
         player.pause()
         try {
-            playerState.isFetching = true
-            val resp = api.songModule.detail(displayId)
-            if (resp.ok) {
-                playerState.downloadProgress = 0f
-                playerState.isBuffering = true
+            playerState.fetchingMetadata = true
+            playerState.downloadProgress = 0f
 
-                Logger.i("global", "Reading detail")
-                val data = resp.okData<SongModule.DetailResp>()
-                playerState.updateSongInfo(data)
-                playerState.hasSong = true
-                playerState.updateCurrentMillis(0L)
-
-                val coverBytes = async<ByteArray>(Dispatchers.Default) {
-                    api.httpClient.get(data.coverUrl).bodyAsBytes()
+            val item = getSongItemCacheable(
+                displayId = displayId,
+                onMetadata = { songInfo ->
+                    playerState.updateSongInfo(songInfo)
+                    playerState.hasSong = true
+                    playerState.updateCurrentMillis(0L)
+                },
+                onProgress = { progress ->
+                    playerState.buffering = true
+                    playerState.downloadProgress = progress
                 }
-                val filename = data.audioUrl.substringAfterLast("/")
-                val extension = filename.substringAfterLast(".")
+            )
 
-                val cache = songCache.get(filename)
-                val buffer = if (cache != null) {
-                    val buffer = Buffer()
-                    cache.use {
-                        it.transferTo(buffer)
-                    }
-                    buffer
+            player.prepare(item, autoPlay = true)
+
+            launch {
+                val songId = item.id.toLong()
+                // Touch playing
+                if (global.isLoggedIn) {
+                    api.playHistoryModule.touch(songId)
                 } else {
-                    Logger.i("global", "Downloading")
-
-                    // Do not use HttpCache plugin because it will affect the progress (Bugs)
-                    val statement = downloadHttpClient.prepareGet(data.audioUrl)
-
-                    // FIXME(wasm)(player): Due to the bugs of ktor client, we can't get the content length header in wasm target
-                    //  KTOR-8377 JS/WASM: response doesn't contain the Content-Length header in a browser
-                    //  https://youtrack.jetbrains.com/issue/KTOR-8377/JS-WASM-response-doesnt-contain-the-Content-Length-header-in-a-browser
-                    //  KTOR-7934 JS/WASM fails with "IllegalStateException: Content-Length mismatch" on requesting gzipped content
-                    //  https://youtrack.jetbrains.com/issue/KTOR-7934/JS-WASM-fails-with-IllegalStateException-Content-Length-mismatch-on-requesting-gzipped-content
-                    var headContentLength: Long? = null
-                    // Workaround for wasm, we can use HEAD request to get the content length
-                    if (getPlatform().name == "wasm") {
-                        val resp = api.httpClient.head(data.audioUrl)
-                        headContentLength = resp.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L
-                        Logger.i("global", "Head content length: $headContentLength bytes")
-                    }
-                    val buffer = statement.execute { resp ->
-                        val contentLength = resp.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-                        Logger.i("global", "Content length: $contentLength bytes")
-
-                        val bestContentLength = contentLength ?: headContentLength
-                        val channel = resp.body<ByteReadChannel>()
-
-                        val buffer = if (bestContentLength != null) {
-                            val buffer = Buffer()
-                            var count = 0L
-                            while (!channel.exhausted()) {
-                                val chunk = channel.readRemaining(1024 * 8)
-                                count += chunk.transferTo(buffer)
-                                val progress = count.toFloat() / bestContentLength
-                                playerState.downloadProgress = progress.coerceIn(0f, 1f)
-                            }
-                            buffer
-                        } else {
-                            Logger.i("global", "Content-Length not found, progress is disabled")
-                            channel.readBuffer()
-                        }
-
-                        buffer
-                    }
-
-                    songCache.save(buffer.copy(), filename)
-                    buffer
+                    api.playHistoryModule.touchAnonymous(songId)
                 }
-                player.prepare(SongItem(
-                    id = data.id.toString(),
-                    title = data.title,
-                    artist = data.uploaderName,
-                    audioBytes = buffer.readByteArray(),
-                    coverBytes = coverBytes.await(),
-                    format = extension
-                ), autoPlay = true)
-
-                launch {
-                    // Touch playing
-                    if (global.isLoggedIn) {
-                        api.playHistoryModule.touch(data.id)
-                    } else {
-                        api.playHistoryModule.touchAnonymous(data.id)
-                    }
-                }
-            } else {
-                global.alert(resp.errData<CommonError>().msg)
-                return@coroutineScope
             }
         } catch (e: Throwable) {
             Logger.e("player", "Failed to play song", e)
             global.alert(e.message)
             return@coroutineScope
         } finally {
-            playerState.isBuffering = false
+            playerState.fetchingMetadata = false
+            playerState.buffering = false
         }
     }
 
 
-    fun playSongInQueue(id: String) {
-        scope.launch {
-            queueMutex.withLock {
-                val index = musicQueue.indexOfFirst { it.displayId == id }
-                if (index != -1) {
-                    val song = musicQueue[index]
+    fun playSongInQueue(id: String) = scope.launch {
+        queueMutex.withLock {
+            val index = musicQueue.indexOfFirst { it.displayId == id }
+            if (index != -1) {
+                val song = musicQueue[index]
 
-                    queueCurrentIndex = index
-                    play(song.displayId)
-                }
+                queueCurrentIndex = index
+                play(song.displayId)
             }
         }
     }
 
     // TODO[refactor](player): Should queue be a builtin feature in player? To make GlobalStore more clear
-    fun queuePrevious() {
-        scope.launch {
-            queueMutex.withLock {
-                if (musicQueue.isNotEmpty()) {
-                    val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-                    if (currentIndex == -1) {
-                        playSongInQueue(musicQueue.first().displayId)
+    fun queuePrevious() = scope.launch {
+        queueMutex.withLock {
+            if (musicQueue.isNotEmpty()) {
+                val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
+                if (currentIndex == -1) {
+                    playSongInQueue(musicQueue.first().displayId)
+                } else {
+                    if (currentIndex == 0) {
+                        playSongInQueue(musicQueue.last().displayId)
                     } else {
-                        if (currentIndex == 0) {
-                            playSongInQueue(musicQueue.last().displayId)
-                        } else {
-                            playSongInQueue(musicQueue[currentIndex - 1].displayId)
-                        }
+                        playSongInQueue(musicQueue[currentIndex - 1].displayId)
                     }
                 }
             }
         }
     }
 
-    fun queueNext() {
-        scope.launch {
-            queueMutex.withLock {
-                if (musicQueue.isNotEmpty()) {
-                    val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-                    if (currentIndex == -1) {
+    fun queueNext() = scope.launch {
+        queueMutex.withLock {
+            if (musicQueue.isNotEmpty()) {
+                val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
+                if (currentIndex == -1) {
+                    playSongInQueue(musicQueue.first().displayId)
+                } else {
+                    if (currentIndex >= musicQueue.lastIndex) {
                         playSongInQueue(musicQueue.first().displayId)
                     } else {
-                        if (currentIndex >= musicQueue.lastIndex) {
-                            playSongInQueue(musicQueue.first().displayId)
-                        } else {
-                            playSongInQueue(musicQueue[currentIndex + 1].displayId)
-                        }
+                        playSongInQueue(musicQueue[currentIndex + 1].displayId)
                     }
                 }
             }
@@ -258,7 +190,8 @@ class PlayerService(
      */
     fun insertToQueue(songDisplayId: String, instantPlay: Boolean, append: Boolean) = scope.launch {
         queueMutex.withLock {
-            playerState.isFetching = true
+            player.pause()
+            playerState.fetchingMetadata = true
             val indexInQueue = musicQueue.indexOfFirst { it.displayId == songDisplayId }
 
             // Remove and reinsert
@@ -268,37 +201,50 @@ class PlayerService(
 
             val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
             try {
-                val resp = api.songModule.detail(songDisplayId)
-                if (resp.ok) {
-                    val data = resp.okData<SongModule.DetailResp>()
-                    val item = MusicQueueItem(
-                        id = data.id,
-                        displayId = data.displayId,
-                        name = data.title,
-                        artist = data.uploaderName,
-                        duration = data.durationSeconds.seconds,
-                        coverUrl = data.coverUrl
-                    )
+                val cache = songCache.getMetadata(songDisplayId)
 
-                    if (append) {
-                        musicQueue.add(currentPlayingIndex + 1, item)
+                if (cache != null) {
+                    Logger.i("global", "Cache hit")
+                }
+
+                val data = cache ?: run {
+                    val resp = api.songModule.detail(songDisplayId)
+                    if (resp.ok) {
+                        val data = resp.ok<SongModule.DetailResp>()
+                        songCache.saveMetadata(data)
+                        data
                     } else {
-                        musicQueue.add(item)
+                        val err = resp.errData<CommonError>()
+                        global.alert(err.msg)
+                        return@launch
                     }
+                }
 
-                    if (instantPlay) {
-                        playerState.hasSong = true
-                        queueNext()
-                    }
+
+                val item = MusicQueueItem(
+                    id = data.id,
+                    displayId = data.displayId,
+                    name = data.title,
+                    artist = data.uploaderName,
+                    duration = data.durationSeconds.seconds,
+                    coverUrl = data.coverUrl
+                )
+
+                if (append) {
+                    musicQueue.add(currentPlayingIndex + 1, item)
                 } else {
-                    val err = resp.errData<CommonError>()
-                    global.alert(err.msg)
+                    musicQueue.add(item)
+                }
+
+                if (instantPlay) {
+                    playerState.hasSong = true
+                    queueNext()
                 }
             } catch (e: Throwable) {
                 Logger.e("player", "Failed to insert song to queue", e)
                 global.alert(e.message)
             } finally {
-                playerState.isFetching = false
+                playerState.fetchingMetadata = false
             }
         }
     }
@@ -353,4 +299,102 @@ class PlayerService(
         playerState.updateCurrentMillis(millis)
     }
 
+    private suspend fun getSongItemCacheable(
+        displayId: String,
+        onMetadata: (SongDetailInfo) -> Unit,
+        onProgress: (Float) -> Unit
+    ): SongItem = coroutineScope {
+        val cache = songCache.get(displayId)
+        val metadata: SongDetailInfo
+        val coverBytes: ByteArray
+        val audioBytes: ByteArray
+
+        if (cache != null) {
+            Logger.i("global", "Cache hit")
+            val buffer = Buffer()
+            metadata = cache.metadata
+            onMetadata(cache.metadata)
+            onProgress(1f)
+            cache.audio.use {
+                it.transferTo(buffer)
+            }
+            coverBytes = cache.cover.readByteArray()
+            audioBytes = buffer.readByteArray()
+        } else {
+            Logger.i("global", "Downloading")
+            val data = songCache.getMetadata(displayId) ?: run {
+                val resp = api.songModule.detail(displayId)
+                if (!resp.ok) error(resp.errData<CommonError>().msg)
+                resp.ok()
+            }
+
+            metadata = data
+            onMetadata(data)
+
+            val coverBytesAsync = async<ByteArray>(Dispatchers.Default) {
+                api.httpClient.get(data.coverUrl).bodyAsBytes()
+            }
+
+            // Do not use HttpCache plugin because it will affect the progress (Bugs)
+            val statement = downloadHttpClient.prepareGet(data.audioUrl)
+
+            // FIXME(wasm)(player): Due to the bugs of ktor client, we can't get the content length header in wasm target
+            //  KTOR-8377 JS/WASM: response doesn't contain the Content-Length header in a browser
+            //  https://youtrack.jetbrains.com/issue/KTOR-8377/JS-WASM-response-doesnt-contain-the-Content-Length-header-in-a-browser
+            //  KTOR-7934 JS/WASM fails with "IllegalStateException: Content-Length mismatch" on requesting gzipped content
+            //  https://youtrack.jetbrains.com/issue/KTOR-7934/JS-WASM-fails-with-IllegalStateException-Content-Length-mismatch-on-requesting-gzipped-content
+            var headContentLength: Long? = null
+            // Workaround for wasm, we can use HEAD request to get the content length
+            if (getPlatform().name == "wasm") {
+                val resp = api.httpClient.head(data.audioUrl)
+                headContentLength = resp.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L
+                Logger.i("global", "Head content length: $headContentLength bytes")
+            }
+            val buffer = statement.execute { resp ->
+                val contentLength = resp.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+                Logger.i("global", "Content length: $contentLength bytes")
+
+                val bestContentLength = contentLength ?: headContentLength
+                val channel = resp.body<ByteReadChannel>()
+
+                val buffer = if (bestContentLength != null) {
+                    val buffer = Buffer()
+                    var count = 0L
+                    while (!channel.exhausted()) {
+                        val chunk = channel.readRemaining(1024 * 8)
+                        count += chunk.transferTo(buffer)
+                        val progress = count.toFloat() / bestContentLength
+                        onProgress(progress.coerceIn(0f, 1f))
+                    }
+                    buffer
+                } else {
+                    Logger.i("global", "Content-Length not found, progress is disabled")
+                    channel.readBuffer()
+                }
+
+                buffer
+            }
+            coverBytes = coverBytesAsync.await()
+            val cacheItem = SongCache.Item(
+                key = displayId,
+                metadata = data,
+                audio = buffer.copy(),
+                cover = Buffer().also { it.write(coverBytes) }
+            )
+            audioBytes = buffer.readByteArray()
+            songCache.save(cacheItem)
+        }
+
+        val filename = metadata.audioUrl.substringAfterLast("/")
+        val extension = filename.substringAfterLast(".")
+        val item = SongItem(
+            id = metadata.id.toString(),
+            title = metadata.title,
+            artist = metadata.uploaderName,
+            audioBytes = audioBytes,
+            coverBytes = coverBytes,
+            format = extension
+        )
+        return@coroutineScope item
+    }
 }
