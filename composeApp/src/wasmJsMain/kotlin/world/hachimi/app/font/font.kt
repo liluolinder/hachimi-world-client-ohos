@@ -2,14 +2,20 @@
 
 package world.hachimi.app.font
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,17 +40,20 @@ import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
+import org.koin.compose.koinInject
 import org.w3c.fetch.Response
 import org.w3c.files.Blob
 import org.w3c.files.FileReader
 import world.hachimi.app.logging.Logger
+import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.ui.LocalDarkMode
+import world.hachimi.app.ui.theme.AppTheme
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.js.Promise
 import kotlin.time.TimeSource
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
-
 
 @Composable
 fun WithFont(
@@ -112,22 +121,35 @@ fun WithFont(
     if (fontsLoaded.value) {
         content()
     } else {
-        Box(Modifier.fillMaxSize(), Alignment.Center) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
-                if (error.value == null) {
-                    val bytesTotal = bytesTotal
-                    if (bytesTotal != null) {
-                        CircularProgressIndicator(progress = { progress })
-                        Text("${formatBytes(bytesRead)} / ${ formatBytes(bytesTotal) }")
-                    } else {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    Icon(Icons.Default.Error, contentDescription = "Error")
-                    when (error.value) {
-                        FontLoadError.NotSupported -> Text("Not supported")
-                        FontLoadError.PermissionDenied -> Text("Permission denied")
-                        else -> {}
+        val global = koinInject<GlobalStore>()
+        val darkMode = global.darkMode ?: isSystemInDarkTheme()
+        AppTheme(darkTheme = darkMode) {
+            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+                    ) {
+                        if (error.value == null) {
+                            val bytesTotal = bytesTotal
+                            if (bytesTotal != null) {
+                                val animatedProgress = animateFloatAsState(targetValue = progress)
+                                CircularProgressIndicator(progress = { animatedProgress.value })
+
+                                Text("${formatBytes(bytesRead)} / ${ formatBytes(bytesTotal) }")
+                            } else {
+                                CircularProgressIndicator()
+
+                                Text("Loading...")
+                            }
+                        } else {
+                            Icon(Icons.Default.Error, contentDescription = "Error")
+                            when (error.value) {
+                                FontLoadError.NotSupported -> Text("Not supported")
+                                FontLoadError.PermissionDenied -> Text("Permission denied")
+                                else -> {}
+                            }
+                        }
                     }
                 }
             }
