@@ -14,7 +14,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
@@ -30,13 +32,13 @@ import world.hachimi.app.ui.player.components.Lyrics
 import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
 import world.hachimi.app.ui.theme.PreviewTheme
-import world.hachimi.app.util.PlatformBackHandler
 import world.hachimi.app.util.WindowSize
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PlayerScreen() {
     val global: GlobalStore = koinInject()
-    PlatformBackHandler {
+    BackHandler {
         global.shrinkPlayer()
     }
     BoxWithConstraints {
