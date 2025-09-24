@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
+import io.ktor.client.plugins.onDownload
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.client.statement.bodyAsChannel
@@ -419,6 +420,11 @@ class GlobalStore(
                     playerState.downloadProgress = 0f
                     val downloadResponse = api.httpClient.get(data.audioUrl)
 
+                    // FIXME(wasm)(player): Due to the bugs of ktor client, we can't get the content length header in wasm target
+                    //  KTOR-8377 JS/WASM: response doesn't contain the Content-Length header in a browser
+                    //  https://youtrack.jetbrains.com/issue/KTOR-8377/JS-WASM-response-doesnt-contain-the-Content-Length-header-in-a-browser
+                    //  KTOR-7934 JS/WASM fails with "IllegalStateException: Content-Length mismatch" on requesting gzipped content
+                    //  https://youtrack.jetbrains.com/issue/KTOR-7934/JS-WASM-fails-with-IllegalStateException-Content-Length-mismatch-on-requesting-gzipped-content
                     val contentLength = downloadResponse.headers[HttpHeaders.ContentLength]?.toLongOrNull()
                     val buffer = if (contentLength != null) {
                         val buffer = Buffer()
@@ -442,6 +448,7 @@ class GlobalStore(
                         buffer
                     } else {
                         // Oh, copy occurs here
+                        Logger.i("global", "Content-Length not found, progress is disabled")
                         downloadResponse.bodyAsChannel().readBuffer()
                     }
 
