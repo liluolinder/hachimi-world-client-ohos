@@ -43,21 +43,21 @@ fun PlayerScreen() {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {
             if (maxWidth < WindowSize.MEDIUM) {
                 CompactPlayerScreen(
-                    playerState = global.playerState,
+                    playerState = global.player.playerState,
                     onShrinkClick = { global.shrinkPlayer() },
-                    onPlayOrPauseClick = { global.playOrPause() },
-                    onPreviousClick = { global.queuePrevious() },
-                    onNextClick = { global.queueNext() },
-                    onProgressChange = { global.setSongProgress(it) }
+                    onPlayOrPauseClick = { global.player.playOrPause() },
+                    onPreviousClick = { global.player.queuePrevious() },
+                    onNextClick = { global.player.queueNext() },
+                    onProgressChange = { global.player.setSongProgress(it) }
                 )
             } else {
                 ExpandedPlayerScreen(
-                    playerState = global.playerState,
+                    playerState = global.player.playerState,
                     onShrinkClick = { global.shrinkPlayer() },
-                    onPlayOrPauseClick = { global.playOrPause() },
-                    onPreviousClick = { global.queuePrevious() },
-                    onNextClick = { global.queueNext() },
-                    onProgressChange = { global.setSongProgress(it) }
+                    onPlayOrPauseClick = { global.player.playOrPause() },
+                    onPreviousClick = { global.player.queuePrevious() },
+                    onNextClick = { global.player.queueNext() },
+                    onProgressChange = { global.player.setSongProgress(it) }
                 )
             }
         }

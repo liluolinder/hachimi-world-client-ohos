@@ -107,7 +107,7 @@ class PlaylistDetailViewModel(
                     coverUrl = it.coverUrl
                 )
             }
-            global.playAll(items)
+            global.player.playAll(items)
         }
     }
 

@@ -92,6 +92,6 @@ class RecentPlayViewModel(
     }
 
     fun play(item: PlayHistoryModule.PlayHistoryItem) {
-        global.insertToQueue(item.songInfo.displayId, true, false)
+        global.player.insertToQueue(item.songInfo.displayId, true, false)
     }
 }

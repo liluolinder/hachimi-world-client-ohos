@@ -32,7 +32,7 @@ import kotlin.random.Random
 @Composable
 fun FooterPlayer() {
     val global = koinInject<GlobalStore>()
-    val playerState = global.playerState
+    val playerState = global.player.playerState
     Surface(shadowElevation = 2.dp) {
         BoxWithConstraints {
             AnimatedVisibility(
@@ -54,7 +54,7 @@ fun FooterPlayer() {
 @Composable
 fun CompactFooterPlayer(modifier: Modifier) {
     val global = koinInject<GlobalStore>()
-    val playerState = global.playerState
+    val playerState = global.player.playerState
     Column(modifier.clickable(onClick = { global.expandPlayer() }).padding(horizontal = 24.dp, vertical = 12.dp)) {
         Row(Modifier.height(60.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(
@@ -97,10 +97,10 @@ fun CompactFooterPlayer(modifier: Modifier) {
             ) {
                 MusicQueue(
                     onClose = { queueExpanded = false },
-                    queue = global.musicQueue,
-                    playingSongId = global.playerState.songDisplayId,
-                    onPlayClick = { global.playSongInQueue(it) },
-                    onRemoveClick = { global.removeFromQueue(it) }
+                    queue = global.player.musicQueue,
+                    playingSongId = global.player.playerState.songDisplayId,
+                    onPlayClick = { global.player.playSongInQueue(it) },
+                    onRemoveClick = { global.player.removeFromQueue(it) }
                 )
             }
 
@@ -113,7 +113,7 @@ fun CompactFooterPlayer(modifier: Modifier) {
             durationMillis = playerState.songDurationSecs * 1000L,
             currentMillis = playerState.currentMillis,
             onProgressChange = {
-                global.setSongProgress(it)
+                global.player.setSongProgress(it)
             }
         )
     }
@@ -123,7 +123,7 @@ fun CompactFooterPlayer(modifier: Modifier) {
 @Composable
 fun ExpandedFooterPlayer() {
     val global = koinInject<GlobalStore>()
-    val playerState = global.playerState
+    val playerState = global.player.playerState
 
 
     Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
@@ -152,9 +152,9 @@ fun ExpandedFooterPlayer() {
                 isPlaying = playerState.isPlaying,
                 isLoading = playerState.isBuffering,
                 loadingProgress = { playerState.downloadProgress },
-                onPlayPauseClick = { global.playOrPause() },
-                onPreviousClick = { global.queuePrevious() },
-                onNextClick = { global.queueNext() }
+                onPlayPauseClick = { global.player.playOrPause() },
+                onPreviousClick = { global.player.queuePrevious() },
+                onNextClick = { global.player.queueNext() }
             )
 
             Spacer(Modifier.height(12.dp))
@@ -164,7 +164,7 @@ fun ExpandedFooterPlayer() {
                 durationMillis = playerState.songDurationSecs * 1000L,
                 currentMillis = playerState.currentMillis,
                 onProgressChange = {
-                    global.setSongProgress(it)
+                    global.player.setSongProgress(it)
                 }
             )
         }
@@ -190,10 +190,10 @@ fun ExpandedFooterPlayer() {
         ) {
             MusicQueue(
                 onClose = { queueExpanded = false },
-                queue = global.musicQueue,
-                playingSongId = global.playerState.songDisplayId,
-                onPlayClick = { global.playSongInQueue(it) },
-                onRemoveClick = { global.removeFromQueue(it) }
+                queue = global.player.musicQueue,
+                playingSongId = global.player.playerState.songDisplayId,
+                onPlayClick = { global.player.playSongInQueue(it) },
+                onRemoveClick = { global.player.removeFromQueue(it) }
             )
         }
 

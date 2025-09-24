@@ -153,7 +153,7 @@ fun PlaylistDetailScreen(
                         orderIndex = it.orderIndex,
                         title = it.title,
                         onClick = {
-                            global.insertToQueue(it.songDisplayId, true, false)
+                            global.player.insertToQueue(it.songDisplayId, true, false)
                         },
                         coverUrl = it.coverUrl,
                         artist = it.uploaderName,

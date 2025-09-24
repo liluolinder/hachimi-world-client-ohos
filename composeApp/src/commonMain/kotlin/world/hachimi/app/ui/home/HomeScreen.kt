@@ -62,7 +62,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                                     likeCount = item.likeCount,
                                     playCount = item.playCount,
                                     onClick = {
-                                        global.insertToQueue(item.displayId, true, false)
+                                        global.player.insertToQueue(item.displayId, true, false)
                                     },
                                 )
                             }
