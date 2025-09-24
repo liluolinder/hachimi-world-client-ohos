@@ -115,7 +115,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("标题") },
-                subtitle = { Text("建议将作品标题设定为文本，不建议使用空格隔断、Emoji、符号等方式增强视觉效果或引流") }
+                subtitle = { Text("如 跳楼基、野哈飞舞 之类的纯文字歌曲标题，建议与原曲强关联，引流内容请在副标题中使用") }
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
