@@ -1,7 +1,6 @@
 package world.hachimi.app.ui.player
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -149,7 +148,7 @@ fun CompactPlayerScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 isPlaying = playerState.isPlaying,
                 isLoading = playerState.isBuffering,
-                loadingProgress = playerState.downloadProgress,
+                loadingProgress = { playerState.downloadProgress },
                 onPlayPauseClick = onPlayOrPauseClick,
                 onPreviousClick = onPreviousClick,
                 onNextClick = onNextClick
@@ -238,7 +237,7 @@ fun ExpandedPlayerScreen(
                     modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
                     isPlaying = playerState.isPlaying,
                     isLoading = playerState.isBuffering,
-                    loadingProgress = playerState.downloadProgress,
+                    loadingProgress = { playerState.downloadProgress },
                     onPlayPauseClick = onPlayOrPauseClick,
                     onPreviousClick = onPreviousClick,
                     onNextClick = onNextClick

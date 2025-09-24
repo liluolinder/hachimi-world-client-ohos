@@ -151,7 +151,7 @@ fun ExpandedFooterPlayer() {
                 modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
                 isPlaying = playerState.isPlaying,
                 isLoading = playerState.isBuffering,
-                loadingProgress = playerState.downloadProgress,
+                loadingProgress = { playerState.downloadProgress },
                 onPlayPauseClick = { global.playOrPause() },
                 onPreviousClick = { global.queuePrevious() },
                 onNextClick = { global.queueNext() }

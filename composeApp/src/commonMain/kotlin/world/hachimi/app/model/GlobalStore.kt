@@ -6,9 +6,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import io.ktor.client.*
+import io.ktor.client.HttpClient
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -35,6 +35,8 @@ import world.hachimi.app.storage.PreferencesKeys
 import world.hachimi.app.storage.SongCache
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+
+private val downloadHttpClient = HttpClient()
 
 /**
  * Global shared data and logic. Can work without UI displaying
@@ -379,11 +381,13 @@ class GlobalStore(
      */
     private suspend fun play(displayId: String) = coroutineScope {
         player.pause()
-
-        playerState.isBuffering = true
         try {
+            playerState.isFetching = true
             val resp = api.songModule.detail(displayId)
             if (resp.ok) {
+                playerState.downloadProgress = 0f
+                playerState.isBuffering = true
+
                 Logger.i("global", "Reading detail")
                 val data = resp.okData<SongModule.DetailResp>()
                 playerState.updateSongInfo(data)
@@ -405,26 +409,36 @@ class GlobalStore(
                     buffer
                 } else {
                     Logger.i("global", "Downloading")
-                    playerState.downloadProgress = 0f
 
-                    val statement = HttpClient(CIO).prepareGet(data.audioUrl)
+                    // Do not use HttpCache plugin because it will affect the progress (Bugs)
+                    val statement = downloadHttpClient.prepareGet(data.audioUrl)
+
+                    // FIXME(wasm)(player): Due to the bugs of ktor client, we can't get the content length header in wasm target
+                    //  KTOR-8377 JS/WASM: response doesn't contain the Content-Length header in a browser
+                    //  https://youtrack.jetbrains.com/issue/KTOR-8377/JS-WASM-response-doesnt-contain-the-Content-Length-header-in-a-browser
+                    //  KTOR-7934 JS/WASM fails with "IllegalStateException: Content-Length mismatch" on requesting gzipped content
+                    //  https://youtrack.jetbrains.com/issue/KTOR-7934/JS-WASM-fails-with-IllegalStateException-Content-Length-mismatch-on-requesting-gzipped-content
+                    var headContentLength: Long? = null
+                    // Workaround for wasm, we can use HEAD request to get the content length
+                    if (getPlatform().name == "wasm") {
+                        val resp = api.httpClient.head(data.audioUrl)
+                        headContentLength = resp.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L
+                        Logger.i("global", "Head content length: $headContentLength bytes")
+                    }
                     val buffer = statement.execute { resp ->
-                        // FIXME(wasm)(player): Due to the bugs of ktor client, we can't get the content length header in wasm target
-                        //  KTOR-8377 JS/WASM: response doesn't contain the Content-Length header in a browser
-                        //  https://youtrack.jetbrains.com/issue/KTOR-8377/JS-WASM-response-doesnt-contain-the-Content-Length-header-in-a-browser
-                        //  KTOR-7934 JS/WASM fails with "IllegalStateException: Content-Length mismatch" on requesting gzipped content
-                        //  https://youtrack.jetbrains.com/issue/KTOR-7934/JS-WASM-fails-with-IllegalStateException-Content-Length-mismatch-on-requesting-gzipped-content
                         val contentLength = resp.headers[HttpHeaders.ContentLength]?.toLongOrNull()
                         Logger.i("global", "Content length: $contentLength bytes")
+
+                        val bestContentLength = contentLength ?: headContentLength
                         val channel = resp.body<ByteReadChannel>()
 
-                        val buffer = if (contentLength != null) {
+                        val buffer = if (bestContentLength != null) {
                             val buffer = Buffer()
                             var count = 0L
                             while (!channel.exhausted()) {
                                 val chunk = channel.readRemaining(1024 * 8)
                                 count += chunk.transferTo(buffer)
-                                val progress = count.toFloat() / contentLength
+                                val progress = count.toFloat() / bestContentLength
                                 Logger.d("global", "Progress: $progress")
                                 playerState.downloadProgress = progress.coerceIn(0f, 1f)
                             }

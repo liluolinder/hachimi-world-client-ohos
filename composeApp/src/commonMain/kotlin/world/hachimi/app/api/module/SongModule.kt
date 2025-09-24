@@ -90,8 +90,8 @@ class SongModule(
         val id: String,
     )
 
-    suspend fun detail(songId: String): WebResult<DetailResp> =
-        client.get("/song/detail", DetailReq(songId), false)
+    suspend fun detail(displayId: String): WebResult<DetailResp> =
+        client.get("/song/detail", DetailReq(displayId), false)
 
     @Serializable
     data class UploadImageResp(
