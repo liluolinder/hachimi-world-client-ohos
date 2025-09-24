@@ -6,39 +6,27 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
-import io.ktor.client.plugins.onDownload
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsBytes
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.http.HttpHeaders
-import io.ktor.utils.io.readAvailable
-import io.ktor.utils.io.readBuffer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.utils.io.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.jetbrains.compose.resources.StringResource
 import world.hachimi.app.BuildKonfig
-import world.hachimi.app.api.ApiClient
-import world.hachimi.app.api.AuthError
-import world.hachimi.app.api.AuthenticationListener
-import world.hachimi.app.api.CommonError
-import world.hachimi.app.api.DefaultAuthenticationListener
-import world.hachimi.app.api.err
+import world.hachimi.app.api.*
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.VersionModule
-import world.hachimi.app.api.ok
 import world.hachimi.app.getPlatform
 import world.hachimi.app.logging.Logger
-import world.hachimi.app.nav.Route
 import world.hachimi.app.nav.Navigator
+import world.hachimi.app.nav.Route
 import world.hachimi.app.player.PlayEvent
 import world.hachimi.app.player.Player
 import world.hachimi.app.player.SongItem
@@ -389,12 +377,12 @@ class GlobalStore(
     /**
      * This is only for play current song. Not interested in the music queue.
      */
-    private suspend fun play(id: String) = coroutineScope {
+    private suspend fun play(displayId: String) = coroutineScope {
         player.pause()
 
         playerState.isBuffering = true
         try {
-            val resp = api.songModule.detail(id)
+            val resp = api.songModule.detail(displayId)
             if (resp.ok) {
                 Logger.i("global", "Reading detail")
                 val data = resp.okData<SongModule.DetailResp>()
@@ -418,38 +406,35 @@ class GlobalStore(
                 } else {
                     Logger.i("global", "Downloading")
                     playerState.downloadProgress = 0f
-                    val downloadResponse = api.httpClient.get(data.audioUrl)
 
-                    // FIXME(wasm)(player): Due to the bugs of ktor client, we can't get the content length header in wasm target
-                    //  KTOR-8377 JS/WASM: response doesn't contain the Content-Length header in a browser
-                    //  https://youtrack.jetbrains.com/issue/KTOR-8377/JS-WASM-response-doesnt-contain-the-Content-Length-header-in-a-browser
-                    //  KTOR-7934 JS/WASM fails with "IllegalStateException: Content-Length mismatch" on requesting gzipped content
-                    //  https://youtrack.jetbrains.com/issue/KTOR-7934/JS-WASM-fails-with-IllegalStateException-Content-Length-mismatch-on-requesting-gzipped-content
-                    val contentLength = downloadResponse.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-                    val buffer = if (contentLength != null) {
-                        val buffer = Buffer()
-                        Logger.i("global", "Has content length")
-                        playerState.downloadProgress = 0.01f
+                    val statement = HttpClient(CIO).prepareGet(data.audioUrl)
+                    val buffer = statement.execute { resp ->
+                        // FIXME(wasm)(player): Due to the bugs of ktor client, we can't get the content length header in wasm target
+                        //  KTOR-8377 JS/WASM: response doesn't contain the Content-Length header in a browser
+                        //  https://youtrack.jetbrains.com/issue/KTOR-8377/JS-WASM-response-doesnt-contain-the-Content-Length-header-in-a-browser
+                        //  KTOR-7934 JS/WASM fails with "IllegalStateException: Content-Length mismatch" on requesting gzipped content
+                        //  https://youtrack.jetbrains.com/issue/KTOR-7934/JS-WASM-fails-with-IllegalStateException-Content-Length-mismatch-on-requesting-gzipped-content
+                        val contentLength = resp.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+                        Logger.i("global", "Content length: $contentLength bytes")
+                        val channel = resp.body<ByteReadChannel>()
 
-                        val channel = downloadResponse.bodyAsChannel()
-                        var totalBytesRead = 0L
-
-                        while (true) {
-                            val byteBuffer = ByteArray(4096)
-                            val bytesRead = channel.readAvailable(byteBuffer, 0, byteBuffer.size)
-
-                            if (bytesRead == -1) break
-
-                            totalBytesRead += bytesRead
-                            buffer.write(byteBuffer, 0, bytesRead)
-                            val progress = totalBytesRead.toDouble() / contentLength.toDouble()
-                            playerState.downloadProgress = progress.toFloat()
+                        val buffer = if (contentLength != null) {
+                            val buffer = Buffer()
+                            var count = 0L
+                            while (!channel.exhausted()) {
+                                val chunk = channel.readRemaining(1024 * 8)
+                                count += chunk.transferTo(buffer)
+                                val progress = count.toFloat() / contentLength
+                                Logger.d("global", "Progress: $progress")
+                                playerState.downloadProgress = progress.coerceIn(0f, 1f)
+                            }
+                            buffer
+                        } else {
+                            Logger.i("global", "Content-Length not found, progress is disabled")
+                            channel.readBuffer()
                         }
+
                         buffer
-                    } else {
-                        // Oh, copy occurs here
-                        Logger.i("global", "Content-Length not found, progress is disabled")
-                        downloadResponse.bodyAsChannel().readBuffer()
                     }
 
                     songCache.save(buffer.copy(), filename)
