@@ -1,5 +1,7 @@
 package world.hachimi.app.nav
 
+import world.hachimi.app.model.SearchViewModel
+
 sealed class Route {
     sealed class Root : Route() {
         companion object {
@@ -33,8 +35,12 @@ sealed class Route {
             data class ReviewDetail(val reviewId: Long): ContributorCenter()
         }
 
-        data class Search(val query: String): Root()
-        object UserSpace: Root()
+        data class Search(
+            val query: String,
+            val type: SearchViewModel.SearchType = SearchViewModel.SearchType.SONG
+        ): Root()
+        data object UserSpace: Root()
+        data class PublicUserSpace(val userId: Long): Root()
         data object Settings: Root()
     }
     data class Auth(val initialLogin: Boolean = true) : Route()
