@@ -24,7 +24,7 @@ class UserModule(
     )
 
     @Serializable
-    data class ProfileResp(
+    data class PublicUserProfile(
         val uid: Long,
         val username: String,
         val avatarUrl: String?,
@@ -33,7 +33,7 @@ class UserModule(
         val isBanned: Boolean,
     )
 
-    suspend fun profile(uid: Long): WebResult<ProfileResp> =
+    suspend fun profile(uid: Long): WebResult<PublicUserProfile> =
         client.get("/user/profile", ProfileReq(uid))
 
     @Serializable
@@ -62,4 +62,24 @@ class UserModule(
             onUpload(listener)
         }
     }
+
+    @Serializable
+    data class SearchReq(
+        val q: String,
+        val page: Int,
+        val size: Int,
+    )
+
+    @Serializable
+    data class SearchResp(
+        val hits: List<PublicUserProfile>,
+        val query: String,
+        val processingTimeMs: Long,
+        val totalHits: Long?,
+        val limit: Long,
+        val offset: Long,
+    )
+
+    suspend fun search(req: SearchReq): WebResult<SearchResp> =
+        client.get("/user/search", req, false)
 }

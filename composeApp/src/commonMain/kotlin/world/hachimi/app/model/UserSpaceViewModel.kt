@@ -17,7 +17,9 @@ import kotlinx.coroutines.launch
 import kotlinx.io.Buffer
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
+import world.hachimi.app.api.err
 import world.hachimi.app.api.module.UserModule
+import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
 
 class UserSpaceViewModel(
@@ -26,7 +28,7 @@ class UserSpaceViewModel(
 ) : ViewModel(CoroutineScope(Dispatchers.Default)) {
     var loading by mutableStateOf(false)
         private set
-    var profile by mutableStateOf<UserModule.ProfileResp?>(null)
+    var profile by mutableStateOf<UserModule.PublicUserProfile?>(null)
         private set
     var showEditBio by mutableStateOf(false)
         private set
@@ -169,11 +171,11 @@ class UserSpaceViewModel(
             try {
                 val resp = api.userModule.profile(userInfo.uid)
                 if (resp.ok) {
-                    val data = resp.okData<UserModule.ProfileResp>()
+                    val data = resp.ok()
                     profile = data
                     global.setLoginUser(data.uid, data.username, data.avatarUrl)
                 } else {
-                    val err = resp.errData<CommonError>()
+                    val err = resp.err()
                     global.alert(err.msg)
                 }
             } catch (e: Throwable) {

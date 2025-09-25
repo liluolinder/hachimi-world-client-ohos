@@ -20,7 +20,6 @@ import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
 import world.hachimi.app.api.err
 import world.hachimi.app.api.module.SongModule
-import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.util.LrcParser
@@ -445,10 +444,10 @@ class PublishViewModel(
                 try {
                     val resp = api.userModule.profile(uid)
                     if (resp.ok) {
-                        val data = resp.okData<UserModule.ProfileResp>()
+                        val data = resp.ok()
                         addStaffName = data.username
                     } else {
-                        val data = resp.errData<CommonError>()
+                        val data = resp.err()
                         global.alert(data.msg)
                         return@launch
                     }

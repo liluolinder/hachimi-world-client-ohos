@@ -210,6 +210,8 @@ class SongModule(
         val likeCount: Long,
         val coverArtUrl: String,
         val audioUrl: String,
+        val uploaderUid: Long,
+        val uploaderName: String
     )
 
     suspend fun search(req: SearchReq): WebResult<SearchResp> =
