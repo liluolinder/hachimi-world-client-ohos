@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import io.ktor.client.*
+import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.utils.io.*
@@ -350,7 +351,7 @@ suspend fun loadFontsFromWeb(
     enableEmoji: Boolean,
     onProgress: (bytesRead: Long, bytesTotal: Long?) -> Unit
 ): FontFamily {
-    val client = HttpClient()
+    val client = HttpClient { install(HttpCache) }
     /*val contentLength = client.head("https://storage.hachimi.world/fonts/MiSansVF.ttf")
         .headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: -1
     Logger.d("Font", "Content length: $contentLength bytes")*/
