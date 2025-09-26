@@ -1,8 +1,10 @@
 package world.hachimi.app.ui.search
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -34,71 +36,89 @@ fun SearchScreen(
     Column {
         if (vm.loading) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
-        } else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp)) {
-            item {
-                Row(
-                    modifier = Modifier.padding(bottom = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "搜索结果",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "${vm.searchProcessingTimeMs} ms",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
-            item {
-                SingleChoiceSegmentedButtonRow(Modifier.padding(bottom = 12.dp)) {
-                    SegmentedButton(
-                        selected = vm.searchType == SearchViewModel.SearchType.SONG,
-                        onClick = { vm.updateSearchType(SearchViewModel.SearchType.SONG) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                        label = { Text("歌曲") }
-                    )
-                    SegmentedButton(
-                        selected = vm.searchType == SearchViewModel.SearchType.USER,
-                        onClick = { vm.updateSearchType(SearchViewModel.SearchType.USER) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                        label = { Text("用户") }
-                    )
-                }
-            }
-            item {
-                val data = if (vm.searchType == SearchViewModel.SearchType.SONG) vm.songData else vm.userData
-                if (data.isEmpty()) Box(
-                    Modifier.fillMaxWidth().padding(vertical = 128.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("空空如也")
-                }
-            }
-            if (vm.searchType == SearchViewModel.SearchType.SONG) itemsIndexed(
-                items = vm.songData,
-                key = { _, item -> item.id },
-                contentType = { _, _ -> "song" }
-            ) { _, item ->
-                SearchSongItem(item, Modifier.widthIn(min = 300.dp).padding(vertical = 8.dp), {
-                    global.player.insertToQueue(item.displayId, true, false)
-                })
-            }
-
-            if (vm.searchType == SearchViewModel.SearchType.USER) itemsIndexed(
-                items = vm.userData,
-                key = { _, item -> item.uid },
-                contentType = { _, _ -> "user" }
-            ) { _, item ->
-                SearchUserItem(
-                    name = item.username,
-                    avatarUrl = item.avatarUrl,
-                    onClick = { global.nav.push(Route.Root.PublicUserSpace(item.uid)) },
-                    modifier = Modifier.wrapContentWidth().padding(vertical = 12.dp)
-                )
-            }
-        }
+        } else Content(vm, global)
     }
 }
 
+@Composable
+private fun Content(vm: SearchViewModel, global: GlobalStore) {
+    LazyVerticalGrid(
+        modifier = Modifier.fillMaxSize(),
+        columns = if (vm.searchType == SearchViewModel.SearchType.SONG) GridCells.Adaptive(minSize = 320.dp)
+        else GridCells.Adaptive(152.dp),
+        contentPadding = PaddingValues(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Row(
+                modifier = Modifier.padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "搜索结果",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "${vm.searchProcessingTimeMs} ms",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            SingleChoiceSegmentedButtonRow(Modifier.wrapContentWidth(align = Alignment.Start)) {
+                SegmentedButton(
+                    selected = vm.searchType == SearchViewModel.SearchType.SONG,
+                    onClick = { vm.updateSearchType(SearchViewModel.SearchType.SONG) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    label = { Text("歌曲") }
+                )
+                SegmentedButton(
+                    selected = vm.searchType == SearchViewModel.SearchType.USER,
+                    onClick = { vm.updateSearchType(SearchViewModel.SearchType.USER) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    label = { Text("用户") }
+                )
+            }
+        }
+
+        val data = if (vm.searchType == SearchViewModel.SearchType.SONG) vm.songData else vm.userData
+        if (data.isEmpty()) item {
+            Box(
+                Modifier.fillMaxWidth().padding(vertical = 128.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("空空如也")
+            }
+        }
+
+        if (vm.searchType == SearchViewModel.SearchType.SONG) items(
+            items = vm.songData,
+            key = { item -> item.id },
+            contentType = { _ -> "song" }
+        ) {item ->
+            SearchSongItem(
+                modifier = Modifier.fillMaxWidth().animateItem(),
+                data = item,
+                onClick = {
+                    global.player.insertToQueue(item.displayId, true, false)
+                }
+            )
+        }
+
+        if (vm.searchType == SearchViewModel.SearchType.USER) items(
+            items = vm.userData,
+            key = { item -> item.uid },
+            contentType = { _ -> "user" }
+        ) { item ->
+            SearchUserItem(
+                modifier = Modifier.fillMaxWidth().animateItem(),
+                name = item.username,
+                avatarUrl = item.avatarUrl,
+                onClick = { global.nav.push(Route.Root.PublicUserSpace(item.uid)) },
+            )
+        }
+    }
+}
