@@ -26,13 +26,13 @@ class SongModule(
 
     @Serializable
     data class RecentResp(
-        val songs: List<DetailResp>
+        val songs: List<PublicSongDetail>
     )
 
     suspend fun recentV2(): WebResult<RecentResp> = client.get("/song/recent_v2", true)
 
     @Serializable
-    data class DetailResp(
+    data class PublicSongDetail(
         val id: Long,
         val displayId: String,
         val title: String,
@@ -90,7 +90,7 @@ class SongModule(
         val id: String,
     )
 
-    suspend fun detail(displayId: String): WebResult<DetailResp> =
+    suspend fun detail(displayId: String): WebResult<PublicSongDetail> =
         client.get("/song/detail", DetailReq(displayId), false)
 
     @Serializable
@@ -243,4 +243,22 @@ class SongModule(
 
     suspend fun tagSearch(req: TagSearchReq): WebResult<TagSearchResp>
         = client.get("/song/tag/search", req)
+
+    @Serializable
+    data class PageByUserReq(
+        val userId: Long,
+        val page: Long?,
+        val size: Long?,
+    )
+
+    @Serializable
+    data class PageByUserResp(
+        val songs: List<PublicSongDetail>,
+        val total: Long,
+        val page: Long,
+        val size: Long,
+    )
+
+    suspend fun pageByUser(req: PageByUserReq): WebResult<PageByUserResp>
+        = client.get("/song/page_by_user", req)
 }
