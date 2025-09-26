@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,9 +37,9 @@ fun SongCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier, onClick = onClick) {
+    Surface(modifier = modifier.defaultMinSize(minWidth = 160.dp), onClick = onClick, shape = CardDefaults.shape, color = CardDefaults.cardColors().containerColor) {
         Column {
-            Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
+            Box(Modifier.aspectRatio(1f)) {
                 AsyncImage(
                     model = coverUrl,
                     contentDescription = null,

@@ -22,7 +22,7 @@ class MainViewModel(
         private set
     var isLoading by mutableStateOf(false)
         private set
-    var songs by mutableStateOf(emptyList<SongModule.DetailResp>())
+    var songs by mutableStateOf(emptyList<SongModule.PublicSongDetail>())
         private set
 
     fun mounted() {

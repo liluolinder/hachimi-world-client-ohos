@@ -7,7 +7,7 @@ import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.util.LrcParser
 
-typealias SongDetailInfo = SongModule.DetailResp
+typealias SongDetailInfo = SongModule.PublicSongDetail
 
 /**
  * UI states, should attach a player

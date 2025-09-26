@@ -100,7 +100,7 @@ private fun Content(vm: SearchViewModel, global: GlobalStore) {
             contentType = { _ -> "song" }
         ) {item ->
             SearchSongItem(
-                modifier = Modifier.fillMaxWidth().animateItem(),
+                modifier = Modifier.fillMaxWidth(),
                 data = item,
                 onClick = {
                     global.player.insertToQueue(item.displayId, true, false)
@@ -114,7 +114,7 @@ private fun Content(vm: SearchViewModel, global: GlobalStore) {
             contentType = { _ -> "user" }
         ) { item ->
             SearchUserItem(
-                modifier = Modifier.fillMaxWidth().animateItem(),
+                modifier = Modifier.fillMaxWidth(),
                 name = item.username,
                 avatarUrl = item.avatarUrl,
                 onClick = { global.nav.push(Route.Root.PublicUserSpace(item.uid)) },

@@ -49,9 +49,9 @@ fun RootScreen(routeContent: Route.Root) {
                     is Route.Root.CreationCenter -> if (global.isLoggedIn) CreationCenterScreen(routeContent) else NeedLoginScreen()
                     Route.Root.CommitteeCenter -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
                     is Route.Root.ContributorCenter -> if (global.isLoggedIn) ContributorCenterScreen(routeContent) else NeedLoginScreen()
-                    Route.Root.UserSpace -> UserSpaceScreen()
+                    Route.Root.UserSpace -> UserSpaceScreen(null)
                     Route.Root.Settings -> SettingsScreen()
-                    is Route.Root.PublicUserSpace -> DevelopingPage()
+                    is Route.Root.PublicUserSpace -> UserSpaceScreen(routeContent.userId)
                 }
             }
         }
