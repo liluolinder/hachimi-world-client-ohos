@@ -46,7 +46,7 @@ fun PlaylistScreen(vm: PlaylistViewModel = koinViewModel()) {
                 InitializeStatus.FAILED -> ReloadPage(onReloadClick = { vm.retry() })
                 InitializeStatus.LOADED -> Box(Modifier.fillMaxSize()) {
                     if (vm.playlists.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("空空如也")
+                        Text("什么也没有")
                     } else LazyVerticalGrid(
                         modifier = Modifier.fillMaxSize(),
                         columns = GridCells.Adaptive(minSize = 160.dp),

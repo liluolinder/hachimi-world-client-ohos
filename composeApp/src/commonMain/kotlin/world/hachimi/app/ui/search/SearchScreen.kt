@@ -85,12 +85,12 @@ private fun Content(vm: SearchViewModel, global: GlobalStore) {
         }
 
         val data = if (vm.searchType == SearchViewModel.SearchType.SONG) vm.songData else vm.userData
-        if (data.isEmpty()) item {
+        if (data.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
             Box(
                 Modifier.fillMaxWidth().padding(vertical = 128.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("空空如也")
+                Text("什么也没有找到")
             }
         }
 

@@ -198,23 +198,37 @@ fun ExpandedPlayerScreen(
                             )
                         }
 
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = playerState.songTitle,
-                        )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = playerState.songAuthor,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LocalContentColor.current.copy(0.6f)
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "基米ID：${playerState.songDisplayId}",
+                            modifier = Modifier.align(Alignment.End),
+                            text = playerState.songDisplayId,
                             style = MaterialTheme.typography.labelSmall,
                             color = LocalContentColor.current.copy(0.7f)
                         )
+
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = playerState.songTitle,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        playerState.songInfo?.subtitle?.let {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = LocalContentColor.current.copy(0.7f)
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "作者：${playerState.songAuthor}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LocalContentColor.current.copy(0.7f)
+                        )
+
                         playerState.staff.fastForEach { (role, name) ->
+                            Spacer(Modifier.height(8.dp))
                             Text(
                                 text = "${role}: ${name}",
                                 style = MaterialTheme.typography.labelSmall,
