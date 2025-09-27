@@ -115,6 +115,7 @@ class PlayerUIState() {
         songTitle = data.title
         songAuthor = data.uploaderName
         songDurationSecs = data.durationSeconds
+        songInfo = data
         staff = data.productionCrew.map {
             it.role to (it.personName ?: it.uid?.toString() ?: "Unknown")
         }
