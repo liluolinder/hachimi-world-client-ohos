@@ -1,52 +1,56 @@
 package world.hachimi.app.ui.search
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.SearchViewModel
-import world.hachimi.app.util.formatSongDuration
-import kotlin.time.Duration.Companion.seconds
+import world.hachimi.app.nav.Route
+import world.hachimi.app.ui.search.components.SearchSongItem
+import world.hachimi.app.ui.search.components.SearchUserItem
 
 @Composable
 fun SearchScreen(
     query: String,
+    searchType: SearchViewModel.SearchType,
     vm: SearchViewModel = koinViewModel(),
 ) {
     val global = koinInject<GlobalStore>()
-    DisposableEffect(vm, query) {
-        vm.mounted(query)
+    DisposableEffect(vm, query, searchType) {
+        vm.mounted(query, searchType)
         onDispose {
             vm.dispose()
         }
     }
 
-    if (vm.loading) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    } else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp)) {
-        item {
+    Column {
+        if (vm.loading) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        } else Content(vm, global)
+    }
+}
+
+@Composable
+private fun Content(vm: SearchViewModel, global: GlobalStore) {
+    LazyVerticalGrid(
+        modifier = Modifier.fillMaxSize(),
+        columns = if (vm.searchType == SearchViewModel.SearchType.SONG) GridCells.Adaptive(minSize = 320.dp)
+        else GridCells.Adaptive(152.dp),
+        contentPadding = PaddingValues(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Row(
                 modifier = Modifier.padding(bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -62,67 +66,59 @@ fun SearchScreen(
                 )
             }
         }
-        item {
-            SingleChoiceSegmentedButtonRow(Modifier.padding(bottom = 12.dp)) {
+
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            SingleChoiceSegmentedButtonRow(Modifier.wrapContentWidth(align = Alignment.Start)) {
                 SegmentedButton(
-                    selected = true,
-                    onClick = {},
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 1),
+                    selected = vm.searchType == SearchViewModel.SearchType.SONG,
+                    onClick = { vm.updateSearchType(SearchViewModel.SearchType.SONG) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                     label = { Text("歌曲") }
+                )
+                SegmentedButton(
+                    selected = vm.searchType == SearchViewModel.SearchType.USER,
+                    onClick = { vm.updateSearchType(SearchViewModel.SearchType.USER) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    label = { Text("用户") }
                 )
             }
         }
-        item {
-            if (vm.data.isEmpty()) Box(Modifier.fillMaxWidth().padding(vertical = 128.dp), contentAlignment = Alignment.Center) {
-                Text("空空如也")
-            }
-        }
-        itemsIndexed(
-            items = vm.data,
-            key = { _, item -> item.displayId }
-        ) { index, item ->
-            SearchSongItem(item, Modifier.widthIn(min = 300.dp).padding(vertical = 12.dp), {
-                global.player.insertToQueue(item.displayId, true, false)
-            })
-        }
-    }
-}
 
-@Composable
-private fun SearchSongItem(
-    data: SongModule.SearchSongItem,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-) {
-    Card(
-        modifier = modifier.height(120.dp),
-        onClick = onClick
-    ) {
-        Row {
-            AsyncImage(
-                model = data.coverArtUrl,
-                contentDescription = null,
-                modifier = Modifier.aspectRatio(1f).fillMaxWidth().padding(12.dp),
-                contentScale = ContentScale.Crop
-            )
-            Column(Modifier.weight(1f).padding(start = 12.dp, top = 12.dp)) {
-                Text(data.title, style = MaterialTheme.typography.titleMedium)
-                Text(data.artist, style = MaterialTheme.typography.titleSmall)
+        val data = if (vm.searchType == SearchViewModel.SearchType.SONG) vm.songData else vm.userData
+        if (data.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
+            Box(
+                Modifier.fillMaxWidth().padding(vertical = 128.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("什么也没有找到")
             }
-            Text(
-                modifier = Modifier.padding(12.dp),
-                text = formatSongDuration(data.durationSeconds.seconds), style = MaterialTheme.typography.bodySmall
+        }
+
+        if (vm.searchType == SearchViewModel.SearchType.SONG) items(
+            items = vm.songData,
+            key = { item -> item.id },
+            contentType = { _ -> "song" }
+        ) {item ->
+            SearchSongItem(
+                modifier = Modifier.fillMaxWidth(),
+                data = item,
+                onClick = {
+                    global.player.insertToQueue(item.displayId, true, false)
+                }
+            )
+        }
+
+        if (vm.searchType == SearchViewModel.SearchType.USER) items(
+            items = vm.userData,
+            key = { item -> item.uid },
+            contentType = { _ -> "user" }
+        ) { item ->
+            SearchUserItem(
+                modifier = Modifier.fillMaxWidth(),
+                name = item.username,
+                avatarUrl = item.avatarUrl,
+                onClick = { global.nav.push(Route.Root.PublicUserSpace(item.uid)) },
             )
         }
     }
-    /*SongCard(
-        coverUrl = data.coverArtUrl,
-        title = data.title,
-        subtitle = data.subtitle,
-        author = data.artist,
-        tags = emptyList(),// data.tags.map { it.name },
-        likeCount = data.likeCount,
-        onClick = onClick,
-        modifier = modifier,
-    )*/
 }

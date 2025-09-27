@@ -210,7 +210,7 @@ class PlayerService(
                 val data = cache ?: run {
                     val resp = api.songModule.detail(songDisplayId)
                     if (resp.ok) {
-                        val data = resp.ok<SongModule.DetailResp>()
+                        val data = resp.ok<SongModule.PublicSongDetail>()
                         songCache.saveMetadata(data)
                         data
                     } else {

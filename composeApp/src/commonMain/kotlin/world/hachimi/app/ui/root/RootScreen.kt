@@ -41,7 +41,7 @@ fun RootScreen(routeContent: Route.Root) {
             AnimatedContent(routeContent) { routeContent ->
                 when (routeContent) {
                     Route.Root.Home -> HomeScreen()
-                    is Route.Root.Search -> SearchScreen(routeContent.query)
+                    is Route.Root.Search -> SearchScreen(routeContent.query, routeContent.type)
                     Route.Root.RecentLike -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
                     Route.Root.RecentPlay -> if (global.isLoggedIn) RecentPlayScreen() else NeedLoginScreen()
                     is Route.Root.MyPlaylist -> if (global.isLoggedIn) PlaylistRouteScreen(routeContent) else NeedLoginScreen()
@@ -49,8 +49,9 @@ fun RootScreen(routeContent: Route.Root) {
                     is Route.Root.CreationCenter -> if (global.isLoggedIn) CreationCenterScreen(routeContent) else NeedLoginScreen()
                     Route.Root.CommitteeCenter -> if (global.isLoggedIn) DevelopingPage() else NeedLoginScreen()
                     is Route.Root.ContributorCenter -> if (global.isLoggedIn) ContributorCenterScreen(routeContent) else NeedLoginScreen()
-                    Route.Root.UserSpace -> UserSpaceScreen()
+                    Route.Root.UserSpace -> UserSpaceScreen(null)
                     Route.Root.Settings -> SettingsScreen()
+                    is Route.Root.PublicUserSpace -> UserSpaceScreen(routeContent.userId)
                 }
             }
         }

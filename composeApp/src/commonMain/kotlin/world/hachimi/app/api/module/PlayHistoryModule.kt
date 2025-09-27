@@ -22,7 +22,7 @@ class PlayHistoryModule(
     @Serializable
     data class PlayHistoryItem(
         val id: Long,
-        val songInfo: SongModule.DetailResp,
+        val songInfo: SongModule.PublicSongDetail,
         val playTime: Instant
     )
 

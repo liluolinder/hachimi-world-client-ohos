@@ -1,6 +1,7 @@
 package world.hachimi.app.model
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -17,16 +18,25 @@ import kotlinx.coroutines.launch
 import kotlinx.io.Buffer
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.CommonError
+import world.hachimi.app.api.err
+import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
+import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
 
 class UserSpaceViewModel(
     private val api: ApiClient,
     private val global: GlobalStore
 ) : ViewModel(CoroutineScope(Dispatchers.Default)) {
-    var loading by mutableStateOf(false)
+    var initializeStatus by mutableStateOf(InitializeStatus.INIT)
         private set
-    var profile by mutableStateOf<UserModule.ProfileResp?>(null)
+    var loadingProfile by mutableStateOf(false)
+        private set
+    var loadingSongs by mutableStateOf(false)
+        private set
+    var myself by mutableStateOf(false)
+        private set
+    var profile by mutableStateOf<UserModule.PublicUserProfile?>(null)
         private set
     var showEditBio by mutableStateOf(false)
         private set
@@ -40,12 +50,62 @@ class UserSpaceViewModel(
         private set
 
     var avatarUploading by mutableStateOf(false)
+    var avatarUploadProgress by mutableStateOf(0f)
 
-    fun mounted() {
-        refreshProfile()
+    val songs = mutableStateListOf<SongModule.PublicSongDetail>()
+    var songPage by mutableStateOf(0)
+        private set
+    var songPageSize by mutableStateOf(20)
+        private set
+    private var uid: Long? = null
+
+    fun mounted(uid: Long?) {
+        when (initializeStatus) {
+            InitializeStatus.INIT, InitializeStatus.FAILED -> {
+                initialize(uid)
+            }
+
+            InitializeStatus.LOADED -> {
+                // Just refresh?
+                if (this.uid != uid) {
+                    initialize(uid)
+                } else {
+                    refresh()
+                }
+            }
+        }
     }
 
     fun dispose() {
+
+    }
+
+    private fun initialize(uid: Long?) {
+        initializeStatus = InitializeStatus.INIT
+        profile = null
+        songs.clear()
+
+        // Initialize
+        if (uid == null) {
+            val userInfo = global.userInfo
+            if (userInfo == null) {
+                global.alert("未登录")
+                return
+            }
+            this.uid = userInfo.uid
+        } else {
+            this.uid = uid
+        }
+        myself = this.uid == global.userInfo?.uid
+
+        viewModelScope.launch {
+            refreshProfile()
+            loadSongs()
+            initializeStatus = InitializeStatus.LOADED
+        }
+    }
+
+    private fun refresh() {
 
     }
 
@@ -67,9 +127,11 @@ class UserSpaceViewModel(
                 try {
                     avatarUploading = true
 
-                    val resp = api.userModule.setAvatar(filename = image.name, source = buffer, listener = { sent, total ->
-                        val progress = (sent.toDouble() / size).toFloat()
-                    })
+                    val resp =
+                        api.userModule.setAvatar(filename = image.name, source = buffer, listener = { sent, total ->
+                            val progress = (sent.toDouble() / size).toFloat()
+                            avatarUploadProgress = progress.coerceIn(0f, 1f)
+                        })
                     if (resp.ok) {
                         refreshProfile()
                     } else {
@@ -157,31 +219,52 @@ class UserSpaceViewModel(
         }
     }
 
-    private fun refreshProfile() {
-        val userInfo = global.userInfo
-        if (userInfo == null) {
-            global.alert("Not logged in")
-            return
-        }
+    fun updateSongPage(page: Int, pageSize: Int) = viewModelScope.launch {
+        songPage = page
+        songPageSize = pageSize
+        loadSongs()
+    }
 
-        viewModelScope.launch {
-            loading = true
-            try {
-                val resp = api.userModule.profile(userInfo.uid)
-                if (resp.ok) {
-                    val data = resp.okData<UserModule.ProfileResp>()
-                    profile = data
+    private suspend fun refreshProfile() {
+        loadingProfile = true
+        try {
+            val resp = api.userModule.profile(uid!!)
+            if (resp.ok) {
+                val data = resp.ok()
+                profile = data
+                if (myself) {
+                    // Update self profile
                     global.setLoginUser(data.uid, data.username, data.avatarUrl)
-                } else {
-                    val err = resp.errData<CommonError>()
-                    global.alert(err.msg)
                 }
-            } catch (e: Throwable) {
-                Logger.e("userspace", "Failed to fetch profile", e)
-                global.alert(e.message)
-            } finally {
-                loading = false
+            } else {
+                val err = resp.err()
+                global.alert(err.msg)
             }
+        } catch (e: Throwable) {
+            Logger.e("userspace", "Failed to fetch profile", e)
+            global.alert(e.message)
+        } finally {
+            loadingProfile = false
+        }
+    }
+
+    private suspend fun loadSongs() {
+        loadingSongs = true
+        try {
+            val resp = api.songModule.pageByUser(SongModule.PageByUserReq(uid!!, null, null))
+            if (resp.ok) {
+                val data = resp.ok()
+                songs.clear()
+                songs.addAll(data.songs)
+            } else {
+                val err = resp.err()
+                global.alert(err.msg)
+            }
+        } catch (e: Throwable) {
+            Logger.e("userspace", "Failed to fetch songs", e)
+            global.alert(e.message)
+        } finally {
+            loadingSongs = false
         }
     }
 }

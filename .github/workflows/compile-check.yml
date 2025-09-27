@@ -22,6 +22,8 @@ jobs:
         run: |
           echo "app.release.apiBaseUrl=${{ secrets.CONFIG_API_BASE_URL }}" > local.properties
           echo "app.dev.apiBaseUrl=${{ secrets.CONFIG_API_BASE_URL }}" >> local.properties
+          echo "app.release.assetsBaseUrl=${{ secrets.CONFIG_ASSETS_BASE_URL }}" >> local.properties
+          echo "app.dev.assetsBaseUrl=${{ secrets.CONFIG_ASSETS_BASE_URL }}" >> local.properties
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -50,6 +52,8 @@ jobs:
         run: |
           echo "app.release.apiBaseUrl=${{ secrets.CONFIG_API_BASE_URL }}" > local.properties
           echo "app.dev.apiBaseUrl=${{ secrets.CONFIG_API_BASE_URL }}" >> local.properties
+          echo "app.release.assetsBaseUrl=${{ secrets.CONFIG_ASSETS_BASE_URL }}" >> local.properties
+          echo "app.dev.assetsBaseUrl=${{ secrets.CONFIG_ASSETS_BASE_URL }}" >> local.properties
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -78,6 +82,8 @@ jobs:
         run: |
           echo "app.release.apiBaseUrl=${{ secrets.CONFIG_API_BASE_URL }}" > local.properties
           echo "app.dev.apiBaseUrl=${{ secrets.CONFIG_API_BASE_URL }}" >> local.properties
+          echo "app.release.assetsBaseUrl=${{ secrets.CONFIG_ASSETS_BASE_URL }}" >> local.properties
+          echo "app.dev.assetsBaseUrl=${{ secrets.CONFIG_ASSETS_BASE_URL }}" >> local.properties
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:

@@ -27,6 +27,7 @@ import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlayerUIState
 import world.hachimi.app.model.SongDetailInfo
+import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.player.components.Album
 import world.hachimi.app.ui.player.components.Lyrics
 import world.hachimi.app.ui.player.components.SongControl
@@ -50,7 +51,11 @@ fun PlayerScreen() {
                     onPlayOrPauseClick = { global.player.playOrPause() },
                     onPreviousClick = { global.player.queuePrevious() },
                     onNextClick = { global.player.queueNext() },
-                    onProgressChange = { global.player.setSongProgress(it) }
+                    onProgressChange = { global.player.setSongProgress(it) },
+                    onNavToAuthor = { uid ->
+                        global.shrinkPlayer()
+                        global.nav.push(Route.Root.PublicUserSpace(uid))
+                    }
                 )
             } else {
                 ExpandedPlayerScreen(
@@ -59,7 +64,11 @@ fun PlayerScreen() {
                     onPlayOrPauseClick = { global.player.playOrPause() },
                     onPreviousClick = { global.player.queuePrevious() },
                     onNextClick = { global.player.queueNext() },
-                    onProgressChange = { global.player.setSongProgress(it) }
+                    onProgressChange = { global.player.setSongProgress(it) },
+                    onNavToAuthor = { uid ->
+                        global.shrinkPlayer()
+                        global.nav.push(Route.Root.PublicUserSpace(uid))
+                    }
                 )
             }
         }
@@ -74,6 +83,7 @@ fun CompactPlayerScreen(
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     onProgressChange: (Float) -> Unit,
+    onNavToAuthor: (Long) -> Unit
 ) {
     var displayingLyrics by remember { mutableStateOf(false) }
 
@@ -85,33 +95,78 @@ fun CompactPlayerScreen(
                     .graphicsLayer { alpha = 1f - lyricsAlpha }
                     .padding(horizontal = 48.dp, vertical = 24.dp)
             ) {
-                Album(
-                    modifier = Modifier.fillMaxWidth().weight(1f).padding(vertical = 24.dp),
-                    coverUrl = playerState.songCoverUrl,
-                    onClick = { displayingLyrics = true },
-                )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                    Text(
+                        modifier = Modifier.align(Alignment.Start),
+                        text = playerState.songDisplayId,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LocalContentColor.current.copy(0.7f)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Album(
+                        modifier = Modifier.fillMaxWidth(),
+                        coverUrl = playerState.songCoverUrl,
+                        onClick = { displayingLyrics = true },
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = playerState.songTitle,
+                        style = MaterialTheme.typography.titleMedium
+                    )
 
+                    playerState.songInfo?.subtitle?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = LocalContentColor.current.copy(0.7f)
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.padding(top = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
+                                playerState.songInfo?.uploaderUid?.let {
+                                    onNavToAuthor(it)
+                                }
+                            }),
+                            text = "作者: ${playerState.songAuthor}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LocalContentColor.current.copy(0.7f)
+                        )
+
+                        /*playerState.staff.fastForEach { (role, name) ->
+                            Text(
+                                text = "${role}: ${name}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LocalContentColor.current.copy(0.7f)
+                            )
+                        }*/
+                    }
+                }
+/*
                 Text(
                     text = playerState.songTitle,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
+                    modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
+                        playerState.songInfo?.uploaderUid?.let {
+                            onNavToAuthor(it)
+                        }
+                    }),
                     text = playerState.songAuthor,
                     style = MaterialTheme.typography.bodySmall,
                     color = LocalContentColor.current.copy(0.6f)
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "基米ID：${playerState.songDisplayId}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColor.current.copy(0.7f)
-                )
+                )*/
 
                 // Current lyric line
                 val lyricsLine =
                     remember { derivedStateOf { playerState.lyricsLines.getOrNull(playerState.currentLyricsLine) } }
 
-                AnimatedContent(lyricsLine.value, modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
+                AnimatedContent(lyricsLine.value, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                     Text(
                         modifier = Modifier.fillMaxWidth().wrapContentWidth(),
                         text = it ?: ""
@@ -182,12 +237,20 @@ fun ExpandedPlayerScreen(
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     onProgressChange: (Float) -> Unit,
+    onNavToAuthor: (Long) -> Unit
 ) {
     Box {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().weight(1f).padding(32.dp)) {
                 Column(Modifier.fillMaxHeight().weight(1f), verticalArrangement = Arrangement.Center) {
                     Column(Modifier.align(Alignment.End).padding(48.dp)) {
+                        Text(
+                            modifier = Modifier.align(Alignment.Start),
+                            text = playerState.songDisplayId,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LocalContentColor.current.copy(0.7f)
+                        )
+                        Spacer(Modifier.height(8.dp))
                         BoxWithConstraints(Modifier.wrapContentSize()) {
                             val size = min(maxHeight * 0.7f, maxWidth)
 
@@ -201,25 +264,39 @@ fun ExpandedPlayerScreen(
                         Spacer(Modifier.height(16.dp))
                         Text(
                             text = playerState.songTitle,
+                            style = MaterialTheme.typography.titleMedium
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = playerState.songAuthor,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LocalContentColor.current.copy(0.6f)
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "基米ID：${playerState.songDisplayId}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = LocalContentColor.current.copy(0.7f)
-                        )
-                        playerState.staff.fastForEach { (role, name) ->
+
+                        playerState.songInfo?.subtitle?.let {
                             Text(
-                                text = "${role}: ${name}",
+                                text = it,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = LocalContentColor.current.copy(0.7f)
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
+                                    playerState.songInfo?.uploaderUid?.let {
+                                        onNavToAuthor(it)
+                                    }
+                                }),
+                                text = "作者: ${playerState.songAuthor}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = LocalContentColor.current.copy(0.7f)
                             )
+
+                            playerState.staff.fastForEach { (role, name) ->
+                                Text(
+                                    text = "${role}: ${name}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = LocalContentColor.current.copy(0.7f)
+                                )
+                            }
                         }
                     }
                 }
@@ -319,7 +396,8 @@ private fun PreviewExpanded() {
                 onPlayOrPauseClick = {},
                 onPreviousClick = {},
                 onNextClick = {},
-                onProgressChange = {}
+                onProgressChange = {},
+                onNavToAuthor = {}
             )
         }
     }
@@ -336,7 +414,8 @@ private fun PreviewCompact() {
             onPlayOrPauseClick = {},
             onPreviousClick = {},
             onNextClick = {},
-            onProgressChange = {}
+            onProgressChange = {},
+            onNavToAuthor = {}
         )
     }
 }
