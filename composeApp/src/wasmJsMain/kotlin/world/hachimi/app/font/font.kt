@@ -7,16 +7,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import io.ktor.client.*
-import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.cache.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.utils.io.*
@@ -45,9 +39,9 @@ import org.koin.compose.koinInject
 import org.w3c.fetch.Response
 import org.w3c.files.Blob
 import org.w3c.files.FileReader
+import world.hachimi.app.BuildKonfig
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.model.GlobalStore
-import world.hachimi.app.ui.LocalDarkMode
 import world.hachimi.app.ui.theme.AppTheme
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -356,7 +350,7 @@ suspend fun loadFontsFromWeb(
         .headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: -1
     Logger.d("Font", "Content length: $contentLength bytes")*/
     val contentLength = 20_093_424L // MiSansVF.ttf file size
-    val buffer = client.prepareGet("https://storage.hachimi.world/fonts/MiSansVF.ttf").execute {
+    val buffer = client.prepareGet(BuildKonfig.ASSETS_BASE_URL + "/fonts/MiSansVF.ttf").execute {
         val buffer = Buffer()
         val channel = it.bodyAsChannel()
         var totalBytesRead = 0L

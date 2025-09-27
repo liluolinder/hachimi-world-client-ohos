@@ -296,6 +296,7 @@ buildkonfig {
         buildConfigField(Type.STRING, "APP_PACKAGE_NAME", "world.hachimi.app.dev")
         buildConfigField(Type.STRING, "APP_NAME", "基米天堂 Dev")
         buildConfigField(Type.STRING, "API_BASE_URL", props.getProperty("app.dev.apiBaseUrl"))
+        buildConfigField(Type.STRING, "ASSETS_BASE_URL", props.getProperty("app.dev.assetsBaseUrl"))
     }
 
     defaultConfigs("release") {
@@ -303,6 +304,7 @@ buildkonfig {
         buildConfigField(Type.STRING, "APP_PACKAGE_NAME", "world.hachimi.app")
         buildConfigField(Type.STRING, "APP_NAME", "基米天堂")
         buildConfigField(Type.STRING, "API_BASE_URL", props.getProperty("app.release.apiBaseUrl"))
+        buildConfigField(Type.STRING, "ASSETS_BASE_URL", props.getProperty("app.release.assetsBaseUrl"))
     }
 
     defaultConfigs("beta") {
@@ -310,6 +312,7 @@ buildkonfig {
         buildConfigField(Type.STRING, "APP_PACKAGE_NAME", "world.hachimi.app.beta")
         buildConfigField(Type.STRING, "APP_NAME", "基米天堂 Beta")
         buildConfigField(Type.STRING, "API_BASE_URL", props.getProperty("app.release.apiBaseUrl"))
+        buildConfigField(Type.STRING, "ASSETS_BASE_URL", props.getProperty("app.release.assetsBaseUrl"))
     }
 }
 
