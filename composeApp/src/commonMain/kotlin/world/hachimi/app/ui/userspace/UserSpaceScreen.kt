@@ -58,7 +58,7 @@ fun UserSpaceScreen(uid: Long?, vm: UserSpaceViewModel = koinViewModel()) {
                     }
                 }
 
-                if (vm.loadingProfile) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                if (vm.loadingProfile) Box(Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 } else vm.profile?.let { profile ->
                     Row(Modifier.fillMaxWidth()) {
@@ -90,7 +90,7 @@ fun UserSpaceScreen(uid: Long?, vm: UserSpaceViewModel = koinViewModel()) {
                                 Text(
                                     modifier = Modifier.clickable(enabled = vm.myself) { vm.editUsername() },
                                     text = profile.username,
-                                    style = MaterialTheme.typography.labelLarge
+                                    style = MaterialTheme.typography.labelMedium
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Box(Modifier.size(16.dp)) {
@@ -126,8 +126,12 @@ fun UserSpaceScreen(uid: Long?, vm: UserSpaceViewModel = koinViewModel()) {
                         modifier = Modifier
                     )
 
-                    if (vm.songs.isEmpty()) {
-                        Text(text = "什么也没有", modifier = Modifier.fillMaxWidth())
+                    if (vm.loadingSongs) Box(Modifier.fillMaxWidth().height(300.dp), Alignment.Center) {
+                        CircularProgressIndicator()
+                    } else if (vm.songs.isEmpty()) {
+                        Box(Modifier.fillMaxWidth().height(300.dp), Alignment.Center) {
+                            Text(text = "什么也没有")
+                        }
                     }
                 }
             }

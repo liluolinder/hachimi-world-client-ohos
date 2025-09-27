@@ -81,7 +81,9 @@ class UserSpaceViewModel(
     }
 
     private fun initialize(uid: Long?) {
-        initializeStatus = InitializeStatus.LOADED
+        initializeStatus = InitializeStatus.INIT
+        profile = null
+        songs.clear()
 
         // Initialize
         if (uid == null) {
@@ -99,6 +101,7 @@ class UserSpaceViewModel(
         viewModelScope.launch {
             refreshProfile()
             loadSongs()
+            initializeStatus = InitializeStatus.LOADED
         }
     }
 
