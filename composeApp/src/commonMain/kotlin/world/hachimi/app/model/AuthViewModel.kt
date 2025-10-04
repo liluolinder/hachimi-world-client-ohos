@@ -140,7 +140,7 @@ class AuthViewModel(
                 )
                 if (resp.ok) {
                     dataStore.set(PreferencesKeys.USER_NAME, name)
-                    global.setLoginUser(uid.toLong(), name, null)
+                    global.setLoginUser(uid.toLong(), name, null, false)
                     global.nav.replace(Route.Root.Home)
                 } else {
                     global.alert(resp.errData<CommonError>().msg)
@@ -187,7 +187,7 @@ class AuthViewModel(
                 // Save login status
                 dataStore.set(PreferencesKeys.USER_UID, profileData.uid)
                 dataStore.set(PreferencesKeys.USER_NAME, profileData.username)
-                global.setLoginUser(data.uid, data.username, profileData.avatarUrl)
+                global.setLoginUser(data.uid, data.username, profileData.avatarUrl, false)
                 global.nav.replace(Route.Root.Home)
             } else {
                 global.alert(resp.errData<CommonError>().msg)
@@ -229,7 +229,7 @@ class AuthViewModel(
                 // Set login user status
                 dataStore.set(PreferencesKeys.USER_UID, data.uid)
                 dataStore.set(PreferencesKeys.USER_NAME, data.generatedUsername)
-                global.setLoginUser(data.uid, data.generatedUsername, null)
+                global.setLoginUser(data.uid, data.generatedUsername, null, false)
             } else {
                 global.alert(resp.errData<CommonError>().msg)
             }

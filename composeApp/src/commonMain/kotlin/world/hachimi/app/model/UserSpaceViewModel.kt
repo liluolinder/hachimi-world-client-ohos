@@ -234,7 +234,7 @@ class UserSpaceViewModel(
                 profile = data
                 if (myself) {
                     // Update self profile
-                    global.setLoginUser(data.uid, data.username, data.avatarUrl)
+                    global.setLoginUser(data.uid, data.username, data.avatarUrl, true)
                 }
             } else {
                 val err = resp.err()
