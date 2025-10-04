@@ -242,6 +242,7 @@ compose.desktop {
                 macOS {
                     appCategory = "public.app-category.entertainment"
                     packageName = "基米天堂"
+                    dockName = "基米天堂"
                     bundleID = "world.hachimi.app"
                     iconFile.set(rootProject.file("icons/icon.icns"))
                 }
