@@ -147,6 +147,15 @@ fun CompactPlayerScreen(
                             color = LocalContentColor.current.copy(0.7f)
                         )
 
+                        if (!playerState.fetchingMetadata) {
+                            info?.originInfos?.fastForEach { item ->
+                                Text(
+                                    text = "原作: ${item.title}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = LocalContentColor.current.copy(0.7f)
+                                )
+                            }
+                        }
                         /*playerState.staff.fastForEach { (role, name) ->
                             Text(
                                 text = "${role}: ${name}",
