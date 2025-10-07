@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -104,7 +105,8 @@ fun CompactFooterPlayer(modifier: Modifier) {
 
                     if (queueExpanded) Popup(
                         alignment = Alignment.CenterEnd,
-                        onDismissRequest = { queueExpanded = false }
+                        onDismissRequest = { queueExpanded = false },
+                        properties = PopupProperties(focusable = true)
                     ) {
                         MusicQueue(
                             onClose = { queueExpanded = false },
@@ -228,7 +230,8 @@ fun ExpandedFooterPlayer() {
 
         if (queueExpanded) Popup(
             alignment = Alignment.CenterEnd,
-            onDismissRequest = { queueExpanded = false }
+            onDismissRequest = { queueExpanded = false },
+            properties = PopupProperties(focusable = true)
         ) {
             MusicQueue(
                 onClose = { queueExpanded = false },
