@@ -115,7 +115,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("标题") },
-                subtitle = { Text("如 跳楼基、野哈飞舞 之类的纯文字歌曲标题，建议与原曲强关联，引流内容请在副标题中使用") }
+                subtitle = { Text("填写一个您认为适合永久流传的纯文字标题。如跳楼基、野哈飞舞之类的与原曲标题关联性强的纯文字标题。请不要在标题中添加标签、Emoji等复杂内容。请不要使用标题来引流，后续可能会做专门用于推荐的标题。") }
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -127,7 +127,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("副标题") },
-                subtitle = { Text("可选。副标题可以是对标题的补充、事件的补充，或是一句口号。由于你可以在后面填写原作信息，副标题中无需说明原作") }
+                subtitle = { Text("可选。使用一句话描述。你可以在后面填写原作信息，副标题中无需说明原作") }
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -139,7 +139,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("标签") },
-                subtitle = { Text("使用标签描述你的曲风类型（如古典、流行）、创作类型（如原教旨、原曲不使用）。不建议添加过多的标签") }
+                subtitle = { Text("使用标签描述你的曲风类型（如古典、流行、J-Pop、ACG、R&B）、创作类型（如原教旨、原曲不使用）。不建议添加过多的标签。若只有英文请按照每单词首字母大写空格隔开，或使用行业标准写法。请勿使用符号和 Emoji") }
             ) {
                 TagEdit(vm)
             }
@@ -195,7 +195,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("创作类型") },
-                subtitle = { Text("如果你的作品是对现有作品的再创作（如对《D大调卡农》的改编），请选择二创填写原作信息。如果你的作品是对哈基米音乐的再创作（如翻唱），请选择三创") }
+                subtitle = { Text("如果你的作品是对现有作品的再创作（如对《D大调卡农》的改编），请选择二创并填写原作信息。如果你的作品是对哈基米音乐的再创作（如翻唱），请选择三创") }
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = vm.creationType == 0, onClick = { vm.creationType = 0 })
@@ -207,6 +207,10 @@ fun PublishScreen(
                     RadioButton(selected = vm.creationType == 2, onClick = { vm.creationType = 2 })
                     Text("三创", style = MaterialTheme.typography.labelLarge)
                 }
+            }
+
+            if (vm.creationType == 0) {
+                Text("原创指的是作词、作曲、编曲等全部原创，改编作品请勿选择原创。选择错误会被退回，请再次确认！", color = MaterialTheme.colorScheme.error)
             }
 
             if (vm.creationType > 0) {
@@ -228,13 +232,22 @@ fun PublishScreen(
                         supportingText = { Text("如 D大调卡农") }
                     )
                 }
+                FormItem(header = { Text("原作艺术家") }) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = vm.originArtist,
+                        onValueChange = { vm.originArtist = it },
+                        singleLine = true,
+                        supportingText = { Text("涉及到多位艺术家的，暂时填写主要的一位歌手即可") }
+                    )
+                }
                 FormItem(header = { Text("原作链接") }) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originLink,
                         onValueChange = { vm.originLink = it },
                         singleLine = true,
-                        supportingText = { Text("建议填写") }
+                        supportingText = { Text("建议填写，请使用 https:// 格式的链接") }
                     )
                 }
             }
@@ -254,6 +267,14 @@ fun PublishScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveTitle,
                         onValueChange = { vm.deriveTitle = it },
+                        singleLine = true
+                    )
+                }
+                FormItem(header = { Text("二作艺术家") }) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = vm.deriveArtist,
+                        onValueChange = { vm.deriveArtist = it },
                         singleLine = true
                     )
                 }
