@@ -75,8 +75,8 @@ fun SongCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1
                     )
-                    Icon(Icons.Default.Headphones, "Play Count", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(end = 4.dp).size(12.dp))
-                    Text(playCount.toString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                    Icon(Icons.Default.Headphones, "Play Count", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 4.dp).size(12.dp))
+                    Text(playCount.toString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
