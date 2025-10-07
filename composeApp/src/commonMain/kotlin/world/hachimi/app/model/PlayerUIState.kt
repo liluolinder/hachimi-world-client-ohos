@@ -24,7 +24,7 @@ class PlayerUIState() {
      * Getting audio metadata.
      */
     var fetchingMetadata by mutableStateOf(false)
-    var fetchingSongId by mutableStateOf(null)
+    var fetchingSongId by mutableStateOf<Long?>(null)
         private set
     // If preview metadata is available during fetching process, we can use preview metadata at first
     var previewMetadata by mutableStateOf<PreviewMetadata?>(null)

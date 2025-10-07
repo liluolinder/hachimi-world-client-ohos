@@ -59,11 +59,15 @@ class JVMPlayer() : Player {
 
             val defaultFormat = clip.format
 
-            val stream = AudioSystem.getAudioInputStream(ByteArrayInputStream(item.audioBytes))
+            val stream = withContext(Dispatchers.IO) {
+                AudioSystem.getAudioInputStream(ByteArrayInputStream(item.audioBytes))
+            }
             val baseFormat = stream.format
 //        val sampleSizeInBites = baseFormat.sampleSizeInBits.takeIf { it > 0 } ?: 32 // Defaults to fltp(32bits)
 
-            val decodedStream = AudioSystem.getAudioInputStream(defaultFormat, stream)
+            val decodedStream = withContext(Dispatchers.IO) {
+                AudioSystem.getAudioInputStream(defaultFormat, stream)
+            }
             clip.open(decodedStream)
             if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
                 volumeControl = clip.getControl(FloatControl.Type.VOLUME) as FloatControl
