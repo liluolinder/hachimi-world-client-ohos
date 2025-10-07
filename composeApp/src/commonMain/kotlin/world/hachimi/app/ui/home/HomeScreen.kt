@@ -33,7 +33,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
         Column(Modifier.fillMaxSize()) {
             Text(
                 modifier = Modifier.padding(top = 24.dp, start = 24.dp),
-                text = "推荐音乐", style = MaterialTheme.typography.titleLarge
+                text = "最近发布", style = MaterialTheme.typography.titleLarge
             )
 
             Spacer(Modifier.height(24.dp))
