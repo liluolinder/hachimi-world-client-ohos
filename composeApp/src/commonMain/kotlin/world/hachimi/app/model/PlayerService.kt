@@ -39,7 +39,13 @@ import world.hachimi.app.player.SongItem
 import world.hachimi.app.storage.SongCache
 import kotlin.time.Duration.Companion.seconds
 
-private val downloadHttpClient = HttpClient()
+private val downloadHttpClient = HttpClient() {
+    install(HttpTimeout) {
+        connectTimeoutMillis = 60_000
+        requestTimeoutMillis = 60_000
+        socketTimeoutMillis = 60_000
+    }
+}
 
 class PlayerService(
     private val global: GlobalStore,
