@@ -117,12 +117,16 @@ class PlayerService(
             player.prepare(item, autoPlay = true)
 
             launch {
-                val songId = item.id.toLong()
-                // Touch playing
-                if (global.isLoggedIn) {
-                    api.playHistoryModule.touch(songId)
-                } else {
-                    api.playHistoryModule.touchAnonymous(songId)
+                try {
+                    val songId = item.id.toLong()
+                    // Touch playing
+                    if (global.isLoggedIn) {
+                        api.playHistoryModule.touch(songId)
+                    } else {
+                        api.playHistoryModule.touchAnonymous(songId)
+                    }
+                } catch (e: Throwable) {
+                    Logger.e("player", "Failed to touch song", e)
                 }
             }
         } catch (e: Throwable) {
