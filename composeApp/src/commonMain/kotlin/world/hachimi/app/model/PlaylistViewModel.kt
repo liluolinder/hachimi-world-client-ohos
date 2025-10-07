@@ -57,7 +57,7 @@ class PlaylistViewModel(
         }
 
         viewModelScope.launch {
-            toBeAddedSongId = global.player.playerState.songId
+            toBeAddedSongId = global.player.playerState.songInfo?.id
             selectedPlaylistId = null
             showPlaylistDialog = true
             refreshPlaylist()

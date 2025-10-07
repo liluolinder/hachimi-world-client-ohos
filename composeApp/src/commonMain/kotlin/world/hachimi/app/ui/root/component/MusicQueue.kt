@@ -25,9 +25,9 @@ import kotlin.time.Duration.Companion.seconds
 fun MusicQueue(
     onClose: () -> Unit,
     queue: List<GlobalStore.MusicQueueItem>,
-    playingSongId: String,
-    onPlayClick: (String) -> Unit,
-    onRemoveClick: (String) -> Unit,
+    playingSongId: Long?,
+    onPlayClick: (Long) -> Unit,
+    onRemoveClick: (Long) -> Unit,
 ) {
     ElevatedCard {
         Column(Modifier.padding(24.dp).width(400.dp).height(600.dp)) {
@@ -45,12 +45,12 @@ fun MusicQueue(
                 itemsIndexed(queue, key = { _, item -> item.id }) { index, item ->
                     Item(
                         modifier = Modifier.fillMaxWidth().animateItem(),
-                        isPlaying = item.displayId == playingSongId,
-                        onPlayClick = { onPlayClick(item.displayId) },
+                        isPlaying = item.id == playingSongId,
+                        onPlayClick = { onPlayClick(item.id) },
                         name = item.name,
                         artist = item.artist,
                         duration = item.duration,
-                        onRemoveClick = { onRemoveClick(item.displayId) },
+                        onRemoveClick = { onRemoveClick(item.id) },
                     )
                     if (index != queue.lastIndex) {
                         Spacer(Modifier.height(8.dp))
@@ -127,7 +127,7 @@ private fun Preview() {
                     GlobalStore.MusicQueueItem(4, "4", "Test Song 5", "Artist", 116.seconds, ""),
                 )
             },
-            "",
+            null,
             {},
             {})
     }

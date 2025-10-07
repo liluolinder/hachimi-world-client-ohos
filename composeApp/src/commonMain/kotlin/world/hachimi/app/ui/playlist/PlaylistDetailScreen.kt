@@ -153,7 +153,14 @@ fun PlaylistDetailScreen(
                         orderIndex = it.orderIndex,
                         title = it.title,
                         onClick = {
-                            global.player.insertToQueue(it.songDisplayId, true, false)
+                            global.player.insertToQueue(GlobalStore.MusicQueueItem(
+                                id = it.songId,
+                                displayId = it.songDisplayId,
+                                name = it.title,
+                                artist = it.uploaderName,
+                                duration = it.durationSeconds.seconds,
+                                coverUrl = it.coverUrl
+                            ), true, false)
                         },
                         coverUrl = it.coverUrl,
                         artist = it.uploaderName,

@@ -59,6 +59,11 @@ fun FooterPlayer() {
 fun CompactFooterPlayer(modifier: Modifier) {
     val global = koinInject<GlobalStore>()
     val playerState = global.player.playerState
+    // TODO: Remove these, use new UI/UX to indicate loading status
+    val displayedCover by remember { derivedStateOf { if (playerState.fetchingMetadata) playerState.previewMetadata?.coverUrl else playerState.songInfo?.coverUrl } }
+    val displayedTitle by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.title } else { playerState.songInfo?.title } ?: "" } }
+    val displayedAuthor by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.author } else { playerState.songInfo?.uploaderName } ?: "" } }
+
     Box(modifier.clickable(onClick = { global.expandPlayer() })) {
         Surface(shadowElevation = 4.dp) {
             Column(Modifier.padding(bottom = currentSafeAreaInsets().bottom).padding(horizontal = 24.dp, vertical = 12.dp)) {
@@ -70,16 +75,16 @@ fun CompactFooterPlayer(modifier: Modifier) {
                     ) {
                         AsyncImage(
                             modifier = Modifier.fillMaxSize(),
-                            model = playerState.songCoverUrl,
+                            model = displayedCover,
                             contentDescription = "Cover",
                             contentScale = ContentScale.Crop
                         )
                     }
 
                     Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                        Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
+                        Text(displayedTitle, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                         Spacer(Modifier.height(8.dp))
-                        Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
+                        Text(displayedAuthor, style = MaterialTheme.typography.bodySmall, maxLines = 1)
                     }
 
                     var queueExpanded by remember { mutableStateOf(false) }
@@ -88,7 +93,7 @@ fun CompactFooterPlayer(modifier: Modifier) {
                     var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
                     IconButton(onClick = {
-                        tobeAddedSong = playerState.songId?.let { it to Random.nextLong() }
+                        tobeAddedSong = playerState.songInfo?.id?.let { it to Random.nextLong() }
                     }) {
                         Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
                     }
@@ -104,7 +109,7 @@ fun CompactFooterPlayer(modifier: Modifier) {
                         MusicQueue(
                             onClose = { queueExpanded = false },
                             queue = global.player.musicQueue,
-                            playingSongId = global.player.playerState.songDisplayId,
+                            playingSongId = if (playerState.fetchingMetadata) playerState.fetchingSongId else playerState.songInfo?.id,
                             onPlayClick = { global.player.playSongInQueue(it) },
                             onRemoveClick = { global.player.removeFromQueue(it) }
                         )
@@ -114,14 +119,20 @@ fun CompactFooterPlayer(modifier: Modifier) {
                     CreatePlaylistDialog()
                 }
 
-                SongProgress(
+                /*SongProgress(
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    durationMillis = playerState.songDurationSecs * 1000L,
+                    durationMillis = if (playerState.fetchingMetadata) {
+                        previewMetadata?.duration?.inWholeMilliseconds
+                    } else {
+                        info?.durationSeconds?.let {
+                            it * 1000L
+                        }
+                    } ?: -1L,
                     currentMillis = playerState.currentMillis,
                     onProgressChange = {
                         global.player.setSongProgress(it)
                     }
-                )
+                )*/
             }
         }
         val animatedProgress by animateFloatAsState(targetValue = playerState.downloadProgress)
@@ -143,7 +154,9 @@ fun CompactFooterPlayer(modifier: Modifier) {
 fun ExpandedFooterPlayer() {
     val global = koinInject<GlobalStore>()
     val playerState = global.player.playerState
-
+    val displayedCover by remember { derivedStateOf { if (playerState.fetchingMetadata) playerState.previewMetadata?.coverUrl else playerState.songInfo?.coverUrl } }
+    val displayedTitle by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.title } else { playerState.songInfo?.title } ?: "" } }
+    val displayedAuthor by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.author } else { playerState.songInfo?.uploaderName } ?: "" } }
 
     Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
         Surface(
@@ -154,15 +167,15 @@ fun ExpandedFooterPlayer() {
         ) {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
-                model = playerState.songCoverUrl,
+                model = displayedCover,
                 contentDescription = "Cover",
                 contentScale = ContentScale.Crop
             )
         }
 
         Column(Modifier.padding(start = 16.dp).width(200.dp)) {
-            Text(playerState.songTitle, style = MaterialTheme.typography.bodyMedium)
-            Text(playerState.songAuthor, style = MaterialTheme.typography.bodySmall)
+            Text(displayedTitle, style = MaterialTheme.typography.bodyMedium)
+            Text(displayedAuthor, style = MaterialTheme.typography.bodySmall)
         }
 
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -180,8 +193,18 @@ fun ExpandedFooterPlayer() {
 
             SongProgress(
                 modifier = Modifier.fillMaxWidth().widthIn(max = 800.dp),
-                durationMillis = playerState.songDurationSecs * 1000L,
-                currentMillis = playerState.currentMillis,
+                durationMillis = if (playerState.fetchingMetadata) {
+                    playerState.previewMetadata?.duration?.inWholeMilliseconds
+                } else {
+                    playerState.songInfo?.durationSeconds?.let {
+                        it * 1000L
+                    }
+                } ?: -1L,
+                currentMillis = if (playerState.fetchingMetadata) {
+                    0L
+                } else {
+                    playerState.currentMillis
+                },
                 onProgressChange = {
                     global.player.setSongProgress(it)
                 }
@@ -194,7 +217,7 @@ fun ExpandedFooterPlayer() {
         var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
         IconButton(onClick = {
-            tobeAddedSong = playerState.songId?.let { it to Random.nextLong() }
+            tobeAddedSong = playerState.songInfo?.id?.let { it to Random.nextLong() }
         }) {
             Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
         }
@@ -210,7 +233,7 @@ fun ExpandedFooterPlayer() {
             MusicQueue(
                 onClose = { queueExpanded = false },
                 queue = global.player.musicQueue,
-                playingSongId = global.player.playerState.songDisplayId,
+                playingSongId = if (playerState.fetchingMetadata) playerState.fetchingSongId else playerState.songInfo?.id,
                 onPlayClick = { global.player.playSongInQueue(it) },
                 onRemoveClick = { global.player.removeFromQueue(it) }
             )

@@ -15,6 +15,7 @@ import world.hachimi.app.api.err
 import world.hachimi.app.api.module.PlayHistoryModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
+import kotlin.time.Duration.Companion.seconds
 
 class RecentPlayViewModel(
     private val global: GlobalStore,
@@ -92,6 +93,13 @@ class RecentPlayViewModel(
     }
 
     fun play(item: PlayHistoryModule.PlayHistoryItem) {
-        global.player.insertToQueue(item.songInfo.displayId, true, false)
+        global.player.insertToQueue(GlobalStore.MusicQueueItem(
+            id = item.songInfo.id,
+            displayId = item.songInfo.displayId,
+            name = item.songInfo.title,
+            artist = item.songInfo.uploaderName,
+            duration = item.songInfo.durationSeconds.seconds,
+            coverUrl = item.songInfo.coverUrl
+        ), true, false)
     }
 }
