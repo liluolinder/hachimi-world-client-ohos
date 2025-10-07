@@ -26,6 +26,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.UserSpaceViewModel
 import world.hachimi.app.ui.home.components.SongCard
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun UserSpaceScreen(uid: Long?, vm: UserSpaceViewModel = koinViewModel()) {
@@ -146,7 +147,14 @@ fun UserSpaceScreen(uid: Long?, vm: UserSpaceViewModel = koinViewModel()) {
                 playCount = song.playCount,
                 likeCount = song.likeCount,
                 onClick = {
-                    global.player.insertToQueue(song.displayId, true, false)
+                    global.player.insertToQueue(GlobalStore.MusicQueueItem(
+                        id = song.id,
+                        displayId = song.displayId,
+                        name = song.title,
+                        artist = song.uploaderName,
+                        duration = song.durationSeconds.seconds,
+                        coverUrl = song.coverUrl
+                    ), true, false)
                 },
                 modifier = Modifier.fillMaxWidth()
             )

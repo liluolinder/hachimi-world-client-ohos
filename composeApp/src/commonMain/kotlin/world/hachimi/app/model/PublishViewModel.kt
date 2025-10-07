@@ -4,9 +4,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.toUri
 import io.github.vinceglb.filekit.*
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.ktor.http.URLParserException
+import io.ktor.http.URLProtocol
+import io.ktor.http.Url
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,9 +43,11 @@ class PublishViewModel(
     var creationType by mutableStateOf(1)
     var originId by mutableStateOf("")
     var originTitle by mutableStateOf("")
+    var originArtist by mutableStateOf("")
     var originLink by mutableStateOf("")
     var deriveId by mutableStateOf("")
     var deriveTitle by mutableStateOf("")
+    var deriveArtist by mutableStateOf("")
     var deriveLink by mutableStateOf("")
 
     var coverImageUploadProgress by mutableStateOf(0f)
@@ -362,15 +368,37 @@ class PublishViewModel(
                 originInfo = if (creationType > 0) SongModule.CreationTypeInfo(
                     songDisplayId = originId.takeIf { it.isNotBlank() },
                     title = originTitle.takeIf { it.isNotBlank() },
-                    url = originLink.takeIf { it.isNotBlank() },
-                    artist = null,
+                    url = originLink.takeIf { it.isNotBlank() }?.also {
+                        try {
+                            val url = Url(it)
+                            if (url.protocolOrNull != URLProtocol.HTTPS)  {
+                                global.alert("请填写 HTTPS 的原作链接，请勿使用 HTTP")
+                                return@launch
+                            }
+                        } catch (_: URLParserException) {
+                            global.alert("请填写正确的 HTTPS 格式的原作链接 https://xxxx")
+                            return@launch
+                        }
+                    },
+                    artist = originArtist.takeIf { it.isNotBlank() },
                     originType = 0
                 ) else null,
                 derivativeInfo = if (creationType > 1) SongModule.CreationTypeInfo(
                     songDisplayId = deriveId.takeIf { it.isNotBlank() },
                     title = deriveTitle.takeIf { it.isNotBlank() },
-                    url = deriveLink.takeIf { it.isNotBlank() },
-                    artist = null,
+                    url = deriveLink.takeIf { it.isNotBlank() }?.also {
+                        try {
+                            val url = Url(it)
+                            if (url.protocolOrNull != URLProtocol.HTTPS)  {
+                                global.alert("请填写 HTTPS 的原作链接，请勿使用 HTTP")
+                                return@launch
+                            }
+                        } catch (_: URLParserException) {
+                            global.alert("请填写正确的 HTTPS 格式的原作链接 https://xxxx")
+                            return@launch
+                        }
+                    },
+                    artist = deriveArtist.takeIf { it.isNotBlank() },
                     originType = 1
                 ) else null
             )

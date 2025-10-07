@@ -1,27 +1,17 @@
 package world.hachimi.app.model
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.client.request.head
-import io.ktor.client.request.prepareGet
-import io.ktor.client.statement.bodyAsBytes
-import io.ktor.http.HttpHeaders
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.exhausted
-import io.ktor.utils.io.readBuffer
-import io.ktor.utils.io.readRemaining
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.utils.io.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
@@ -37,10 +27,20 @@ import world.hachimi.app.player.PlayEvent
 import world.hachimi.app.player.Player
 import world.hachimi.app.player.SongItem
 import world.hachimi.app.storage.SongCache
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
-private val downloadHttpClient = HttpClient()
+private val downloadHttpClient = HttpClient() {
+    install(HttpTimeout) {
+        connectTimeoutMillis = 60_000
+        requestTimeoutMillis = 60_000
+        socketTimeoutMillis = 60_000
+    }
+}
 
+/**
+ * TODO(player): There are too fucking many racing conditions here. I think I should totally rewrite this.
+ */
 class PlayerService(
     private val global: GlobalStore,
     private val api: ApiClient,
@@ -48,8 +48,9 @@ class PlayerService(
     private val songCache: SongCache
 ) {
     val playerState = PlayerUIState()
-    val musicQueue = mutableStateListOf<MusicQueueItem>()
-    var queueCurrentIndex by mutableStateOf(-1)
+    var musicQueue by mutableStateOf<List<MusicQueueItem>>(emptyList())
+        private set
+
     private val queueMutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.Default)
 
@@ -92,114 +93,173 @@ class PlayerService(
         }
     }
 
+    private var playerMutex = Mutex()
+    private var playerJobSign: Int = 0
+
     /**
      * This is only for play current song. Not interested in the music queue.
      */
-    private suspend fun play(displayId: String) = coroutineScope {
+    private suspend fun play(item: MusicQueueItem) = coroutineScope {
         player.pause()
+        val sign = Random.nextInt()
+
+        playerMutex.withLock { playerJobSign = sign }
+
         try {
-            playerState.fetchingMetadata = true
             playerState.downloadProgress = 0f
+            playerState.updatePreviewMetadata(PlayerUIState.PreviewMetadata(
+                id = item.id,
+                displayId = item.displayId,
+                title = item.name,
+                author = item.artist,
+                coverUrl = item.coverUrl,
+                duration = item.duration
+            ))
+            playerState.fetchingMetadata = true
 
             val item = getSongItemCacheable(
-                displayId = displayId,
+                displayId = item.displayId,
                 onMetadata = { songInfo ->
-                    playerState.updateSongInfo(songInfo)
-                    playerState.hasSong = true
-                    playerState.updateCurrentMillis(0L)
+                    playerMutex.withLock {
+                        if (playerJobSign == sign) {
+                            playerState.updateSongInfo(songInfo)
+                            playerState.hasSong = true
+                            playerState.updateCurrentMillis(0L)
+                        }
+                    }
                 },
                 onProgress = { progress ->
-                    playerState.buffering = true
-                    playerState.downloadProgress = progress
+                    playerMutex.withLock {
+                        if (playerJobSign == sign) {
+                            playerState.buffering = true
+                            playerState.downloadProgress = progress
+                        }
+                    }
                 }
             )
 
-            player.prepare(item, autoPlay = true)
-
-            launch {
-                val songId = item.id.toLong()
-                // Touch playing
-                if (global.isLoggedIn) {
-                    api.playHistoryModule.touch(songId)
-                } else {
-                    api.playHistoryModule.touchAnonymous(songId)
+            playerMutex.withLock {
+                if (playerJobSign == sign) {
+                    player.prepare(item, autoPlay = true)
                 }
             }
+
+            // Touch in the global scope
+            scope.launch {
+                try {
+                    val songId = item.id.toLong()
+                    // Touch playing
+                    if (global.isLoggedIn) {
+                        api.playHistoryModule.touch(songId)
+                    } else {
+                        api.playHistoryModule.touchAnonymous(songId)
+                    }
+                } catch (e: Throwable) {
+                    Logger.e("player", "Failed to touch song", e)
+                }
+            }
+        } catch (_: CancellationException) {
+            Logger.i("player", "Preparing cancelled")
         } catch (e: Throwable) {
             Logger.e("player", "Failed to play song", e)
             global.alert(e.message)
-            return@coroutineScope
         } finally {
-            playerState.fetchingMetadata = false
-            playerState.buffering = false
+            playerMutex.withLock {
+                if (playerJobSign == sign) {
+                    playerState.fetchingMetadata = false
+                    playerState.buffering = false
+                }
+            }
         }
     }
 
 
-    fun playSongInQueue(id: String) = scope.launch {
-        queueMutex.withLock {
-            val index = musicQueue.indexOfFirst { it.displayId == id }
-            if (index != -1) {
-                val song = musicQueue[index]
+    private var playPrepareJob: Job? = null
 
-                queueCurrentIndex = index
-                play(song.displayId)
+    fun playSongInQueue(id: Long) = scope.launch {
+        if (playPrepareJob?.isActive == true) {
+            // We don't use cancelAndJoin because we want the operation to be instant
+            Logger.d("player", "Cancel prepare job")
+            playPrepareJob?.cancel()
+        }
+        val song = queueMutex.withLock {
+            val index = musicQueue.indexOfFirst { it.id == id }
+            if (index != -1) {
+                musicQueue[index]
+            } else {
+                null
+            }
+        }
+        if (song != null) {
+            playPrepareJob = scope.launch {
+                Logger.d("playSongInQueue", "Playing song $song")
+                play(song)
             }
         }
     }
 
     // TODO[refactor](player): Should queue be a builtin feature in player? To make GlobalStore more clear
     fun queuePrevious() = scope.launch {
-        queueMutex.withLock {
+        val targetSong = queueMutex.withLock {
             if (musicQueue.isNotEmpty()) {
-                val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-                if (currentIndex == -1) {
-                    playSongInQueue(musicQueue.first().displayId)
-                } else {
-                    if (currentIndex == 0) {
-                        playSongInQueue(musicQueue.last().displayId)
-                    } else {
-                        playSongInQueue(musicQueue[currentIndex - 1].displayId)
-                    }
+                val currentSongId = if (playerState.fetchingMetadata) playerState.previewMetadata?.id else playerState.songInfo?.id
+
+                val currentIndex = musicQueue.indexOfFirst {
+                    it.id == currentSongId
                 }
+                val targetIdx = when {
+                    currentIndex == -1 -> 0 // First
+                    currentIndex == 0 -> musicQueue.lastIndex // Ring
+                    else -> currentIndex - 1 // Previous
+                }
+                val targetSong = musicQueue[targetIdx]
+                return@withLock targetSong
             }
+            return@withLock null
+        }
+        targetSong?.let {
+            playSongInQueue(it.id)
         }
     }
 
     fun queueNext() = scope.launch {
-        queueMutex.withLock {
+        val targetSong = queueMutex.withLock {
             if (musicQueue.isNotEmpty()) {
-                val currentIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-                if (currentIndex == -1) {
-                    playSongInQueue(musicQueue.first().displayId)
-                } else {
-                    if (currentIndex >= musicQueue.lastIndex) {
-                        playSongInQueue(musicQueue.first().displayId)
-                    } else {
-                        playSongInQueue(musicQueue[currentIndex + 1].displayId)
-                    }
+                // Get current song index (including the fetching/buffering)
+                val currentSongId = if (playerState.fetchingMetadata) playerState.previewMetadata?.id else playerState.songInfo?.id
+
+                val currentIndex = musicQueue.indexOfFirst {
+                    it.id == currentSongId
                 }
+                val targetIdx = when {
+                    currentIndex == -1 -> 0 // First
+                    currentIndex >= musicQueue.lastIndex -> 0 // Ring
+                    else -> currentIndex + 1 // Next
+                }
+                val targetSong = musicQueue[targetIdx]
+                return@withLock targetSong
             }
+            return@withLock null
+        }
+
+        targetSong?.let {
+            playSongInQueue(it.id)
         }
     }
 
-    /**
-     * Add song to queue
-     * @param instantPlay instantly play after inserting
-     * @param append appends to tail or insert after current playing
-     */
-    fun insertToQueue(songDisplayId: String, instantPlay: Boolean, append: Boolean) = scope.launch {
-        queueMutex.withLock {
-            player.pause()
+    private var fetchMetadataJob: Job? = null
+
+    fun insertToQueueWithFetch(
+        songDisplayId: String,
+        instantPlay: Boolean,
+        append: Boolean
+    ) {
+        if (fetchMetadataJob?.isActive == true) {
+            fetchMetadataJob?.cancel()
+        }
+
+        fetchMetadataJob = scope.launch {
             playerState.fetchingMetadata = true
-            val indexInQueue = musicQueue.indexOfFirst { it.displayId == songDisplayId }
-
-            // Remove and reinsert
-            if (indexInQueue != -1) {
-                musicQueue.removeAt(indexInQueue)
-            }
-
-            val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
             try {
                 val cache = songCache.getMetadata(songDisplayId)
 
@@ -220,7 +280,6 @@ class PlayerService(
                     }
                 }
 
-
                 val item = MusicQueueItem(
                     id = data.id,
                     displayId = data.displayId,
@@ -230,45 +289,71 @@ class PlayerService(
                     coverUrl = data.coverUrl
                 )
 
-                if (append) {
-                    musicQueue.add(currentPlayingIndex + 1, item)
-                } else {
-                    musicQueue.add(item)
-                }
-
-                if (instantPlay) {
-                    playerState.hasSong = true
-                    queueNext()
-                }
+                insertToQueue(item, instantPlay, append).join()
+            } catch (e: CancellationException) {
+                // Do nothing, it's just cancelled
+                Logger.i("player", "Cancelled")
             } catch (e: Throwable) {
-                Logger.e("player", "Failed to insert song to queue", e)
                 global.alert(e.message)
+                Logger.e("global", "Failed to insert song to music queue", e)
             } finally {
+                fetchMetadataJob = null
                 playerState.fetchingMetadata = false
             }
         }
     }
 
-    fun insertToQueue(item: MusicQueueItem, instantPlay: Boolean, append: Boolean) = scope.launch {
+    /**
+     * Add song to queue
+     * @param instantPlay instantly play after inserting
+     * @param append appends to tail or insert after current playing
+     */
+    fun insertToQueue(
+        item: MusicQueueItem,
+        instantPlay: Boolean,
+        append: Boolean
+    ) = scope.launch {
+        player.pause()
 
-    }
+        queueMutex.withLock {
+            val indexInQueue = musicQueue.indexOfFirst { it.id == item.id }
 
-    fun playAll(items: List<MusicQueueItem>) {
-        scope.launch {
-            queueMutex.withLock {
-                player.pause()
-                musicQueue.clear()
-                musicQueue.addAll(items)
-                queueCurrentIndex = -1
-                queueNext()
+            if (indexInQueue != -1) {
+                // If the music was already in the queue, just play it
+                // Or we can reorder it after
+            } else {
+                // Add to queue
+                val currentPlayingIndex = musicQueue.indexOfFirst { it.id == playerState.songInfo?.id }
+
+                val queue = musicQueue.toMutableList()
+
+                if (append) {
+                    queue.add(item)
+                } else {
+                    queue.add(currentPlayingIndex + 1, item)
+                }
+                musicQueue = queue
             }
+        }
+
+        if (instantPlay) {
+            playerState.hasSong = true
+            playSongInQueue(item.id)
         }
     }
 
-    fun removeFromQueue(id: String) = scope.launch {
+    fun playAll(items: List<MusicQueueItem>) = scope.launch {
         queueMutex.withLock {
-            val currentPlayingIndex = musicQueue.indexOfFirst { it.displayId == playerState.songDisplayId }
-            val targetIndex = musicQueue.indexOfFirst { it.displayId == id }
+            player.pause()
+            musicQueue = items
+            queueNext()
+        }
+    }
+
+    fun removeFromQueue(id: Long) = scope.launch {
+        queueMutex.withLock {
+            val currentPlayingIndex = musicQueue.indexOfFirst { it.id == playerState.songInfo?.id }
+            val targetIndex = musicQueue.indexOfFirst { it.id == id }
 
             if (currentPlayingIndex == targetIndex) {
                 if (musicQueue.size > 1) {
@@ -278,31 +363,40 @@ class PlayerService(
                     playerState.hasSong = false
                 }
             }
-            musicQueue.removeAt(targetIndex)
+            musicQueue = musicQueue.toMutableList().apply {
+                removeAt(targetIndex)
+            }.toList()
         }
     }
 
     fun playOrPause() = scope.launch {
-        if (player.isPlaying()) {
-            player.pause()
-        } else {
-            player.play()
+        // TODO: Redownload, if the song download failed
+        if (!playerState.fetchingMetadata && !playerState.buffering) {
+            if (player.isPlaying()) {
+                player.pause()
+            } else {
+                player.play()
+            }
         }
     }
 
     fun setSongProgress(progress: Float) = scope.launch {
-        val millis = (progress * (playerState.songDurationSecs * 1000L)).toLong()
-        player.seek(millis, true)
+        if (!playerState.fetchingMetadata && !playerState.buffering) {
+            playerState.songInfo?.let { songInfo ->
+                val millis = (progress * (songInfo.durationSeconds * 1000L)).toLong()
+                player.seek(millis, true)
 
-        // Update UI instantly
-        // FIXME(player): This might be overwrite by progress syncing job
-        playerState.updateCurrentMillis(millis)
+                // Update UI instantly
+                // FIXME(player): This might be overwrite by progress syncing job
+                playerState.updateCurrentMillis(millis)
+            }
+        }
     }
 
     private suspend fun getSongItemCacheable(
         displayId: String,
-        onMetadata: (SongDetailInfo) -> Unit,
-        onProgress: (Float) -> Unit
+        onMetadata: suspend (SongDetailInfo) -> Unit,
+        onProgress: suspend (Float) -> Unit
     ): SongItem = coroutineScope {
         val cache = songCache.get(displayId)
         val metadata: SongDetailInfo
@@ -322,6 +416,7 @@ class PlayerService(
             audioBytes = buffer.readByteArray()
         } else {
             Logger.i("global", "Downloading")
+            onProgress(0f)
             val data = songCache.getMetadata(displayId) ?: run {
                 val resp = api.songModule.detail(displayId)
                 if (!resp.ok) error(resp.errData<CommonError>().msg)

@@ -86,6 +86,14 @@ fun CompactPlayerScreen(
     onNavToAuthor: (Long) -> Unit
 ) {
     var displayingLyrics by remember { mutableStateOf(false) }
+    // TODO: Remove these, use new UI/UX to indicate loading status
+    val previewMetadata = playerState.previewMetadata
+    val info = playerState.songInfo
+
+    val displayedId = if (playerState.fetchingMetadata) { previewMetadata?.displayId } else { info?.displayId } ?: ""
+    val displayedCover = if (playerState.fetchingMetadata) previewMetadata?.coverUrl else info?.coverUrl
+    val displayedTitle = if (playerState.fetchingMetadata) { previewMetadata?.title } else { info?.title } ?: ""
+    val displayedAuthor = if (playerState.fetchingMetadata) { previewMetadata?.author } else { info?.uploaderName } ?: ""
 
     Column(Modifier.systemBarsPadding()) {
         Box(Modifier.fillMaxWidth().weight(1f)) {
@@ -98,28 +106,30 @@ fun CompactPlayerScreen(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
                     Text(
                         modifier = Modifier.align(Alignment.Start),
-                        text = playerState.songDisplayId,
+                        text = displayedId,
                         style = MaterialTheme.typography.labelSmall,
                         color = LocalContentColor.current.copy(0.7f)
                     )
                     Spacer(Modifier.height(8.dp))
                     Album(
                         modifier = Modifier.fillMaxWidth(),
-                        coverUrl = playerState.songCoverUrl,
+                        coverUrl = displayedCover,
                         onClick = { displayingLyrics = true },
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = playerState.songTitle,
+                        text = displayedTitle,
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    playerState.songInfo?.subtitle?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = LocalContentColor.current.copy(0.7f)
-                        )
+                    if (!playerState.fetchingMetadata) {
+                        playerState.songInfo?.subtitle?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = LocalContentColor.current.copy(0.7f)
+                            )
+                        }
                     }
 
                     Column(
@@ -132,11 +142,20 @@ fun CompactPlayerScreen(
                                     onNavToAuthor(it)
                                 }
                             }),
-                            text = "作者: ${playerState.songAuthor}",
+                            text = "作者: ${displayedAuthor}",
                             style = MaterialTheme.typography.labelSmall,
                             color = LocalContentColor.current.copy(0.7f)
                         )
 
+                        if (!playerState.fetchingMetadata) {
+                            info?.originInfos?.fastForEach { item ->
+                                Text(
+                                    text = "原作: ${item.title}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = LocalContentColor.current.copy(0.7f)
+                                )
+                            }
+                        }
                         /*playerState.staff.fastForEach { (role, name) ->
                             Text(
                                 text = "${role}: ${name}",
@@ -221,8 +240,18 @@ fun CompactPlayerScreen(
             Spacer(Modifier.height(12.dp))
 
             SongProgress(
-                durationMillis = playerState.songDurationSecs * 1000L,
-                currentMillis = playerState.currentMillis,
+                durationMillis = if (playerState.fetchingMetadata) {
+                    previewMetadata?.duration?.inWholeMilliseconds
+                } else {
+                    info?.durationSeconds?.let {
+                        it * 1000L
+                    }
+                } ?: -1L,
+                currentMillis = if (playerState.fetchingMetadata) {
+                    0L
+                } else {
+                    playerState.currentMillis
+                },
                 onProgressChange = onProgressChange
             )
         }
@@ -239,6 +268,14 @@ fun ExpandedPlayerScreen(
     onProgressChange: (Float) -> Unit,
     onNavToAuthor: (Long) -> Unit
 ) {
+    val previewMetadata = playerState.previewMetadata
+    val info = playerState.songInfo
+
+    val displayedId = if (playerState.fetchingMetadata) { previewMetadata?.displayId } else { info?.displayId } ?: ""
+    val displayedCover = if (playerState.fetchingMetadata) previewMetadata?.coverUrl else info?.coverUrl
+    val displayedTitle = if (playerState.fetchingMetadata) { previewMetadata?.title } else { info?.title } ?: ""
+    val displayedAuthor = if (playerState.fetchingMetadata) { previewMetadata?.author } else { info?.uploaderName } ?: ""
+
     Box {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().weight(1f).padding(32.dp)) {
@@ -246,7 +283,7 @@ fun ExpandedPlayerScreen(
                     Column(Modifier.align(Alignment.End).padding(48.dp)) {
                         Text(
                             modifier = Modifier.align(Alignment.Start),
-                            text = playerState.songDisplayId,
+                            text = displayedId,
                             style = MaterialTheme.typography.labelSmall,
                             color = LocalContentColor.current.copy(0.7f)
                         )
@@ -255,7 +292,7 @@ fun ExpandedPlayerScreen(
                             val size = min(maxHeight * 0.7f, maxWidth)
 
                             Album(
-                                playerState.songCoverUrl,
+                                coverUrl = displayedCover,
                                 onClick = {},
                                 modifier = Modifier.size(size)
                             )
@@ -263,16 +300,18 @@ fun ExpandedPlayerScreen(
 
                         Spacer(Modifier.height(16.dp))
                         Text(
-                            text = playerState.songTitle,
+                            text = displayedTitle,
                             style = MaterialTheme.typography.titleMedium
                         )
 
-                        playerState.songInfo?.subtitle?.let {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = LocalContentColor.current.copy(0.7f)
-                            )
+                        if (!playerState.fetchingMetadata) {
+                            info?.subtitle?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = LocalContentColor.current.copy(0.7f)
+                                )
+                            }
                         }
 
                         Column(
@@ -281,21 +320,23 @@ fun ExpandedPlayerScreen(
                         ) {
                             Text(
                                 modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
-                                    playerState.songInfo?.uploaderUid?.let {
+                                    info?.uploaderUid?.let {
                                         onNavToAuthor(it)
                                     }
                                 }),
-                                text = "作者: ${playerState.songAuthor}",
+                                text = "作者: ${displayedAuthor}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = LocalContentColor.current.copy(0.7f)
                             )
 
-                            playerState.staff.fastForEach { (role, name) ->
-                                Text(
-                                    text = "${role}: ${name}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = LocalContentColor.current.copy(0.7f)
-                                )
+                            if (!playerState.fetchingMetadata) {
+                                info?.originInfos?.fastForEach { item ->
+                                    Text(
+                                        text = "原作: ${item.title}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = LocalContentColor.current.copy(0.7f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -332,8 +373,18 @@ fun ExpandedPlayerScreen(
                 Spacer(Modifier.height(12.dp))
 
                 SongProgress(
-                    durationMillis = playerState.songDurationSecs * 1000L,
-                    currentMillis = playerState.currentMillis,
+                    durationMillis = if (playerState.fetchingMetadata) {
+                        previewMetadata?.duration?.inWholeMilliseconds
+                    } else {
+                        info?.durationSeconds?.let {
+                            it * 1000L
+                        }
+                    } ?: -1L,
+                    currentMillis = if (playerState.fetchingMetadata) {
+                        0L
+                    } else {
+                        playerState.currentMillis
+                    },
                     onProgressChange = onProgressChange
                 )
             }

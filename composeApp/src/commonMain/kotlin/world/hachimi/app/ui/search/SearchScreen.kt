@@ -18,6 +18,7 @@ import world.hachimi.app.model.SearchViewModel
 import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.search.components.SearchSongItem
 import world.hachimi.app.ui.search.components.SearchUserItem
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun SearchScreen(
@@ -103,7 +104,14 @@ private fun Content(vm: SearchViewModel, global: GlobalStore) {
                 modifier = Modifier.fillMaxWidth(),
                 data = item,
                 onClick = {
-                    global.player.insertToQueue(item.displayId, true, false)
+                    global.player.insertToQueue(GlobalStore.MusicQueueItem(
+                        id = item.id,
+                        displayId = item.displayId,
+                        name = item.title,
+                        artist = item.artist,
+                        duration = item.durationSeconds.seconds,
+                        coverUrl = item.coverArtUrl
+                    ), true, false)
                 }
             )
         }

@@ -6,45 +6,48 @@ import androidx.compose.runtime.setValue
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.logging.Logger
 import world.hachimi.app.util.LrcParser
+import kotlin.time.Duration
 
 typealias SongDetailInfo = SongModule.PublicSongDetail
 
 /**
- * UI states, should attach a player
+ * UI states, should attach a player.
+ *
+ * TODO(opt): Reduce extra complexity
  */
 class PlayerUIState() {
     // Status
+    // TODO: Remove this status because it has unclear definition
     var hasSong by mutableStateOf(false)
 
     /**
-     * Getting audio metadata
+     * Getting audio metadata.
      */
     var fetchingMetadata by mutableStateOf(false)
+    var fetchingSongId by mutableStateOf<Long?>(null)
+        private set
+    // If preview metadata is available during fetching process, we can use preview metadata at first
+    var previewMetadata by mutableStateOf<PreviewMetadata?>(null)
+        private set
+
     /**
      * Downloading audio data
      */
     var buffering by mutableStateOf(false)
-    var isPlaying by mutableStateOf(false)
     var downloadProgress by mutableStateOf(0f)
+
+    // Controller-related state
+    /**
+     * The player should always not be playing during fetching/buffering phase
+     */
+    var isPlaying by mutableStateOf(false)
+    /**
+     * Only meaningful when music data loaded
+     */
     var currentMillis by mutableStateOf(0L)
         private set
 
-    // Info
-    var songId by mutableStateOf<Long?>(null)
-        private set
-    var songDisplayId by mutableStateOf("")
-        private set
-    var songTitle by mutableStateOf("")
-        private set
-    var songAuthor by mutableStateOf("")
-        private set
-    var songCoverUrl by mutableStateOf<String?>(null)
-        private set
-    var songDurationSecs by mutableStateOf(-1)
-        private set
-    var staff by mutableStateOf<List<Pair<String, String>>>(emptyList())
-        private set
-    // Lyrics status
+    // Lyrics state
     var currentLyricsLine by mutableStateOf(-1)
         private set
     var timedLyricsEnabled by mutableStateOf(false)
@@ -52,7 +55,9 @@ class PlayerUIState() {
     var lyricsLines by mutableStateOf<List<String>>(emptyList())
         private set
 
+    // The current playing music info
     var songInfo by mutableStateOf<SongDetailInfo?>(null)
+        private set
 
     private var lrcSegments: List<TimedLyricsSegment> = emptyList()
 
@@ -66,6 +71,15 @@ class PlayerUIState() {
         val startTimeMs: Long,
         val endTimeMs: Long,
         val text: String
+    )
+
+    data class PreviewMetadata(
+        val id: Long,
+        val displayId: String,
+        val title: String,
+        val author: String,
+        val coverUrl: String,
+        val duration: Duration
     )
 
     fun updateCurrentMillis(milliseconds: Long) {
@@ -108,17 +122,12 @@ class PlayerUIState() {
     }
 
     fun updateSongInfo(data: SongDetailInfo) {
-        songId = data.id
-        songDisplayId = data.displayId
         hasSong = true
-        songCoverUrl = data.coverUrl
-        songTitle = data.title
-        songAuthor = data.uploaderName
-        songDurationSecs = data.durationSeconds
         songInfo = data
-        staff = data.productionCrew.map {
-            it.role to (it.personName ?: it.uid?.toString() ?: "Unknown")
-        }
         setLyrics(data.lyrics)
+    }
+
+    fun updatePreviewMetadata(data: PreviewMetadata) {
+        previewMetadata = data
     }
 }

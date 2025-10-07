@@ -19,6 +19,7 @@ import world.hachimi.app.model.MainViewModel
 import world.hachimi.app.ui.component.LoadingPage
 import world.hachimi.app.ui.component.ReloadPage
 import world.hachimi.app.ui.home.components.SongCard
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun HomeScreen(vm: MainViewModel = koinViewModel()) {
@@ -32,7 +33,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
         Column(Modifier.fillMaxSize()) {
             Text(
                 modifier = Modifier.padding(top = 24.dp, start = 24.dp),
-                text ="推荐音乐", style = MaterialTheme.typography.titleLarge
+                text = "最近发布", style = MaterialTheme.typography.titleLarge
             )
 
             Spacer(Modifier.height(24.dp))
@@ -47,7 +48,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                         } else LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
                             columns = GridCells.Adaptive(minSize = 160.dp),
-                            contentPadding = PaddingValues(horizontal = 24.dp),
+                            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp),
                             horizontalArrangement = Arrangement.spacedBy(24.dp),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
@@ -62,7 +63,16 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                                     likeCount = item.likeCount,
                                     playCount = item.playCount,
                                     onClick = {
-                                        global.player.insertToQueue(item.displayId, true, false)
+                                        global.player.insertToQueue(
+                                            GlobalStore.MusicQueueItem(
+                                                id = item.id,
+                                                displayId = item.displayId,
+                                                name = item.title,
+                                                artist = item.uploaderName,
+                                                duration = item.durationSeconds.seconds,
+                                                coverUrl = item.coverUrl
+                                            )
+                                            , true, false)
                                     },
                                 )
                             }
