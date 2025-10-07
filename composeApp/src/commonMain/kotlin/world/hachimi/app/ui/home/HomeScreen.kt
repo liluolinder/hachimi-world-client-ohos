@@ -32,7 +32,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
         Column(Modifier.fillMaxSize()) {
             Text(
                 modifier = Modifier.padding(top = 24.dp, start = 24.dp),
-                text ="推荐音乐", style = MaterialTheme.typography.titleLarge
+                text = "推荐音乐", style = MaterialTheme.typography.titleLarge
             )
 
             Spacer(Modifier.height(24.dp))
@@ -47,7 +47,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                         } else LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
                             columns = GridCells.Adaptive(minSize = 160.dp),
-                            contentPadding = PaddingValues(horizontal = 24.dp),
+                            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp),
                             horizontalArrangement = Arrangement.spacedBy(24.dp),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
