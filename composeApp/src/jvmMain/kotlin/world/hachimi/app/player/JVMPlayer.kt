@@ -6,12 +6,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import world.hachimi.app.logging.Logger
 import java.io.ByteArrayInputStream
-import javax.sound.sampled.AudioInputStream
-import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.Clip
-import javax.sound.sampled.DataLine
-import javax.sound.sampled.FloatControl
-import javax.sound.sampled.LineEvent
+import javax.sound.sampled.*
+
 
 class JVMPlayer() : Player {
     private var clip: Clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
@@ -40,7 +36,37 @@ class JVMPlayer() : Player {
             clip.close()
 
             ready = false
-            val clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
+            val stream = withContext(Dispatchers.IO) {
+                AudioSystem.getAudioInputStream(ByteArrayInputStream(item.audioBytes))
+            }
+            val originalFormat = stream.format
+
+            Logger.i("player", "originalFormat = $originalFormat")
+
+            val desiredPcmFormat = AudioFormat( // 16bit, signed-int PCM, with original sampleRate
+                AudioFormat.Encoding.PCM_SIGNED,
+                originalFormat.sampleRate,
+                16,
+                originalFormat.channels, // Always be 2(stereo)
+                originalFormat.channels * (16 / 8),
+                originalFormat.sampleRate, // frameRate is the same as sampleRate
+                false
+            )
+            val clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, desiredPcmFormat)) as Clip
+            val defaultFormat = clip.format
+            Logger.i("player", "defaultFormat = $defaultFormat")
+
+            val decodedStream = withContext(Dispatchers.IO) {
+                AudioSystem.getAudioInputStream(desiredPcmFormat, stream)
+            }
+            Logger.i("player", "decodedFormat = ${decodedStream.format}")
+
+            if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
+                volumeControl = clip.getControl(FloatControl.Type.VOLUME) as FloatControl
+            } else {
+                volumeControl = null
+            }
+            Logger.i("player", "volumeControl = $volumeControl")
             clip.addLineListener {
                 when (it.type) {
                     LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
@@ -56,24 +82,7 @@ class JVMPlayer() : Player {
                     }
                 }
             }
-
-            val defaultFormat = clip.format
-
-            val stream = withContext(Dispatchers.IO) {
-                AudioSystem.getAudioInputStream(ByteArrayInputStream(item.audioBytes))
-            }
-            val baseFormat = stream.format
-//        val sampleSizeInBites = baseFormat.sampleSizeInBits.takeIf { it > 0 } ?: 32 // Defaults to fltp(32bits)
-
-            val decodedStream = withContext(Dispatchers.IO) {
-                AudioSystem.getAudioInputStream(defaultFormat, stream)
-            }
             clip.open(decodedStream)
-            if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
-                volumeControl = clip.getControl(FloatControl.Type.VOLUME) as FloatControl
-            } else {
-                volumeControl = null
-            }
             ready = true
             this@JVMPlayer.clip = clip
 
