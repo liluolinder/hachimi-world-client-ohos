@@ -19,6 +19,9 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import world.hachimi.app.util.formatSongDuration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -34,7 +37,7 @@ fun SongProgress(
     val animatedPlayingProgress by animateFloatAsState(targetValue = playingProgress, tween(durationMillis = 100, easing = LinearEasing))
     var draggingProgress by remember { mutableStateOf(0f) }
     var offsetX by remember { mutableStateOf(0f) }
-
+    val scope = rememberCoroutineScope()
 
     Row(
         modifier = modifier.widthIn(max = 1000.dp),
@@ -67,8 +70,11 @@ fun SongProgress(
                                 break
                             }
                         }
-                        isDragging = false
                         onProgressChange(draggingProgress)
+                        scope.launch {
+                            delay(200)
+                            isDragging = false
+                        }
                     }
                 }
         ) {

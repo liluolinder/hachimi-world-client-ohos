@@ -7,12 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloseFullscreen
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -30,6 +25,7 @@ import world.hachimi.app.model.SongDetailInfo
 import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.player.components.Album
 import world.hachimi.app.ui.player.components.Lyrics
+import world.hachimi.app.ui.player.components.OriginInfoDialog
 import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
 import world.hachimi.app.ui.theme.PreviewTheme
@@ -95,6 +91,8 @@ fun CompactPlayerScreen(
     val displayedTitle = if (playerState.fetchingMetadata) { previewMetadata?.title } else { info?.title } ?: ""
     val displayedAuthor = if (playerState.fetchingMetadata) { previewMetadata?.author } else { info?.uploaderName } ?: ""
 
+    var showOriginInfo by remember { mutableStateOf(false) }
+    
     Column(Modifier.systemBarsPadding()) {
         Box(Modifier.fillMaxWidth().weight(1f)) {
             val lyricsAlpha by animateFloatAsState(if (displayingLyrics) 1f else 0f)
@@ -150,6 +148,9 @@ fun CompactPlayerScreen(
                         if (!playerState.fetchingMetadata) {
                             info?.originInfos?.fastForEach { item ->
                                 Text(
+                                    modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
+                                        showOriginInfo = true
+                                    }),
                                     text = "原作: ${item.title}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = LocalContentColor.current.copy(0.7f)
@@ -256,6 +257,17 @@ fun CompactPlayerScreen(
             )
         }
     }
+
+    if (showOriginInfo) {
+        val originInfo = playerState.songInfo?.originInfos?.firstOrNull()
+
+        if (originInfo != null) OriginInfoDialog(
+            onDismissRequest = { showOriginInfo = false },
+            title = originInfo.title,
+            artist = originInfo.artist,
+            url = originInfo.url
+        )
+    }
 }
 
 @Composable
@@ -275,6 +287,8 @@ fun ExpandedPlayerScreen(
     val displayedCover = if (playerState.fetchingMetadata) previewMetadata?.coverUrl else info?.coverUrl
     val displayedTitle = if (playerState.fetchingMetadata) { previewMetadata?.title } else { info?.title } ?: ""
     val displayedAuthor = if (playerState.fetchingMetadata) { previewMetadata?.author } else { info?.uploaderName } ?: ""
+
+    var showOriginInfo by remember { mutableStateOf(false) }
 
     Box {
         Column(Modifier.fillMaxSize()) {
@@ -332,6 +346,9 @@ fun ExpandedPlayerScreen(
                             if (!playerState.fetchingMetadata) {
                                 info?.originInfos?.fastForEach { item ->
                                     Text(
+                                        modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
+                                            showOriginInfo = true
+                                        }),
                                         text = "原作: ${item.title}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = LocalContentColor.current.copy(0.7f)
@@ -395,6 +412,17 @@ fun ExpandedPlayerScreen(
             onClick = onShrinkClick
         ) {
             Icon(Icons.Default.CloseFullscreen, "Shrink")
+        }
+
+        if (showOriginInfo) {
+            val originInfo = playerState.songInfo?.originInfos?.firstOrNull()
+
+            if (originInfo != null) OriginInfoDialog(
+                onDismissRequest = { showOriginInfo = false },
+                title = originInfo.title,
+                artist = originInfo.artist,
+                url = originInfo.url
+            )
         }
     }
 }

@@ -32,6 +32,9 @@ class ReviewDetailViewModel(
         private set
 
     fun mounted(reviewId: Long) {
+        if (this.reviewId != reviewId) {
+            initializeStatus = InitializeStatus.INIT
+        }
         this.reviewId = reviewId
         refresh()
     }

@@ -4,7 +4,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil3.toUri
 import io.github.vinceglb.filekit.*
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -95,6 +94,9 @@ class PublishViewModel(
     var addStaffName by mutableStateOf("")
     var addStaffRole by mutableStateOf("")
     var addStaffOperating by mutableStateOf(false)
+
+    var showAddExternalLinkDialog by mutableStateOf(false)
+        private set
 
     private fun clearInput() {
         title = ""
@@ -517,6 +519,10 @@ class PublishViewModel(
         if (subtitle.isBlank()) {
             // Do nothing
         }
+        if (subtitle.length > 32) {
+            global.alert("副标题过长")
+            return false
+        }
 
         if (description.isBlank()) {
             // Do nothing
@@ -551,5 +557,13 @@ class PublishViewModel(
         }
 
         return true
+    }
+
+    fun showAddExternalLinkDialog() {
+        showAddExternalLinkDialog = true
+    }
+
+    fun closeAddExternalLinkDialog() {
+        showAddExternalLinkDialog = false
     }
 }

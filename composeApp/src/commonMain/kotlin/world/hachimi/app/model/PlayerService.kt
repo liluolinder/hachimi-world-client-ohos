@@ -123,6 +123,7 @@ class PlayerService(
                     playerMutex.withLock {
                         if (playerJobSign == sign) {
                             playerState.updateSongInfo(songInfo)
+                            playerState.fetchingMetadata = false
                             playerState.hasSong = true
                             playerState.updateCurrentMillis(0L)
                         }
@@ -391,6 +392,11 @@ class PlayerService(
                 playerState.updateCurrentMillis(millis)
             }
         }
+    }
+
+    fun updateVolume(volume: Float) = scope.launch {
+        playerState.volume = volume
+        player.setVolume(volume)
     }
 
     private suspend fun getSongItemCacheable(

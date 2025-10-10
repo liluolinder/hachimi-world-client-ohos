@@ -29,7 +29,8 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
         onDispose { vm.unmount() }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val maxWidth = maxWidth
         Column(Modifier.fillMaxSize()) {
             Text(
                 modifier = Modifier.padding(top = 24.dp, start = 24.dp),
@@ -47,7 +48,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
                             Text("空空如也")
                         } else LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
-                            columns = GridCells.Adaptive(minSize = 160.dp),
+                            columns = if (maxWidth < 400.dp) GridCells.Adaptive(minSize = 120.dp) else GridCells.Adaptive(minSize = 160.dp),
                             contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp),
                             horizontalArrangement = Arrangement.spacedBy(24.dp),
                             verticalArrangement = Arrangement.spacedBy(24.dp)

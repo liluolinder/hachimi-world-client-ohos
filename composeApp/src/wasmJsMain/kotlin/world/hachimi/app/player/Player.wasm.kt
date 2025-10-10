@@ -78,6 +78,7 @@ class WasmPlayer : Player {
     override suspend fun prepare(item: SongItem, autoPlay: Boolean) {
         mutex.withLock {
             val time = measureTime {
+                val previousVolume = getVolume()
                 howl?.let {
                     it.unload()
                     howl = null
@@ -105,6 +106,7 @@ class WasmPlayer : Player {
                 )
                 val howl = buildHowl(options)
                 this.howl = howl
+                setVolume(previousVolume)
                 isReadyMutex.withLock {
                     this.isReady = true
                 }

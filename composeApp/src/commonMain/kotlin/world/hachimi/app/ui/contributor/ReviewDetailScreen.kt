@@ -71,7 +71,7 @@ private fun Content(vm: ReviewDetailViewModel) {
                 "状态", when (data.status) {
                     PublishModule.SongPublishReviewBrief.STATUS_PENDING -> "待审核"
                     PublishModule.SongPublishReviewBrief.STATUS_APPROVED -> "通过"
-                    PublishModule.SongPublishReviewBrief.STATUS_REJECTED -> "驳回"
+                    PublishModule.SongPublishReviewBrief.STATUS_REJECTED -> "退回"
                     else -> error("unreachable")
                 }
             )
@@ -92,7 +92,7 @@ private fun Content(vm: ReviewDetailViewModel) {
                     }
                     Spacer(Modifier.width(12.dp))
                     TextButton(onClick = { vm.reject() }, enabled = !vm.operating) {
-                        Text("驳回")
+                        Text("退回")
                     }
                 }
             }
@@ -130,7 +130,8 @@ private fun Content(vm: ReviewDetailViewModel) {
                         else -> "未知"
                     }
                 )
-                PropertyItem("原作标题", it.title ?: "null")
+                PropertyItem("原作标题", it.title ?: "空")
+                PropertyItem("原作艺术家", it.artist ?: "空")
                 PropertyItem({ Text("原作链接") }) {
                     Text(
                         modifier = Modifier.clickable {
@@ -138,7 +139,7 @@ private fun Content(vm: ReviewDetailViewModel) {
                                 getPlatform().openUrl(it)
                             }
                         },
-                        text = it.url ?: "null",
+                        text = it.url ?: "空",
                         textDecoration = if (it.url != null) TextDecoration.Underline else null
                     )
                 }

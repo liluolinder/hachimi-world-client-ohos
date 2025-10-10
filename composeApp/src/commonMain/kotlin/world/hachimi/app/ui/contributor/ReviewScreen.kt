@@ -157,7 +157,7 @@ private fun Item(
                 text = when (status) {
                     PublishModule.SongPublishReviewBrief.STATUS_PENDING -> "待审核"
                     PublishModule.SongPublishReviewBrief.STATUS_APPROVED -> "通过"
-                    PublishModule.SongPublishReviewBrief.STATUS_REJECTED -> "驳回"
+                    PublishModule.SongPublishReviewBrief.STATUS_REJECTED -> "退回"
                     else -> "未知"
                 }, style = MaterialTheme.typography.bodySmall
             )

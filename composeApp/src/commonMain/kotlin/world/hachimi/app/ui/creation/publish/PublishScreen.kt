@@ -1,41 +1,14 @@
 package world.hachimi.app.ui.creation.publish
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
@@ -68,7 +41,15 @@ fun PublishScreen(
         ) {
             Text("发布作品", style = MaterialTheme.typography.headlineSmall)
 
-            FormItem(header = { Text("上传音频") }) {
+            Text(
+                "尊重劳动成果，请勿搬运作品。暂不收录时长或结构明显短于 TV Size 的作品。",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            FormItem(
+                header = { Text("上传音频") },
+                subtitle = { Text("支持 flac 和 mp3 格式，大小不超过 20MB") }
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -91,7 +72,12 @@ fun PublishScreen(
                 }
             }
 
-            FormItem(header = { Text("设置封面") }) {
+            FormItem(
+                header = { Text("设置封面") },
+                subtitle = {
+                    Text("支持 jpg, png, webp 格式的图片。封面在所有地方都只会以裁剪的方式显示为正方形，如果您的封面原先是长方形，建议进行适当的调整。请勿通过拉伸比例的方式来调整，请勿使用透明图片。")
+                }
+            ) {
                 Card(
                     modifier = Modifier.size(200.dp),
                     onClick = { vm.setCoverImage() },
@@ -115,7 +101,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("标题") },
-                subtitle = { Text("填写一个您认为适合永久流传的纯文字标题。如跳楼基、野哈飞舞之类的与原曲标题关联性强的纯文字标题。请不要在标题中添加标签、Emoji等复杂内容。请不要使用标题来引流，后续可能会做专门用于推荐的标题。") }
+                subtitle = { Text("填写一个您认为适合永久流传的纯文字标题。如 钢铁雄基4 这类与原曲标题关联性强的纯文字标题。请不要在标题中添加标签、Emoji等复杂内容。请不要使用标题来引流，后续可能会做专门用于推荐的标题。") }
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -127,7 +113,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("副标题") },
-                subtitle = { Text("可选。使用一句话描述。你可以在后面填写原作信息，副标题中无需说明原作") }
+                subtitle = { Text("可选。副标题通常是一句简短的描述，或是 OST 的出处，如《XXX》OP、《XXX》游戏原声带。无需在此处填写原作标题，原作信息请在后方对应的输入框中填写。") }
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -139,7 +125,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("标签") },
-                subtitle = { Text("使用标签描述你的曲风类型（如古典、流行、J-Pop、ACG、R&B）、创作类型（如原教旨、原曲不使用）。不建议添加过多的标签。若只有英文请按照每单词首字母大写空格隔开，或使用行业标准写法。请勿使用符号和 Emoji") }
+                subtitle = { Text("使用标签描述你的曲风类型（如古典、流行、J-Pop、ACG、R&B）、创作类型（如纯净哈基米、原曲不使用）。不建议添加过多的标签。若只有英文请按照每单词首字母大写空格隔开，或使用行业标准写法。请勿使用符号和 Emoji") }
             ) {
                 TagEdit(vm)
             }
@@ -210,7 +196,10 @@ fun PublishScreen(
             }
 
             if (vm.creationType == 0) {
-                Text("原创指的是作词、作曲、编曲等全部原创，改编作品请勿选择原创。选择错误会被退回，请再次确认！", color = MaterialTheme.colorScheme.error)
+                Text(
+                    "原创指的是作词、作曲、编曲等全部原创，改编作品请勿选择原创。选择错误会被退回，请再次确认！",
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             if (vm.creationType > 0) {
@@ -220,7 +209,7 @@ fun PublishScreen(
                         value = vm.originId,
                         onValueChange = { vm.originId = it },
                         singleLine = true,
-                        supportingText = { Text("如果原作是站内作品，填写 ID 即可，无需再填写标题与链接") }
+                        supportingText = { Text("如果原作是基米天堂站内的作品，填写基米 ID 即可，无需再填写标题与链接") }
                     )
                 }
                 FormItem(header = { Text("原作标题") }) {
@@ -247,6 +236,7 @@ fun PublishScreen(
                         value = vm.originLink,
                         onValueChange = { vm.originLink = it },
                         singleLine = true,
+                        placeholder = { Text("https://") },
                         supportingText = { Text("建议填写，请使用 https:// 格式的链接") }
                     )
                 }
@@ -302,8 +292,17 @@ fun PublishScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(text=item.role, modifier = Modifier.width(120.dp), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                        Text(text= item.name ?: "uid: ${item.uid}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = item.role,
+                            modifier = Modifier.width(120.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = item.name ?: "uid: ${item.uid}",
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
 
                         IconButton(onClick = { vm.removeStaff(index) }) {
                             Icon(Icons.Default.Remove, contentDescription = "Remove")
@@ -313,7 +312,13 @@ fun PublishScreen(
             }
 
             FormItem(
-                header = { Text("外部链接") },
+                header = {
+                    Text("外部链接")
+
+                    IconButton(onClick = { vm.showAddExternalLinkDialog() }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add")
+                    }
+                },
                 subtitle = { Text("如果你的作品已发表在其他平台上，请在此添加链接") }
             ) {
                 vm.externalLinks.fastForEachIndexed { index, item ->
@@ -340,75 +345,6 @@ fun PublishScreen(
                         }
                     }
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    var platform by remember { mutableStateOf<String?>(null) }
-                    var link by remember { mutableStateOf("") }
-                    Box {
-                        var dropdown by remember { mutableStateOf(false) }
-                        TextButton(onClick = { dropdown = true }, modifier = Modifier.width(120.dp)) {
-                            Text(
-                                platform?.let {
-                                    translatePlatformLabel(it)
-                                } ?: "选择平台"
-                            )
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "ArrowDropDown")
-                        }
-                        DropdownMenu(dropdown, onDismissRequest = { dropdown = false }) {
-                            DropdownMenuItem(
-                                text = { Text("B站") },
-                                onClick = {
-                                    platform = "bilibili"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("niconico") },
-                                onClick = {
-                                    platform = "niconico"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("YouTube") },
-                                onClick = {
-                                    platform = "youtube"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("抖音") },
-                                onClick = {
-                                    platform = "douyin"
-                                    dropdown = false
-                                }
-                            )
-                        }
-                    }
-                    OutlinedTextField(
-                        modifier = Modifier.weight(1f),
-                        value = link,
-                        onValueChange = { link = it },
-                        label = { Text("链接") },
-                        placeholder = { Text("https://xxxxxx")},
-                        singleLine = true
-                    )
-                    IconButton(onClick = {
-                        platform?.let {
-                            if (it.isNotBlank() && link.startsWith("https://")) {
-                                vm.addLink(it, link)
-                                platform = null
-                                link = ""
-                            } else {
-                                global.alert("请选择平台并输入正确的链接")
-                            }
-                        }
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
-                    }
-                }
             }
 
             Button(onClick = { vm.publish() }, enabled = !vm.isOperating) {
@@ -420,10 +356,10 @@ fun PublishScreen(
     if (vm.showSuccessDialog) AlertDialog(
         onDismissRequest = { vm.closeDialog() },
         title = {
-            Text("作品发布成功")
+            Text("作品提交成功")
         },
         text = {
-            Text("你的作品编号为：${vm.publishedSongId}")
+            Text("你的作品编号为：${vm.publishedSongId}。首次发布需要确认您是该作品的作者，请留意相关视频平台的私信。目前由原始贡献者人工审核，可能会很慢，请耐心等待或主动联系我们，感谢您的理解！")
         },
         confirmButton = {
             TextButton(onClick = { vm.closeDialog() }) {
@@ -433,6 +369,7 @@ fun PublishScreen(
     )
 
     AddStaffDialog(vm)
+    AddExternalLinkDialog(vm)
 }
 
 @Composable
@@ -466,7 +403,7 @@ private fun AddStaffDialog(vm: PublishViewModel) {
                         vm.addStaffUid = ""
                         type = 1
                     })
-                    Text(text = "站外用户")
+                    Text(text = "站外艺术家")
                 }
 
                 if (type == 0) OutlinedTextField(
@@ -500,11 +437,113 @@ private fun AddStaffDialog(vm: PublishViewModel) {
     )
 }
 
+@Composable
+private fun AddExternalLinkDialog(vm: PublishViewModel) {
+    if (vm.showAddExternalLinkDialog) {
+        var platform by remember { mutableStateOf<String?>(null) }
+        var link by remember { mutableStateOf("") }
+        var error by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { vm.closeAddExternalLinkDialog() },
+            title = {
+                Text("添加外部链接")
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box {
+                        var dropdown by remember { mutableStateOf(false) }
+                        TextButton(onClick = { dropdown = true }, modifier = Modifier.width(120.dp)) {
+                            Text(
+                                platform?.let {
+                                    translatePlatformLabel(it)
+                                } ?: "选择平台"
+                            )
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "ArrowDropDown")
+                        }
+                        DropdownMenu(dropdown, onDismissRequest = { dropdown = false }) {
+                            DropdownMenuItem(
+                                text = { Text("哔哩哔哩") },
+                                onClick = {
+                                    platform = "bilibili"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("niconico") },
+                                onClick = {
+                                    platform = "niconico"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("YouTube") },
+                                onClick = {
+                                    platform = "youtube"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("抖音") },
+                                onClick = {
+                                    platform = "douyin"
+                                    dropdown = false
+                                }
+                            )
+                        }
+                    }
+                    OutlinedTextField(
+                        modifier = Modifier,
+                        value = link,
+                        onValueChange = { link = it },
+                        label = { Text("链接") },
+                        placeholder = { Text("https://") },
+                        singleLine = true,
+                        supportingText = {
+                            error?.let { error ->
+                                Text(error, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val platform = platform
+                        val link = link
+
+                        if (platform == null) {
+                            error = "请选择平台"
+                            return@TextButton
+                        }
+
+                        if (!link.startsWith("https://")) {
+                            error = "请使用 https:// 格式的链接"
+                            return@TextButton
+                        }
+
+                        vm.addLink(platform, link)
+                        vm.closeAddExternalLinkDialog()
+                    },
+                ) {
+                    Text("添加")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.closeAddExternalLinkDialog() }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+}
+
 @Stable
 @Composable
 private fun translatePlatformLabel(label: String): String = when (label) {
     // TODO: i18n
-    "bilibili" -> "B站"
+    "bilibili" -> "哔哩哔哩"
     "douyin" -> "抖音"
     "youtube" -> "YouTube"
     "niconico" -> "niconico"

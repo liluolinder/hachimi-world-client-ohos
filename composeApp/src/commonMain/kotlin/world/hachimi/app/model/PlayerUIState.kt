@@ -59,6 +59,8 @@ class PlayerUIState() {
     var songInfo by mutableStateOf<SongDetailInfo?>(null)
         private set
 
+    var volume by mutableStateOf<Float>(1f)
+
     private var lrcSegments: List<TimedLyricsSegment> = emptyList()
 
     data class TimedLyricsSegment(

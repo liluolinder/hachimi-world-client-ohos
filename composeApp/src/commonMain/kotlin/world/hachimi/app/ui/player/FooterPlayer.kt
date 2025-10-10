@@ -31,6 +31,7 @@ import world.hachimi.app.model.PlaylistViewModel
 import world.hachimi.app.ui.insets.currentSafeAreaInsets
 import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
+import world.hachimi.app.ui.player.components.VolumeControl
 import world.hachimi.app.ui.root.component.MusicQueue
 import kotlin.random.Random
 
@@ -159,6 +160,10 @@ fun ExpandedFooterPlayer() {
     val displayedCover by remember { derivedStateOf { if (playerState.fetchingMetadata) playerState.previewMetadata?.coverUrl else playerState.songInfo?.coverUrl } }
     val displayedTitle by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.title } else { playerState.songInfo?.title } ?: "" } }
     val displayedAuthor by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.author } else { playerState.songInfo?.uploaderName } ?: "" } }
+    var queueExpanded by remember { mutableStateOf(false) }
+
+    // TODO[refactor](footer): I really should not write this garbage. Refactor later.
+    var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
     Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
         Surface(
@@ -181,51 +186,57 @@ fun ExpandedFooterPlayer() {
         }
 
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            SongControl(
-                modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally),
-                isPlaying = playerState.isPlaying,
-                isLoading = playerState.buffering,
-                loadingProgress = { playerState.downloadProgress },
-                onPlayPauseClick = { global.player.playOrPause() },
-                onPreviousClick = { global.player.queuePrevious() },
-                onNextClick = { global.player.queueNext() }
-            )
+            Row(Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally)) {
+                SongControl(
+                    modifier = Modifier.weight(1f).wrapContentWidth(),
+                    isPlaying = playerState.isPlaying,
+                    isLoading = playerState.buffering,
+                    loadingProgress = { playerState.downloadProgress },
+                    onPlayPauseClick = { global.player.playOrPause() },
+                    onPreviousClick = { global.player.queuePrevious() },
+                    onNextClick = { global.player.queueNext() }
+                )
+
+                IconButton(onClick = {
+                    tobeAddedSong = playerState.songInfo?.id?.let { it to Random.nextLong() }
+                }) {
+                    Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
+                }
+
+                IconButton(onClick = { queueExpanded = true }) {
+                    Icon(Icons.AutoMirrored.Filled.QueueMusic, "Queue")
+                }
+            }
 
             Spacer(Modifier.height(12.dp))
 
-            SongProgress(
-                modifier = Modifier.fillMaxWidth().widthIn(max = 800.dp),
-                durationMillis = if (playerState.fetchingMetadata) {
-                    playerState.previewMetadata?.duration?.inWholeMilliseconds
-                } else {
-                    playerState.songInfo?.durationSeconds?.let {
-                        it * 1000L
+            Row(Modifier.fillMaxWidth()) {
+                SongProgress(
+                    modifier = Modifier.widthIn(max = 800.dp).weight(1f),
+                    durationMillis = if (playerState.fetchingMetadata) {
+                        playerState.previewMetadata?.duration?.inWholeMilliseconds
+                    } else {
+                        playerState.songInfo?.durationSeconds?.let {
+                            it * 1000L
+                        }
+                    } ?: -1L,
+                    currentMillis = if (playerState.fetchingMetadata) {
+                        0L
+                    } else {
+                        playerState.currentMillis
+                    },
+                    onProgressChange = {
+                        global.player.setSongProgress(it)
                     }
-                } ?: -1L,
-                currentMillis = if (playerState.fetchingMetadata) {
-                    0L
-                } else {
-                    playerState.currentMillis
-                },
-                onProgressChange = {
-                    global.player.setSongProgress(it)
-                }
-            )
-        }
+                )
 
-        var queueExpanded by remember { mutableStateOf(false) }
+                Spacer(Modifier.width(16.dp))
 
-        // TODO[refactor](footer): I really should not write this garbage. Refactor later.
-        var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
-
-        IconButton(onClick = {
-            tobeAddedSong = playerState.songInfo?.id?.let { it to Random.nextLong() }
-        }) {
-            Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add To Playlist")
-        }
-
-        IconButton(onClick = { queueExpanded = true }) {
-            Icon(Icons.AutoMirrored.Filled.QueueMusic, "Queue")
+                VolumeControl(
+                    volume = playerState.volume,
+                    onVolumeChange = { global.player.updateVolume(it) },
+                )
+            }
         }
 
         if (queueExpanded) Popup(
