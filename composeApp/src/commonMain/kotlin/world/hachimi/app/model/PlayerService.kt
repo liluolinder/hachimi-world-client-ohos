@@ -123,6 +123,7 @@ class PlayerService(
                     playerMutex.withLock {
                         if (playerJobSign == sign) {
                             playerState.updateSongInfo(songInfo)
+                            playerState.fetchingMetadata = false
                             playerState.hasSong = true
                             playerState.updateCurrentMillis(0L)
                         }
