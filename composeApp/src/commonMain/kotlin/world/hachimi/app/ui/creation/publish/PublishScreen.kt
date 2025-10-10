@@ -41,7 +41,10 @@ fun PublishScreen(
         ) {
             Text("发布作品", style = MaterialTheme.typography.headlineSmall)
 
-            Text("尊重劳动成果，请勿搬运作品（即便已经过原作者授权）。暂不收录时长或结构短于 TV Size 的作品。", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "尊重劳动成果，请勿搬运作品。暂不收录时长或结构明显短于 TV Size 的作品。",
+                style = MaterialTheme.typography.bodyMedium
+            )
 
             FormItem(
                 header = { Text("上传音频") },
@@ -110,7 +113,7 @@ fun PublishScreen(
 
             FormItem(
                 header = { Text("副标题") },
-                subtitle = { Text("可选。副标题通常是一句简短的描述，或是 OST 的出处，如《XXX》OP、《XXX》游戏原声带。无需在此处填写原作标题，原作信息请在后续的输入框中填写。") }
+                subtitle = { Text("可选。副标题通常是一句简短的描述，或是 OST 的出处，如《XXX》OP、《XXX》游戏原声带。无需在此处填写原作标题，原作信息请在后方对应的输入框中填写。") }
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -193,7 +196,10 @@ fun PublishScreen(
             }
 
             if (vm.creationType == 0) {
-                Text("原创指的是作词、作曲、编曲等全部原创，改编作品请勿选择原创。选择错误会被退回，请再次确认！", color = MaterialTheme.colorScheme.error)
+                Text(
+                    "原创指的是作词、作曲、编曲等全部原创，改编作品请勿选择原创。选择错误会被退回，请再次确认！",
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             if (vm.creationType > 0) {
@@ -230,6 +236,7 @@ fun PublishScreen(
                         value = vm.originLink,
                         onValueChange = { vm.originLink = it },
                         singleLine = true,
+                        placeholder = { Text("https://") },
                         supportingText = { Text("建议填写，请使用 https:// 格式的链接") }
                     )
                 }
@@ -285,8 +292,17 @@ fun PublishScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(text=item.role, modifier = Modifier.width(120.dp), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                        Text(text= item.name ?: "uid: ${item.uid}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = item.role,
+                            modifier = Modifier.width(120.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = item.name ?: "uid: ${item.uid}",
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
 
                         IconButton(onClick = { vm.removeStaff(index) }) {
                             Icon(Icons.Default.Remove, contentDescription = "Remove")
@@ -296,7 +312,13 @@ fun PublishScreen(
             }
 
             FormItem(
-                header = { Text("外部链接") },
+                header = {
+                    Text("外部链接")
+
+                    IconButton(onClick = { vm.showAddExternalLinkDialog() }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add")
+                    }
+                },
                 subtitle = { Text("如果你的作品已发表在其他平台上，请在此添加链接") }
             ) {
                 vm.externalLinks.fastForEachIndexed { index, item ->
@@ -323,75 +345,6 @@ fun PublishScreen(
                         }
                     }
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    var platform by remember { mutableStateOf<String?>(null) }
-                    var link by remember { mutableStateOf("") }
-                    Box {
-                        var dropdown by remember { mutableStateOf(false) }
-                        TextButton(onClick = { dropdown = true }, modifier = Modifier.width(120.dp)) {
-                            Text(
-                                platform?.let {
-                                    translatePlatformLabel(it)
-                                } ?: "选择平台"
-                            )
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "ArrowDropDown")
-                        }
-                        DropdownMenu(dropdown, onDismissRequest = { dropdown = false }) {
-                            DropdownMenuItem(
-                                text = { Text("B站") },
-                                onClick = {
-                                    platform = "bilibili"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("niconico") },
-                                onClick = {
-                                    platform = "niconico"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("YouTube") },
-                                onClick = {
-                                    platform = "youtube"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("抖音") },
-                                onClick = {
-                                    platform = "douyin"
-                                    dropdown = false
-                                }
-                            )
-                        }
-                    }
-                    OutlinedTextField(
-                        modifier = Modifier.weight(1f),
-                        value = link,
-                        onValueChange = { link = it },
-                        label = { Text("链接") },
-                        placeholder = { Text("https://xxxxxx")},
-                        singleLine = true
-                    )
-                    IconButton(onClick = {
-                        platform?.let {
-                            if (it.isNotBlank() && link.startsWith("https://")) {
-                                vm.addLink(it, link)
-                                platform = null
-                                link = ""
-                            } else {
-                                global.alert("请选择平台并输入正确的链接")
-                            }
-                        }
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
-                    }
-                }
             }
 
             Button(onClick = { vm.publish() }, enabled = !vm.isOperating) {
@@ -416,6 +369,7 @@ fun PublishScreen(
     )
 
     AddStaffDialog(vm)
+    AddExternalLinkDialog(vm)
 }
 
 @Composable
@@ -449,7 +403,7 @@ private fun AddStaffDialog(vm: PublishViewModel) {
                         vm.addStaffUid = ""
                         type = 1
                     })
-                    Text(text = "站外用户")
+                    Text(text = "站外艺术家")
                 }
 
                 if (type == 0) OutlinedTextField(
@@ -483,11 +437,113 @@ private fun AddStaffDialog(vm: PublishViewModel) {
     )
 }
 
+@Composable
+private fun AddExternalLinkDialog(vm: PublishViewModel) {
+    if (vm.showAddExternalLinkDialog) {
+        var platform by remember { mutableStateOf<String?>(null) }
+        var link by remember { mutableStateOf("") }
+        var error by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { vm.closeAddExternalLinkDialog() },
+            title = {
+                Text("添加外部链接")
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box {
+                        var dropdown by remember { mutableStateOf(false) }
+                        TextButton(onClick = { dropdown = true }, modifier = Modifier.width(120.dp)) {
+                            Text(
+                                platform?.let {
+                                    translatePlatformLabel(it)
+                                } ?: "选择平台"
+                            )
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "ArrowDropDown")
+                        }
+                        DropdownMenu(dropdown, onDismissRequest = { dropdown = false }) {
+                            DropdownMenuItem(
+                                text = { Text("哔哩哔哩") },
+                                onClick = {
+                                    platform = "bilibili"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("niconico") },
+                                onClick = {
+                                    platform = "niconico"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("YouTube") },
+                                onClick = {
+                                    platform = "youtube"
+                                    dropdown = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("抖音") },
+                                onClick = {
+                                    platform = "douyin"
+                                    dropdown = false
+                                }
+                            )
+                        }
+                    }
+                    OutlinedTextField(
+                        modifier = Modifier,
+                        value = link,
+                        onValueChange = { link = it },
+                        label = { Text("链接") },
+                        placeholder = { Text("https://") },
+                        singleLine = true,
+                        supportingText = {
+                            error?.let { error ->
+                                Text(error, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val platform = platform
+                        val link = link
+
+                        if (platform == null) {
+                            error = "请选择平台"
+                            return@TextButton
+                        }
+
+                        if (!link.startsWith("https://")) {
+                            error = "请使用 https:// 格式的链接"
+                            return@TextButton
+                        }
+
+                        vm.addLink(platform, link)
+                        vm.closeAddExternalLinkDialog()
+                    },
+                ) {
+                    Text("添加")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.closeAddExternalLinkDialog() }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+}
+
 @Stable
 @Composable
 private fun translatePlatformLabel(label: String): String = when (label) {
     // TODO: i18n
-    "bilibili" -> "B站"
+    "bilibili" -> "哔哩哔哩"
     "douyin" -> "抖音"
     "youtube" -> "YouTube"
     "niconico" -> "niconico"
