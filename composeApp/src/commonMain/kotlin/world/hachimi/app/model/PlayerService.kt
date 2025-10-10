@@ -393,6 +393,11 @@ class PlayerService(
         }
     }
 
+    fun updateVolume(volume: Float) = scope.launch {
+        playerState.volume = volume
+        player.setVolume(volume)
+    }
+
     private suspend fun getSongItemCacheable(
         displayId: String,
         onMetadata: suspend (SongDetailInfo) -> Unit,

@@ -7,11 +7,13 @@ import kotlinx.coroutines.withContext
 import world.hachimi.app.logging.Logger
 import java.io.ByteArrayInputStream
 import javax.sound.sampled.*
+import kotlin.math.roundToInt
 
 
 class JVMPlayer() : Player {
     private var clip: Clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, null)) as Clip
     private var volumeControl: FloatControl? = null
+    private var masterGainControl: FloatControl? = null
 
     private lateinit var stream: AudioInputStream
     private var ready = false
@@ -61,12 +63,6 @@ class JVMPlayer() : Player {
             }
             Logger.i("player", "decodedFormat = ${decodedStream.format}")
 
-            if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
-                volumeControl = clip.getControl(FloatControl.Type.VOLUME) as FloatControl
-            } else {
-                volumeControl = null
-            }
-            Logger.i("player", "volumeControl = $volumeControl")
             clip.addLineListener {
                 when (it.type) {
                     LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
@@ -83,6 +79,19 @@ class JVMPlayer() : Player {
                 }
             }
             clip.open(decodedStream)
+
+            val previousVolume = getVolume()
+            volumeControl = if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
+                clip.getControl(FloatControl.Type.VOLUME) as FloatControl
+            } else null
+            masterGainControl = if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                clip.getControl(FloatControl.Type.MASTER_GAIN) as FloatControl
+            } else null
+
+            setVolume(previousVolume)
+            Logger.i("player", "volumeControl = $volumeControl")
+            Logger.i("player", "masterGainControl = $masterGainControl")
+
             ready = true
             this@JVMPlayer.clip = clip
 
@@ -133,11 +142,30 @@ class JVMPlayer() : Player {
     }
 
     override suspend fun getVolume(): Float {
-        return volumeControl?.value ?: 1f
+        return if (volumeControl != null) {
+            volumeControl?.value ?: 1f
+        } else if (masterGainControl != null) {
+            masterGainControl?.let {
+//                (it.value - it.minimum) / (it.maximum - it.minimum)
+                // The maximum gain could be +6 DB, should we make it available to users?
+                (it.value - it.minimum) / (0 - it.minimum)
+            } ?: 1f
+        } else {
+            1f
+        }
     }
 
     override suspend fun setVolume(value: Float) {
-        volumeControl?.value = value
+        if (volumeControl != null) {
+            volumeControl?.value = value
+        } else if (masterGainControl != null) {
+            masterGainControl?.let {
+//                val db = ((it.maximum - it.minimum) * value + it.minimum).roundToInt().toFloat()
+                val db = ((0 - it.minimum) * value + it.minimum).roundToInt().toFloat()
+                masterGainControl?.value = db
+                Logger.d("player", "Set master gain: $db db")
+            }
+        }
     }
 
     override suspend fun release() {
