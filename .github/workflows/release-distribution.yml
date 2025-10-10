@@ -168,7 +168,6 @@ jobs:
           # Set UTF-8 encoding for the environment
           export LANG=C.UTF-8
           export LC_ALL=C.UTF-8
-          chcp 65001
           # Export PR content as changelog
           printf "%s" "$PR_BODY" > changelog.txt
           # Step 1: Replace \r\n with \n
