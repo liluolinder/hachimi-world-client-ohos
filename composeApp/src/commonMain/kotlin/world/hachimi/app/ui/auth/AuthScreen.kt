@@ -1,29 +1,23 @@
 package world.hachimi.app.ui.auth
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import world.hachimi.app.model.AuthViewModel
 import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.ui.auth.components.CaptchaDialog
 import world.hachimi.app.ui.auth.components.FormCard
 import world.hachimi.app.ui.insets.currentSafeAreaInsets
 
@@ -79,22 +73,9 @@ fun AuthScreen(
             }
         }
 
-        if (vm.showCaptchaDialog) AlertDialog(
-            onDismissRequest = {},
-            title = {
-                Text("请完成人机验证")
-            },
-            text = {
-                Text("请在打开的浏览器页面中完成人机验证")
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.finishCaptcha()
-                }) {
-                    Text("我已完成，继续")
-                }
-            }
-        )
+        if (vm.showCaptchaDialog) CaptchaDialog(onConfirm = {
+            vm.finishCaptcha()
+        })
     }
 }
 
@@ -106,7 +87,8 @@ private fun LoginContent(vm: AuthViewModel, toRegister: () -> Unit) {
             value = vm.email,
             onValueChange = { vm.email = it },
             label = { Text("邮箱") },
-            singleLine = true
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
         Spacer(Modifier.height(24.dp))
         TextField(
@@ -115,7 +97,13 @@ private fun LoginContent(vm: AuthViewModel, toRegister: () -> Unit) {
             onValueChange = { vm.password = it },
             label = { Text("密码") },
             singleLine = true,
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                if (!vm.isOperating && vm.email.isNotBlank() && vm.password.isNotBlank()) {
+                    vm.startLogin()
+                }
+            })
         )
         Spacer(Modifier.height(8.dp))
         TextButton(
@@ -152,7 +140,8 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
                 value = vm.regEmail,
                 onValueChange = { vm.regEmail = it },
                 label = { Text("邮箱") },
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
             )
             TextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -160,7 +149,8 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
                 onValueChange = { vm.regPassword = it },
                 label = { Text("密码") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
             )
             TextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -168,7 +158,8 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
                 onValueChange = { vm.regPasswordRepeat = it },
                 label = { Text("确认密码") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
             )
 
             val enabled by remember {
@@ -203,7 +194,13 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
                     value = vm.regCode,
                     onValueChange = { vm.regCode = it },
                     label = { Text("验证码") },
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        if (!vm.isOperating && vm.regCode.isNotBlank()) {
+                            vm.regNextStep()
+                        }
+                    })
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -240,7 +237,8 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
                 value = vm.name,
                 onValueChange = { vm.name = it },
                 label = { Text("昵称") },
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
             )
             TextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -248,7 +246,8 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
                 onValueChange = { vm.intro = it },
                 label = { Text("介绍一下") },
                 maxLines = 4,
-                minLines = 4
+                minLines = 4,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
