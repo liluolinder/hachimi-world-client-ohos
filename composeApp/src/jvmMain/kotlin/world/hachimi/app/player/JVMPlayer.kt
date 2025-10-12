@@ -45,23 +45,55 @@ class JVMPlayer() : Player {
 
             Logger.i("player", "originalFormat = $originalFormat")
 
-            val desiredPcmFormat = AudioFormat( // 16bit, signed-int PCM, with original sampleRate
+            // TODO(player)(jvm): Replace javax.sound
+
+            // Decode to PCM
+            val sampleBit = originalFormat.sampleSizeInBits.takeIf { it > 0 } ?: 16
+            val desiredPcmFormat = AudioFormat( // Signed-int PCM, with original sampleRate and sampleBitSize
                 AudioFormat.Encoding.PCM_SIGNED,
                 originalFormat.sampleRate,
-                16,
+                sampleBit,
                 originalFormat.channels, // Always be 2(stereo)
-                originalFormat.channels * (16 / 8),
+                originalFormat.channels * (sampleBit / 8),
                 originalFormat.sampleRate, // frameRate is the same as sampleRate
                 false
             )
-            val clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, desiredPcmFormat)) as Clip
-            val defaultFormat = clip.format
-            Logger.i("player", "defaultFormat = $defaultFormat")
-
-            val decodedStream = withContext(Dispatchers.IO) {
+            // Decode to PCM
+            var decodedStream = withContext(Dispatchers.IO) {
                 AudioSystem.getAudioInputStream(desiredPcmFormat, stream)
             }
             Logger.i("player", "decodedFormat = ${decodedStream.format}")
+
+            // Try to get Line with origin pcm format
+            var clip = try {
+                AudioSystem.getLine(DataLine.Info(Clip::class.java, desiredPcmFormat)) as Clip
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+
+            if (clip == null) {
+                Logger.i("player", "Raw format is unsupported, fallback to PCM 16bit")
+                // Target format is not supported, try fallback to PCM 16bit format
+                val fallbackFormat = AudioFormat( // 16bit, signed-int PCM, with original sampleRate
+                    AudioFormat.Encoding.PCM_SIGNED,
+                    originalFormat.sampleRate,
+                    16,
+                    originalFormat.channels, // Always be 2(stereo)
+                    originalFormat.channels * (16 / 8),
+                    originalFormat.sampleRate, // frameRate is the same as sampleRate
+                    false
+                )
+                // Transform by the
+                decodedStream = withContext(Dispatchers.IO) {
+                    AudioSystem.getAudioInputStream(fallbackFormat, decodedStream)
+                }
+                clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, fallbackFormat)) as Clip
+            }
+
+
+            val defaultFormat = clip.format
+            Logger.i("player", "defaultFormat = $defaultFormat")
 
             clip.addLineListener {
                 when (it.type) {
