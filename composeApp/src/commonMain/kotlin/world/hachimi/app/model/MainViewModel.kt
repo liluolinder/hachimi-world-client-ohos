@@ -13,6 +13,7 @@ import world.hachimi.app.api.err
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
+import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(
     private val apiClient: ApiClient,
@@ -72,5 +73,21 @@ class MainViewModel(
 
     fun refresh() {
         getRecommendSongs()
+    }
+
+    fun playAllRecent() {
+        viewModelScope.launch {
+            val items = songs.map {
+                GlobalStore.MusicQueueItem(
+                    id = it.id,
+                    displayId = it.displayId,
+                    name = it.title,
+                    artist = it.uploaderName,
+                    duration = it.durationSeconds.seconds,
+                    coverUrl = it.coverUrl
+                )
+            }
+            global.player.playAll(items)
+        }
     }
 }

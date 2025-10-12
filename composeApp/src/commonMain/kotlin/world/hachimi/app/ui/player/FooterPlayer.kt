@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -114,7 +113,8 @@ fun CompactFooterPlayer(modifier: Modifier) {
                             queue = global.player.musicQueue,
                             playingSongId = if (playerState.fetchingMetadata) playerState.fetchingSongId else playerState.songInfo?.id,
                             onPlayClick = { global.player.playSongInQueue(it) },
-                            onRemoveClick = { global.player.removeFromQueue(it) }
+                            onRemoveClick = { global.player.removeFromQueue(it) },
+                            onClearClick = { global.player.clearQueue() }
                         )
                     }
 
@@ -156,6 +156,7 @@ fun CompactFooterPlayer(modifier: Modifier) {
 @Composable
 fun ExpandedFooterPlayer() {
     val global = koinInject<GlobalStore>()
+    val player = global.player
     val playerState = global.player.playerState
     val displayedCover by remember { derivedStateOf { if (playerState.fetchingMetadata) playerState.previewMetadata?.coverUrl else playerState.songInfo?.coverUrl } }
     val displayedTitle by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.title } else { playerState.songInfo?.title } ?: "" } }
@@ -193,8 +194,16 @@ fun ExpandedFooterPlayer() {
                     isLoading = playerState.buffering,
                     loadingProgress = { playerState.downloadProgress },
                     onPlayPauseClick = { global.player.playOrPause() },
-                    onPreviousClick = { global.player.queuePrevious() },
-                    onNextClick = { global.player.queueNext() }
+                    onPreviousClick = { global.player.previous() },
+                    onNextClick = { global.player.next() },
+                    shuffle = player.shuffleMode,
+                    onShuffleModeChange = {
+                        player.updateShuffleMode(it)
+                    },
+                    repeat = player.repeatMode,
+                    onRepeatModeChange = {
+                        player.updateRepeatMode(it)
+                    }
                 )
 
                 IconButton(onClick = {
@@ -249,7 +258,8 @@ fun ExpandedFooterPlayer() {
                 queue = global.player.musicQueue,
                 playingSongId = if (playerState.fetchingMetadata) playerState.fetchingSongId else playerState.songInfo?.id,
                 onPlayClick = { global.player.playSongInQueue(it) },
-                onRemoveClick = { global.player.removeFromQueue(it) }
+                onRemoveClick = { global.player.removeFromQueue(it) },
+                onClearClick = { global.player.clearQueue() },
             )
         }
 

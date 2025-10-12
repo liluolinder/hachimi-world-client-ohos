@@ -5,7 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
@@ -32,10 +37,25 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val maxWidth = maxWidth
         Column(Modifier.fillMaxSize()) {
-            Text(
-                modifier = Modifier.padding(top = 24.dp, start = 24.dp),
-                text = "最近发布", style = MaterialTheme.typography.titleLarge
-            )
+            Row(
+                modifier = Modifier.padding(top = 24.dp, start = 24.dp, end = 24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "最近发布", style = MaterialTheme.typography.titleLarge
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                Button(
+                    modifier = Modifier,
+                    onClick = { vm.playAllRecent() }
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                    Spacer(Modifier.width(16.dp))
+                    Text("播放全部")
+                }
+            }
 
             Spacer(Modifier.height(24.dp))
 

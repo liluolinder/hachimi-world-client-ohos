@@ -28,7 +28,9 @@ import world.hachimi.app.player.Player
 import world.hachimi.app.player.SongItem
 import world.hachimi.app.storage.SongCache
 import kotlin.random.Random
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 private val downloadHttpClient = HttpClient() {
     install(HttpTimeout) {
@@ -50,6 +52,21 @@ class PlayerService(
     val playerState = PlayerUIState()
     var musicQueue by mutableStateOf<List<MusicQueueItem>>(emptyList())
         private set
+    private var shuffledQueue = emptyList<MusicQueueItem>()
+    private var shuffleIndex = -1
+
+    @Deprecated("deprecated")
+    private val playHistory = mutableListOf<PlayHistory>()
+    // Indicate the current playing cursor in play history, used to remember the play order in shuffle mode
+    private var historyCursor = -1
+
+    var shuffleMode by mutableStateOf(false)
+    var repeatMode by mutableStateOf(false)
+
+    data class PlayHistory(
+        val songId: Long,
+        val playTime: Instant
+    )
 
     private val queueMutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -61,7 +78,7 @@ class PlayerService(
                     when (event) {
                         PlayEvent.End -> {
                             playerState.isPlaying = false
-                            queueNext()
+                            autoNext()
                         }
 
                         is PlayEvent.Error -> {
@@ -103,7 +120,15 @@ class PlayerService(
         player.pause()
         val sign = Random.nextInt()
 
-        playerMutex.withLock { playerJobSign = sign }
+        playerMutex.withLock {
+            playerJobSign = sign
+
+            // If the played song is a new one, add to play history
+            if (historyCursor == playHistory.lastIndex) {
+                playHistory.add(PlayHistory(item.id, Clock.System.now()))
+                historyCursor += 1
+            }
+        }
 
         try {
             playerState.downloadProgress = 0f
@@ -139,10 +164,8 @@ class PlayerService(
                 }
             )
 
-            playerMutex.withLock {
-                if (playerJobSign == sign) {
-                    player.prepare(item, autoPlay = true)
-                }
+            if (playerJobSign == sign) {
+                player.prepare(item, autoPlay = true)
             }
 
             // Touch in the global scope
@@ -327,13 +350,20 @@ class PlayerService(
                 val currentPlayingIndex = musicQueue.indexOfFirst { it.id == playerState.songInfo?.id }
 
                 val queue = musicQueue.toMutableList()
+                val shuffledQueue = shuffledQueue.toMutableList()
 
                 if (append) {
+                    // Append to tail
                     queue.add(item)
+                    // Randomly add to shuffled queue
+                    shuffledQueue.add(Random.nextInt(shuffleIndex, shuffledQueue.size + 1), item)
                 } else {
+                    // Insert to next
                     queue.add(currentPlayingIndex + 1, item)
+                    shuffledQueue.add(shuffleIndex + 1, item)
                 }
                 musicQueue = queue
+                this@PlayerService.shuffledQueue = shuffledQueue
             }
         }
 
@@ -347,7 +377,9 @@ class PlayerService(
         queueMutex.withLock {
             player.pause()
             musicQueue = items
-            queueNext()
+            shuffledQueue = items.shuffled()
+            shuffleIndex = -1
+            next()
         }
     }
 
@@ -366,6 +398,9 @@ class PlayerService(
             }
             musicQueue = musicQueue.toMutableList().apply {
                 removeAt(targetIndex)
+            }.toList()
+            shuffledQueue = shuffledQueue.toMutableList().apply {
+                removeAll { it.id == id }
             }.toList()
         }
     }
@@ -497,5 +532,101 @@ class PlayerService(
             format = extension
         )
         return@coroutineScope item
+    }
+
+    fun previous() = scope.launch {
+        if (playHistory.isEmpty()) return@launch
+
+        if (shuffleMode) {
+            queueMutex.withLock {
+                val index = if (shuffleIndex <= 0) {
+                    shuffledQueue.lastIndex
+                } else {
+                    shuffleIndex - 1
+                }
+                val song = shuffledQueue[index]
+                shuffleIndex = index
+                playSongInQueue(song.id)
+            }
+            /*// Play the previously played song, (not a song in music queue)
+            val index = if (historyCursor > 0) {
+                playHistory.lastIndex
+            } else {
+                historyCursor
+            }
+            val previousSong = playHistory[index]
+            historyCursor = index
+
+            playSongInQueue(previousSong.songId)*/
+        } else {
+            // Play previous song in the queue
+            queuePrevious()
+        }
+    }
+
+    fun next() = scope.launch {
+        Logger.i("player", "next clicked")
+        if (shuffleMode) {
+            queueMutex.withLock {
+                val index = if (shuffleIndex >= shuffledQueue.lastIndex) {
+                    0
+                } else {
+                    shuffleIndex + 1
+                }
+                val song = shuffledQueue[index]
+                shuffleIndex = index
+                playSongInQueue(song.id)
+            }
+
+            /*if (historyCursor >= playHistory.lastIndex) {
+                // Get new random song
+                val queue = musicQueue.map { it.id }.toSet()
+                val played = playHistory.map { it.songId }.toSet()
+                val remain = queue - played
+                val randomSongId = remain.random()
+                playSongInQueue(randomSongId).join()
+            } else {
+                val song = playHistory[historyCursor + 1]
+                playSongInQueue(song.songId).join()
+                historyCursor += 1
+            }*/
+        } else {
+            queueNext()
+        }
+    }
+
+    /**
+     * Automatically play next song, generally triggered by player service.
+     *
+     * Only the autoNext abides by the `repeatMode`
+     */
+    private fun autoNext() = scope.launch {
+        if (repeatMode) {
+            // Just play this song
+            playerState.songInfo?.id?.let {
+                playSongInQueue(it).join()
+            }
+        } else {
+            next()
+        }
+    }
+
+    fun updateShuffleMode(value: Boolean) {
+        shuffleMode = value
+    }
+
+    fun updateRepeatMode(value: Boolean) {
+        repeatMode = value
+    }
+
+    fun clearQueue() = scope.launch {
+        queueMutex.withLock {
+            musicQueue = emptyList()
+            shuffledQueue = emptyList()
+            shuffleIndex = -1
+
+            player.pause()
+            playerState.hasSong = false
+        }
     }
 }
