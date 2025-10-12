@@ -18,11 +18,6 @@ class JVMPlayer() : Player {
     private lateinit var stream: AudioInputStream
     private var ready = false
     private val listeners: MutableSet<Player.Listener> = mutableSetOf()
-
-    @get:Synchronized
-    @set:Synchronized
-    private var pauseByUser = false
-
     private val mutex = Mutex()
 
     suspend fun prepare(uri: String, autoPlay: Boolean) {
@@ -99,13 +94,13 @@ class JVMPlayer() : Player {
                 when (it.type) {
                     LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
                     LineEvent.Type.STOP -> {
-                        if (pauseByUser) {
-                            Logger.i("player", "Pause")
-                            pauseByUser = false
-                            listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
-                        } else {
+                        Logger.i("player", "STOP event: ${clip.framePosition} / ${clip.frameLength}")
+                        if (clip.framePosition >= clip.frameLength) {
                             Logger.i("player", "End")
                             listeners.forEach { listener -> listener.onEvent(PlayEvent.End) }
+                        } else {
+                            Logger.i("player", "Pause")
+                            listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
                         }
                     }
                 }
@@ -157,15 +152,12 @@ class JVMPlayer() : Player {
 
     override suspend fun pause() {
         if (ready) {
-            pauseByUser = true
             clip.stop()
         }
     }
 
     override suspend fun seek(position: Long, autoStart: Boolean) {
         if (autoStart || isPlaying()) {
-            pauseByUser = true
-            clip.stop()
             clip.microsecondPosition = position * 1000L
             clip.start()
         } else {
