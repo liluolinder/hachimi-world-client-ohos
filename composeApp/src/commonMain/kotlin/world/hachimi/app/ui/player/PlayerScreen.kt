@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloseFullscreen
+import androidx.compose.material.icons.filled.MusicVideo
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,17 +100,6 @@ fun CompactPlayerScreen(
     } else {
         info?.displayId
     } ?: ""
-    val displayedCover = if (playerState.fetchingMetadata) previewMetadata?.coverUrl else info?.coverUrl
-    val displayedTitle = if (playerState.fetchingMetadata) {
-        previewMetadata?.title
-    } else {
-        info?.title
-    } ?: ""
-    val displayedAuthor = if (playerState.fetchingMetadata) {
-        previewMetadata?.author
-    } else {
-        info?.uploaderName
-    } ?: ""
 
     var showOriginInfo by remember { mutableStateOf(false) }
 
@@ -122,88 +112,16 @@ fun CompactPlayerScreen(
                     .padding(horizontal = 48.dp, vertical = 24.dp)
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                    Text(
-                        modifier = Modifier.align(Alignment.Start),
-                        text = displayedId,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LocalContentColor.current.copy(0.7f)
-                    )
+                    JmidLabel(displayedId, Modifier.align(Alignment.Start))
                     Spacer(Modifier.height(8.dp))
                     Album(
                         modifier = Modifier.fillMaxWidth(),
-                        coverUrl = displayedCover,
+                        coverUrl = if (playerState.fetchingMetadata) previewMetadata?.coverUrl else info?.coverUrl,
                         onClick = { displayingLyrics = true },
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = displayedTitle,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    if (!playerState.fetchingMetadata) {
-                        playerState.songInfo?.subtitle?.let {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = LocalContentColor.current.copy(0.7f)
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier.padding(top = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
-                                playerState.songInfo?.uploaderUid?.let {
-                                    onNavToAuthor(it)
-                                }
-                            }),
-                            text = "作者: ${displayedAuthor}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = LocalContentColor.current.copy(0.7f)
-                        )
-
-                        if (!playerState.fetchingMetadata) {
-                            info?.originInfos?.fastForEach { item ->
-                                Text(
-                                    modifier = Modifier.clickable(
-                                        indication = null,
-                                        interactionSource = null,
-                                        onClick = {
-                                            showOriginInfo = true
-                                        }),
-                                    text = "原作: ${item.title}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = LocalContentColor.current.copy(0.7f)
-                                )
-                            }
-                        }
-                        /*playerState.staff.fastForEach { (role, name) ->
-                            Text(
-                                text = "${role}: ${name}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(0.7f)
-                            )
-                        }*/
-                    }
+                    MetadataInfo(playerState, onNavToAuthor)
                 }
-                /*
-                                Text(
-                                    text = playerState.songTitle,
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
-                                        playerState.songInfo?.uploaderUid?.let {
-                                            onNavToAuthor(it)
-                                        }
-                                    }),
-                                    text = playerState.songAuthor,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(0.6f)
-                                )*/
 
                 // Current lyric line
                 val lyricsLine =
@@ -231,7 +149,6 @@ fun CompactPlayerScreen(
                 ).padding(horizontal = 24.dp),
                 currentLine = playerState.currentLyricsLine,
                 lines = playerState.lyricsLines,
-                fadeColor = MaterialTheme.colorScheme.surfaceVariant
                 fadeColor = MaterialTheme.colorScheme.surfaceVariant,
                 loading = playerState.fetchingMetadata,
             )
@@ -322,31 +239,16 @@ fun ExpandedPlayerScreen(
         info?.displayId
     } ?: ""
     val displayedCover = if (playerState.fetchingMetadata) previewMetadata?.coverUrl else info?.coverUrl
-    val displayedTitle = if (playerState.fetchingMetadata) {
-        previewMetadata?.title
-    } else {
-        info?.title
-    } ?: ""
-    val displayedAuthor = if (playerState.fetchingMetadata) {
-        previewMetadata?.author
-    } else {
-        info?.uploaderName
-    } ?: ""
-
-    var showOriginInfo by remember { mutableStateOf(false) }
 
     Box {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().weight(1f).padding(32.dp)) {
                 Column(Modifier.fillMaxHeight().weight(1f), verticalArrangement = Arrangement.Center) {
                     Column(Modifier.align(Alignment.End).padding(48.dp)) {
-                        Text(
-                            modifier = Modifier.align(Alignment.Start),
-                            text = displayedId,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = LocalContentColor.current.copy(0.7f)
-                        )
+                        JmidLabel(displayedId, Modifier.align(Alignment.Start))
+
                         Spacer(Modifier.height(8.dp))
+                        
                         BoxWithConstraints(Modifier.wrapContentSize()) {
                             val size = min(maxHeight * 0.7f, maxWidth)
 
@@ -358,52 +260,7 @@ fun ExpandedPlayerScreen(
                         }
 
                         Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = displayedTitle,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        if (!playerState.fetchingMetadata) {
-                            info?.subtitle?.let {
-                                Text(
-                                    text = it,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = LocalContentColor.current.copy(0.7f)
-                                )
-                            }
-                        }
-
-                        Column(
-                            modifier = Modifier.padding(top = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
-                                    info?.uploaderUid?.let {
-                                        onNavToAuthor(it)
-                                    }
-                                }),
-                                text = "作者: ${displayedAuthor}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(0.7f)
-                            )
-
-                            if (!playerState.fetchingMetadata) {
-                                info?.originInfos?.fastForEach { item ->
-                                    Text(
-                                        modifier = Modifier.clickable(
-                                            indication = null,
-                                            interactionSource = null,
-                                            onClick = {
-                                                showOriginInfo = true
-                                            }),
-                                        text = "原作: ${item.title}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = LocalContentColor.current.copy(0.7f)
-                                    )
-                                }
-                            }
-                        }
+                        MetadataInfo(playerState, onNavToAuthor)
                     }
                 }
 
@@ -466,15 +323,126 @@ fun ExpandedPlayerScreen(
         ) {
             Icon(Icons.Default.CloseFullscreen, "Shrink")
         }
+    }
+}
 
-        if (showOriginInfo) {
-            val originInfo = playerState.songInfo?.originInfos?.firstOrNull()
+@Composable
+private fun JmidLabel(
+    displayedId: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier,
+        text = displayedId,
+        style = MaterialTheme.typography.labelSmall,
+        color = LocalContentColor.current.copy(0.7f)
+    )
+}
+@Composable
+private fun MetadataInfo(
+    playerState: PlayerUIState,
+    onNavToAuthor: (Long) -> Unit
+) {
+    var showOriginInfo by remember { mutableStateOf(false) }
+    var showExternalLinks by remember { mutableStateOf(false) }
 
-            if (originInfo != null) OriginInfoDialog(
-                onDismissRequest = { showOriginInfo = false },
-                title = originInfo.title,
-                artist = originInfo.artist,
-                url = originInfo.url
+    val previewMetadata = playerState.previewMetadata
+    val info = playerState.songInfo
+
+    val displayedTitle = if (playerState.fetchingMetadata) {
+        previewMetadata?.title
+    } else {
+        info?.title
+    } ?: ""
+    val displayedAuthor = if (playerState.fetchingMetadata) {
+        previewMetadata?.author
+    } else {
+        info?.uploaderName
+    } ?: ""
+
+    Text(
+        text = displayedTitle,
+        style = MaterialTheme.typography.titleMedium
+    )
+
+    if (!playerState.fetchingMetadata) {
+        info?.subtitle?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.titleSmall,
+                color = LocalContentColor.current.copy(0.7f)
+            )
+        }
+    }
+
+    Column(
+        modifier = Modifier.padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
+                info?.uploaderUid?.let {
+                    onNavToAuthor(it)
+                }
+            }),
+            text = "作者: ${displayedAuthor}",
+            style = MaterialTheme.typography.labelSmall,
+            color = LocalContentColor.current.copy(0.7f)
+        )
+
+        if (!playerState.fetchingMetadata) {
+            info?.originInfos?.fastForEach { item ->
+                Text(
+                    modifier = Modifier.clickable(
+                        indication = null,
+                        interactionSource = null,
+                        onClick = {
+                            showOriginInfo = true
+                        }),
+                    text = "原作: ${item.title}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColor.current.copy(0.7f)
+                )
+            }
+        }
+
+        if (info?.externalLinks?.isNotEmpty() == true) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "MV: ",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColor.current.copy(0.7f)
+                )
+                Icon(
+                    modifier = Modifier.size(14.dp).clickable(
+                        indication = null,
+                        interactionSource = null,
+                        onClick = { showExternalLinks = true },
+                    ),
+                    imageVector = Icons.Default.MusicVideo,
+                    contentDescription = "Music Video",
+                    tint = LocalContentColor.current.copy(0.7f)
+                )
+            }
+        }
+    }
+
+    if (showOriginInfo) {
+        val originInfo = playerState.songInfo?.originInfos?.firstOrNull()
+
+        if (originInfo != null) OriginInfoDialog(
+            onDismissRequest = { showOriginInfo = false },
+            title = originInfo.title,
+            artist = originInfo.artist,
+            url = originInfo.url
+        )
+    }
+
+    if (showExternalLinks) {
+        info?.externalLinks?.let {
+            ExternalLinkDialog(
+                onDismissRequest = { showExternalLinks = false },
+                links = it
             )
         }
     }
