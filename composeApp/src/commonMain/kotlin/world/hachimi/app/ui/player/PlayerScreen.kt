@@ -141,7 +141,7 @@ fun CompactPlayerScreen(
                     this.scaleX = if (lyricsAlpha == 0f) 0f else 1f
                     this.scaleY = if (lyricsAlpha == 0f) 0f else 1f
                     this.alpha = lyricsAlpha
-                }.fillMaxWidth().clickable(
+                }.fillMaxSize().clickable(
                     indication = null,
                     interactionSource = null,
                     onClick = { displayingLyrics = false },
@@ -248,7 +248,7 @@ fun ExpandedPlayerScreen(
                         JmidLabel(displayedId, Modifier.align(Alignment.Start))
 
                         Spacer(Modifier.height(8.dp))
-                        
+
                         BoxWithConstraints(Modifier.wrapContentSize()) {
                             val size = min(maxHeight * 0.7f, maxWidth)
 
