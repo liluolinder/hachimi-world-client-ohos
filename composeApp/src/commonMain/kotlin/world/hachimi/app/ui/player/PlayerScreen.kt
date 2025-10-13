@@ -232,6 +232,8 @@ fun CompactPlayerScreen(
                 currentLine = playerState.currentLyricsLine,
                 lines = playerState.lyricsLines,
                 fadeColor = MaterialTheme.colorScheme.surfaceVariant
+                fadeColor = MaterialTheme.colorScheme.surfaceVariant,
+                loading = playerState.fetchingMetadata,
             )
 
             IconButton(
@@ -408,6 +410,7 @@ fun ExpandedPlayerScreen(
                 Spacer(Modifier.width(64.dp))
 
                 Lyrics(
+                    loading = playerState.fetchingMetadata,
                     currentLine = playerState.currentLyricsLine,
                     lines = playerState.lyricsLines,
                     modifier = Modifier.fillMaxHeight().weight(1f),

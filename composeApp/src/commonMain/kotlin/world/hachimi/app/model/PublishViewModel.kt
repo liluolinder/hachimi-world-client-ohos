@@ -1,21 +1,17 @@
 package world.hachimi.app.model
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.*
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.ktor.http.URLParserException
-import io.ktor.http.URLProtocol
-import io.ktor.http.Url
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import io.ktor.http.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
@@ -534,10 +530,14 @@ class PublishViewModel(
         }
 
         if (lyricsType == 0) {
-            try {
+            val lines = try {
                 LrcParser.parse(lyrics)
             } catch (e: Throwable) {
-                global.alert("请填写正确的 LRC 格式歌词，并移除歌名、作者、描述等标签")
+                global.alert("请填写正确的 LRC 格式歌词")
+                return false
+            }
+            if (lines.isEmpty()) {
+                global.alert("请填写正确的 LRC 格式歌词")
                 return false
             }
         }
