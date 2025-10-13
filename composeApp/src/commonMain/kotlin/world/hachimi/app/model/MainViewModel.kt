@@ -7,12 +7,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.err
 import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
+import kotlin.random.Random
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(
@@ -20,6 +24,8 @@ class MainViewModel(
     private val global: GlobalStore
 ): ViewModel(CoroutineScope(Dispatchers.Default)) {
     var initializeStatus by mutableStateOf(InitializeStatus.INIT)
+        private set
+    var isRefreshing by mutableStateOf(false)
         private set
     var isLoading by mutableStateOf(false)
         private set
@@ -73,6 +79,23 @@ class MainViewModel(
 
     fun refresh() {
         getRecommendSongs()
+    }
+
+    private var lastRefreshTime = Clock.System.now() - 20.minutes
+
+    fun fakeRefresh() {
+        // This is used to treat obsessive-compulsive disorder (OCD).
+        val now = Clock.System.now()
+        if (now - lastRefreshTime > 10.minutes) {
+            refresh()
+            lastRefreshTime = now
+        } else {
+            viewModelScope.launch {
+                isLoading = true
+                delay(Random.nextLong(1000, 5000))
+                isLoading = false
+            }
+        }
     }
 
     fun playAllRecent() {
