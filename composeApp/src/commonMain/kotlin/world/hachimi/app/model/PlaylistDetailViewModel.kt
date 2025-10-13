@@ -25,6 +25,8 @@ class PlaylistDetailViewModel(
     private val api: ApiClient,
     private val global: GlobalStore
 ) : ViewModel(CoroutineScope(Dispatchers.Default)) {
+    var initStatus by mutableStateOf(InitializeStatus.INIT)
+        private set
     var loading by mutableStateOf(false)
         private set
     var playlistId by mutableStateOf<Long?>(null)
@@ -41,15 +43,28 @@ class PlaylistDetailViewModel(
     var coverUploadingProgress by mutableStateOf(0f)
 
     fun mounted(playlistId: Long) {
-        this.playlistId = playlistId
-
-        viewModelScope.launch {
-            refresh()
+        if (this.playlistId != playlistId) {
+            init()
+        } else {
+            viewModelScope.launch {
+                refresh()
+            }
         }
+        this.playlistId = playlistId
     }
 
     fun dispose() {
 
+    }
+
+    fun init() = viewModelScope.launch {
+        initStatus = InitializeStatus.INIT
+        refresh()
+    }
+
+    fun retry() = viewModelScope.launch {
+        initStatus = InitializeStatus.INIT
+        refresh()
     }
 
     fun edit() {
@@ -119,8 +134,14 @@ class PlaylistDetailViewModel(
                 val data = resp.okData<PlaylistModule.DetailResp>()
                 playlistInfo = data.playlistInfo
                 songs = data.songs
+                if (initStatus == InitializeStatus.INIT) {
+                    initStatus = InitializeStatus.LOADED
+                }
             } else {
                 global.alert(resp.errData<CommonError>().msg)
+                if (initStatus == InitializeStatus.INIT) {
+                    initStatus = InitializeStatus.FAILED
+                }
             }
         } catch (e: Throwable) {
             Logger.e("playlist detail", "Failed to refresh playlist detail", e)
@@ -168,6 +189,20 @@ class PlaylistDetailViewModel(
                 } finally {
                     coverUploading = false
                 }
+            }
+        }
+    }
+
+    fun removeFromPlaylist(songId: Long) {
+        playlistId?.let { playlistId ->
+            viewModelScope.launch {
+                api.playlistModule.removeSong(
+                    PlaylistModule.AddSongReq(
+                        playlistId = playlistId,
+                        songId = songId
+                    )
+                )
+                refresh()
             }
         }
     }
