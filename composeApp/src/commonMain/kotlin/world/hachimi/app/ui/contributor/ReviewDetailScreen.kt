@@ -49,7 +49,7 @@ fun ReviewDetailScreen(
 
 @Composable
 private fun Content(vm: ReviewDetailViewModel) {
-    Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp), Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp), Arrangement.spacedBy(16.dp)) {
         vm.data?.let { data ->
             Text("Review 详情", style = MaterialTheme.typography.titleLarge)
             PropertyItem("投稿人", "${data.uploaderName} ${data.uploaderUid}")
