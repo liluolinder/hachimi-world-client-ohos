@@ -447,6 +447,7 @@ class PlayerService(
     fun updateVolume(volume: Float) = scope.launch {
         playerState.volume = volume
         player.setVolume(volume)
+        dataStore.set(PreferencesKeys.PLAYER_VOLUME, volume)
     }
 
     private suspend fun getSongItemCacheable(
@@ -653,6 +654,10 @@ class PlayerService(
     )
 
     suspend fun restorePlayerState() {
+        val volume = dataStore.get(PreferencesKeys.PLAYER_VOLUME) ?: 1f
+        playerState.volume = volume
+        player.setVolume(volume)
+
         val data = dataStore.get(PreferencesKeys.PLAYER_MUSIC_QUEUE) ?: run {
             Logger.i("global", "Music queue was not found")
             return

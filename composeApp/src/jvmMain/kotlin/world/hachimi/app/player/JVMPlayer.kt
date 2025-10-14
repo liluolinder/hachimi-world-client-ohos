@@ -19,6 +19,7 @@ class JVMPlayer() : Player {
     private var ready = false
     private val listeners: MutableSet<Player.Listener> = mutableSetOf()
     private val mutex = Mutex()
+    private var volume: Float = 1f
 
     suspend fun prepare(uri: String, autoPlay: Boolean) {
         /*val bytes = withContext(Dispatchers.IO) {
@@ -107,7 +108,6 @@ class JVMPlayer() : Player {
             }
             clip.open(decodedStream)
 
-            val previousVolume = getVolume()
             volumeControl = if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
                 clip.getControl(FloatControl.Type.VOLUME) as FloatControl
             } else null
@@ -115,7 +115,7 @@ class JVMPlayer() : Player {
                 clip.getControl(FloatControl.Type.MASTER_GAIN) as FloatControl
             } else null
 
-            setVolume(previousVolume)
+            setVolume(volume)
             Logger.i("player", "volumeControl = $volumeControl")
             Logger.i("player", "masterGainControl = $masterGainControl")
 
@@ -180,6 +180,7 @@ class JVMPlayer() : Player {
     }
 
     override suspend fun setVolume(value: Float) {
+        volume = value
         if (volumeControl != null) {
             volumeControl?.value = value
         } else if (masterGainControl != null) {
