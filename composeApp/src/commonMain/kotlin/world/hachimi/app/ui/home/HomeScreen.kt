@@ -38,7 +38,7 @@ fun HomeScreen(vm: MainViewModel = koinViewModel()) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val maxWidth = maxWidth
         AdaptivePullToRefreshBox(
-            isRefreshing = vm.isLoading,
+            isRefreshing = vm.initializeStatus != InitializeStatus.INIT && vm.isLoading,
             onRefresh = {
                 vm.fakeRefresh()
             },
