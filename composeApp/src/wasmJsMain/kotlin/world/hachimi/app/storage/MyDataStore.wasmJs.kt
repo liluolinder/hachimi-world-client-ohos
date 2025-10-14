@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package world.hachimi.app.storage
 
 import kotlinx.browser.localStorage
@@ -9,8 +11,14 @@ class MyDataStoreImpl(): MyDataStore {
         localStorage.getItem(key.name)?.let {
             return when (key.clazz) {
                 Long::class -> it.toLong() as T
+                Int::class -> it.toInt() as T
+                Short::class -> it.toShort() as T
+                Char::class -> it.first() as T
+                Byte::class -> it.toByte() as T
+                Float::class -> it.toFloat() as T
+                Double::class -> it.toDouble() as T
                 String::class -> it as T
-                Boolean::class -> it.toBooleanStrictOrNull() as T
+                Boolean::class -> it.toBooleanStrict() as T
                 else -> error("Unsupported preference type ${key.clazz}")
             }
         }
