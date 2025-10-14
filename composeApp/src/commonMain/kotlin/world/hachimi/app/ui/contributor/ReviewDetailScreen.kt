@@ -2,24 +2,11 @@ package world.hachimi.app.ui.contributor
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -124,7 +111,7 @@ private fun Content(vm: ReviewDetailViewModel) {
             )
             data.originInfos.fastForEach {
                 PropertyItem(
-                    "原作类型", when (data.creationType) {
+                    "原作类型", when (it.originType) {
                         PublishModule.SongPublishReviewData.CREATION_TYPE_ORIGINAL -> "原作"
                         PublishModule.SongPublishReviewData.CREATION_TYPE_DERIVATION -> "二作"
                         else -> "未知"
@@ -168,6 +155,15 @@ private fun Content(vm: ReviewDetailViewModel) {
 
             PropertyItem("歌词", data.lyrics)
 
+            PropertyItem( { Text("外部链接") }) {
+                data.externalLink.fastForEach {
+                    Text(it.platform, style = MaterialTheme.typography.labelMedium)
+
+                    SelectionContainer {
+                        Text(it.url, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
         }
     }
 }
