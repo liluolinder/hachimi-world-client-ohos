@@ -136,4 +136,8 @@ class WasmPlayer : Player {
     override fun removeListener(listener: Player.Listener) {
         listeners.remove(listener)
     }
+
+    override suspend fun initialize() {
+        // Do nothing because the WASM player does not need to be initialized
+    }
 }

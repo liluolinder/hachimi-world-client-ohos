@@ -18,4 +18,6 @@ expect object PreferencesKeys {
     val AUTH_ACCESS_TOKEN: PreferenceKey<String>
     val AUTH_REFRESH_TOKEN: PreferenceKey<String>
     val SETTINGS_DARK_MODE: PreferenceKey<Boolean>
+    val PLAYER_VOLUME: PreferenceKey<Float>
+    val PLAYER_MUSIC_QUEUE: PreferenceKey<String>
 }

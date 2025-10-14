@@ -1,7 +1,6 @@
 package world.hachimi.app
 
 import android.app.Application
-import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import world.hachimi.app.di.appModule
@@ -13,12 +12,12 @@ class MyApplication: Application() {
 
         initializeGlobalContext(this)
 
-        startKoin {
+        val koin = startKoin {
             androidContext(this@MyApplication)
             modules(appModule)
         }
 
-        val global = inject<GlobalStore>()
-        global.value.initialize()
+        val global = koin.koin.get<GlobalStore>()
+        global.initialize()
     }
 }

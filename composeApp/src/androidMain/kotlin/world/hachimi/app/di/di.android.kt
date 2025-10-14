@@ -28,8 +28,9 @@ val appModule = module {
     single { getPreferencesDataStore() }
     single<MyDataStore> { MyDataStoreImpl(get()) }
     single<Player> {
-        val sessionToken = SessionToken(androidContext(), ComponentName(androidContext(), PlaybackService::class.java))
-        val controllerFuture = MediaController.Builder(androidContext(), sessionToken).buildAsync()
+        val context = androidContext()
+        val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
         AndroidPlayer(controllerFuture)
     }
     single<SongCache> { SongCacheImpl() }
@@ -45,3 +46,26 @@ private fun getPreferencesDataStore(): DataStore<Preferences> {
 
     return PreferenceDataStoreFactory.createWithPath { file.toOkioPath() }
 }
+
+/*
+private suspend fun getPlayerBlocking(context: Context): Player {
+    val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+    val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+    Logger.i("player", "Waiting for MediaController")
+
+    val controller = try {
+        suspendCoroutine<MediaController> { cont ->
+            controllerFuture.addListener({
+                try {
+                    cont.resume(controllerFuture.get())
+                } catch (e: Throwable) {
+                    cont.resumeWithException(e)
+                }
+            }, MoreExecutors.directExecutor())
+        }
+    } catch (e: Throwable) {
+        Logger.e("player", "Failed to get MediaController", e)
+        throw e
+    }
+    return AndroidPlayer(controller)
+}*/

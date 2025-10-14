@@ -144,4 +144,10 @@ class PlayerUIState() {
     fun updatePreviewMetadata(data: PreviewMetadata) {
         previewMetadata = data
     }
+
+    fun clear() {
+        songInfo = null
+        hasSong = false
+        setLyrics("")
+    }
 }

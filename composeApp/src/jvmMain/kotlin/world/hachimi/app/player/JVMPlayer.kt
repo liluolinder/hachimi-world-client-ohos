@@ -214,4 +214,8 @@ class JVMPlayer() : Player {
     suspend fun drain() = withContext(Dispatchers.IO) {
         clip.drain()
     }
+
+    override suspend fun initialize() {
+        // Do nothing because JVM player does not need to be initialized
+    }
 }
