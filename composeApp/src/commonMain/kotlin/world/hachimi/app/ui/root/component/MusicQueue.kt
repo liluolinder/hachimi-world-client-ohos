@@ -28,6 +28,7 @@ fun MusicQueue(
     playingSongId: Long?,
     onPlayClick: (Long) -> Unit,
     onRemoveClick: (Long) -> Unit,
+    onClearClick: () -> Unit,
 ) {
     ElevatedCard {
         Column(Modifier.padding(24.dp).width(400.dp).height(600.dp)) {
@@ -36,6 +37,9 @@ fun MusicQueue(
                 Spacer(Modifier.width(8.dp))
                 Text(text = queue.size.toString(), style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.weight(1f))
+                TextButton(onClick = onClearClick) {
+                    Text("清空")
+                }
                 IconButton(onClick = onClose) {
                     Icon(Icons.Filled.Close, contentDescription = "Close")
                 }
@@ -128,6 +132,7 @@ private fun Preview() {
                 )
             },
             null,
+            {},
             {},
             {})
     }

@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package world.hachimi.app.storage
 
 import kotlinx.browser.localStorage
@@ -9,8 +11,14 @@ class MyDataStoreImpl(): MyDataStore {
         localStorage.getItem(key.name)?.let {
             return when (key.clazz) {
                 Long::class -> it.toLong() as T
+                Int::class -> it.toInt() as T
+                Short::class -> it.toShort() as T
+                Char::class -> it.first() as T
+                Byte::class -> it.toByte() as T
+                Float::class -> it.toFloat() as T
+                Double::class -> it.toDouble() as T
                 String::class -> it as T
-                Boolean::class -> it.toBooleanStrictOrNull() as T
+                Boolean::class -> it.toBooleanStrict() as T
                 else -> error("Unsupported preference type ${key.clazz}")
             }
         }
@@ -43,4 +51,6 @@ actual object PreferencesKeys {
     actual val AUTH_ACCESS_TOKEN: PreferenceKey<String> = PreferenceKey("auth_access_token", String::class)
     actual val AUTH_REFRESH_TOKEN: PreferenceKey<String> = PreferenceKey("auth_refresh_token", String::class)
     actual val SETTINGS_DARK_MODE: PreferenceKey<Boolean> = PreferenceKey("settings_dark_mode", Boolean::class)
+    actual val PLAYER_VOLUME: PreferenceKey<Float> = PreferenceKey("player_volume", Float::class)
+    actual val PLAYER_MUSIC_QUEUE: PreferenceKey<String> = PreferenceKey("player_music_queue", String::class)
 }

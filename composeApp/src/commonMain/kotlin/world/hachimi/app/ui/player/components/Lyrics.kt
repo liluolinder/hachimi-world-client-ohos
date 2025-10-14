@@ -2,11 +2,7 @@ package world.hachimi.app.ui.player.components
 
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -27,12 +23,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.lerp
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
 fun Lyrics(
+    loading: Boolean,
     currentLine: Int,
     lines: List<String>,
     fadeColor: Color,
@@ -49,7 +45,14 @@ fun Lyrics(
         }
 
         val fadeHeight = 64.dp
-        LazyColumn(Modifier.fillMaxSize().drawWithContent {
+        if (loading) {
+            Icon(
+                modifier = Modifier.padding(top = 64.dp).size(28.dp),
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = "Loading",
+                tint = LocalContentColor.current.copy(0.48f)
+            )
+        } else if (lines.isNotEmpty()) LazyColumn(Modifier.fillMaxSize().drawWithContent {
             drawContent()
             drawRect(
                 brush = Brush.verticalGradient(
@@ -83,8 +86,8 @@ fun Lyrics(
                     val offset = abs(it)
                     when (offset) {
                         0 -> 1f
-                        1 -> 0.8f
-                        2 -> 0.7f
+//                        1 -> 0.8f
+//                        2 -> 0.7f
                         else -> 0.7f
                     }
                     /*val fraction = (abs(it).toFloat() / 3).coerceIn(0f, 1f)
@@ -114,6 +117,13 @@ fun Lyrics(
                     style = MaterialTheme.typography.headlineSmall
                 )
             }
+        } else {
+            Icon(
+                modifier = Modifier.padding(top = 64.dp).size(28.dp),
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = "No Lyrics",
+                tint = LocalContentColor.current.copy(0.48f)
+            )
         }
     }
 }

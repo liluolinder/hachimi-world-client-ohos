@@ -137,6 +137,11 @@ class SongModule(
                     }
                 )
             )
+            timeout {
+                socketTimeoutMillis = 60_000
+                connectTimeoutMillis = 60_000
+                requestTimeoutMillis = 60_000
+            }
             onUpload(listener)
         }
     }

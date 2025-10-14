@@ -16,9 +16,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
@@ -114,7 +115,8 @@ fun CompactFooterPlayer(modifier: Modifier) {
                             queue = global.player.musicQueue,
                             playingSongId = if (playerState.fetchingMetadata) playerState.fetchingSongId else playerState.songInfo?.id,
                             onPlayClick = { global.player.playSongInQueue(it) },
-                            onRemoveClick = { global.player.removeFromQueue(it) }
+                            onRemoveClick = { global.player.removeFromQueue(it) },
+                            onClearClick = { global.player.clearQueue() }
                         )
                     }
 
@@ -143,10 +145,31 @@ fun CompactFooterPlayer(modifier: Modifier) {
 
         if (playerState.fetchingMetadata || playerState.buffering) Crossfade(showProgress) {
             if (it) LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth(),
-                progress = { animatedProgress }
+                modifier = Modifier.fillMaxWidth().height(2.dp),
+                progress = { animatedProgress },
+                strokeCap = StrokeCap.Square,
+                color = MaterialTheme.colorScheme.primary.copy(0.6f)
             ) else LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(2.dp),
+                strokeCap = StrokeCap.Square,
+                color = MaterialTheme.colorScheme.primary.copy(0.6f)
+            )
+        } else {
+            val durationMillis = if (playerState.fetchingMetadata) {
+                playerState.previewMetadata?.duration?.inWholeMilliseconds
+            } else {
+                playerState.songInfo?.durationSeconds?.let {
+                    it * 1000L
+                }
+            } ?: -1L
+
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().height(2.dp),
+                progress = {
+                    (playerState.currentMillis.toFloat() / durationMillis).coerceIn(0f, 1f)
+                },
+                strokeCap = StrokeCap.Square,
+                trackColor = Color.Transparent
             )
         }
     }
@@ -156,6 +179,7 @@ fun CompactFooterPlayer(modifier: Modifier) {
 @Composable
 fun ExpandedFooterPlayer() {
     val global = koinInject<GlobalStore>()
+    val player = global.player
     val playerState = global.player.playerState
     val displayedCover by remember { derivedStateOf { if (playerState.fetchingMetadata) playerState.previewMetadata?.coverUrl else playerState.songInfo?.coverUrl } }
     val displayedTitle by remember { derivedStateOf { if (playerState.fetchingMetadata) { playerState.previewMetadata?.title } else { playerState.songInfo?.title } ?: "" } }
@@ -193,8 +217,16 @@ fun ExpandedFooterPlayer() {
                     isLoading = playerState.buffering,
                     loadingProgress = { playerState.downloadProgress },
                     onPlayPauseClick = { global.player.playOrPause() },
-                    onPreviousClick = { global.player.queuePrevious() },
-                    onNextClick = { global.player.queueNext() }
+                    onPreviousClick = { global.player.previous() },
+                    onNextClick = { global.player.next() },
+                    shuffle = player.shuffleMode,
+                    onShuffleModeChange = {
+                        player.updateShuffleMode(it)
+                    },
+                    repeat = player.repeatMode,
+                    onRepeatModeChange = {
+                        player.updateRepeatMode(it)
+                    }
                 )
 
                 IconButton(onClick = {
@@ -249,7 +281,8 @@ fun ExpandedFooterPlayer() {
                 queue = global.player.musicQueue,
                 playingSongId = if (playerState.fetchingMetadata) playerState.fetchingSongId else playerState.songInfo?.id,
                 onPlayClick = { global.player.playSongInQueue(it) },
-                onRemoveClick = { global.player.removeFromQueue(it) }
+                onRemoveClick = { global.player.removeFromQueue(it) },
+                onClearClick = { global.player.clearQueue() },
             )
         }
 

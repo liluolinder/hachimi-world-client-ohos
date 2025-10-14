@@ -18,12 +18,8 @@ class JVMPlayer() : Player {
     private lateinit var stream: AudioInputStream
     private var ready = false
     private val listeners: MutableSet<Player.Listener> = mutableSetOf()
-
-    @get:Synchronized
-    @set:Synchronized
-    private var pauseByUser = false
-
     private val mutex = Mutex()
+    private var volume: Float = 1f
 
     suspend fun prepare(uri: String, autoPlay: Boolean) {
         /*val bytes = withContext(Dispatchers.IO) {
@@ -45,42 +41,73 @@ class JVMPlayer() : Player {
 
             Logger.i("player", "originalFormat = $originalFormat")
 
-            val desiredPcmFormat = AudioFormat( // 16bit, signed-int PCM, with original sampleRate
+            // TODO(player)(jvm): Replace javax.sound
+
+            // Decode to PCM
+            val sampleBit = originalFormat.sampleSizeInBits.takeIf { it > 0 } ?: 16
+            val desiredPcmFormat = AudioFormat( // Signed-int PCM, with original sampleRate and sampleBitSize
                 AudioFormat.Encoding.PCM_SIGNED,
                 originalFormat.sampleRate,
-                16,
+                sampleBit,
                 originalFormat.channels, // Always be 2(stereo)
-                originalFormat.channels * (16 / 8),
+                originalFormat.channels * (sampleBit / 8),
                 originalFormat.sampleRate, // frameRate is the same as sampleRate
                 false
             )
-            val clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, desiredPcmFormat)) as Clip
-            val defaultFormat = clip.format
-            Logger.i("player", "defaultFormat = $defaultFormat")
-
-            val decodedStream = withContext(Dispatchers.IO) {
+            // Decode to PCM
+            var decodedStream = withContext(Dispatchers.IO) {
                 AudioSystem.getAudioInputStream(desiredPcmFormat, stream)
             }
             Logger.i("player", "decodedFormat = ${decodedStream.format}")
+
+            // Try to get Line with origin pcm format
+            var clip = try {
+                AudioSystem.getLine(DataLine.Info(Clip::class.java, desiredPcmFormat)) as Clip
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+
+            if (clip == null) {
+                Logger.i("player", "Raw format is unsupported, fallback to PCM 16bit")
+                // Target format is not supported, try fallback to PCM 16bit format
+                val fallbackFormat = AudioFormat( // 16bit, signed-int PCM, with original sampleRate
+                    AudioFormat.Encoding.PCM_SIGNED,
+                    originalFormat.sampleRate,
+                    16,
+                    originalFormat.channels, // Always be 2(stereo)
+                    originalFormat.channels * (16 / 8),
+                    originalFormat.sampleRate, // frameRate is the same as sampleRate
+                    false
+                )
+                // Transform by the
+                decodedStream = withContext(Dispatchers.IO) {
+                    AudioSystem.getAudioInputStream(fallbackFormat, decodedStream)
+                }
+                clip = AudioSystem.getLine(DataLine.Info(Clip::class.java, fallbackFormat)) as Clip
+            }
+
+
+            val defaultFormat = clip.format
+            Logger.i("player", "defaultFormat = $defaultFormat")
 
             clip.addLineListener {
                 when (it.type) {
                     LineEvent.Type.START -> listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
                     LineEvent.Type.STOP -> {
-                        if (pauseByUser) {
-                            Logger.i("player", "Pause")
-                            pauseByUser = false
-                            listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
-                        } else {
+                        Logger.i("player", "STOP event: ${clip.framePosition} / ${clip.frameLength}")
+                        if (clip.framePosition >= clip.frameLength) {
                             Logger.i("player", "End")
                             listeners.forEach { listener -> listener.onEvent(PlayEvent.End) }
+                        } else {
+                            Logger.i("player", "Pause")
+                            listeners.forEach { listener -> listener.onEvent(PlayEvent.Pause) }
                         }
                     }
                 }
             }
             clip.open(decodedStream)
 
-            val previousVolume = getVolume()
             volumeControl = if (clip.isControlSupported(FloatControl.Type.VOLUME)) {
                 clip.getControl(FloatControl.Type.VOLUME) as FloatControl
             } else null
@@ -88,7 +115,7 @@ class JVMPlayer() : Player {
                 clip.getControl(FloatControl.Type.MASTER_GAIN) as FloatControl
             } else null
 
-            setVolume(previousVolume)
+            setVolume(volume)
             Logger.i("player", "volumeControl = $volumeControl")
             Logger.i("player", "masterGainControl = $masterGainControl")
 
@@ -125,15 +152,12 @@ class JVMPlayer() : Player {
 
     override suspend fun pause() {
         if (ready) {
-            pauseByUser = true
             clip.stop()
         }
     }
 
     override suspend fun seek(position: Long, autoStart: Boolean) {
         if (autoStart || isPlaying()) {
-            pauseByUser = true
-            clip.stop()
             clip.microsecondPosition = position * 1000L
             clip.start()
         } else {
@@ -156,6 +180,7 @@ class JVMPlayer() : Player {
     }
 
     override suspend fun setVolume(value: Float) {
+        volume = value
         if (volumeControl != null) {
             volumeControl?.value = value
         } else if (masterGainControl != null) {
@@ -189,5 +214,9 @@ class JVMPlayer() : Player {
 
     suspend fun drain() = withContext(Dispatchers.IO) {
         clip.drain()
+    }
+
+    override suspend fun initialize() {
+        // Do nothing because JVM player does not need to be initialized
     }
 }

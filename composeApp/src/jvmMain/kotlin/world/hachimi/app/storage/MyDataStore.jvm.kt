@@ -1,11 +1,7 @@
 package world.hachimi.app.storage
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -26,6 +22,8 @@ actual object PreferencesKeys {
     actual val AUTH_ACCESS_TOKEN: PreferenceKey<String> = PreferenceKey("auth_access_token", stringPreferencesKey("auth_access_token"))
     actual val AUTH_REFRESH_TOKEN: PreferenceKey<String> = PreferenceKey("auth_refresh_token", stringPreferencesKey("auth_refresh_token"))
     actual val SETTINGS_DARK_MODE: PreferenceKey<Boolean> = PreferenceKey("settings_dark_mode", booleanPreferencesKey("settings_dark_mode"))
+    actual val PLAYER_VOLUME: PreferenceKey<Float> = PreferenceKey("player_volume", floatPreferencesKey("player_volume"))
+    actual val PLAYER_MUSIC_QUEUE: PreferenceKey<String> = PreferenceKey("player_music_queue", stringPreferencesKey("player_music_queue"))
 }
 
 class MyDataStoreImpl(

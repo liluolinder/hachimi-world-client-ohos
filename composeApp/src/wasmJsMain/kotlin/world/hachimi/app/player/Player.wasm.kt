@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class, ExperimentalUnsignedTypes::class)
+
 package world.hachimi.app.player
 
 import howler.Howl
@@ -135,5 +137,9 @@ class WasmPlayer : Player {
 
     override fun removeListener(listener: Player.Listener) {
         listeners.remove(listener)
+    }
+
+    override suspend fun initialize() {
+        // Do nothing because the WASM player does not need to be initialized
     }
 }

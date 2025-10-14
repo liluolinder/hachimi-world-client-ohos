@@ -33,11 +33,19 @@ private const val TAG = "ApiClient"
  */
 class ApiClient(private val baseUrl: String) {
     companion object {
-        const val VERSION: Int = 250926
+        const val VERSION: Int = 251014
     }
 
     @OptIn(ExperimentalSerializationApi::class)
     internal val json = Json {
+        // Ignoring unknown keys increases the forward compatibility
+        // Compatible schema changes:
+        // - Add: Added a new field in a new writer. (by `ignoreUnknownKeys`)
+        // Not compatible schema changes:
+        // - Delete: Read a missing field without default value.
+        // - Rename: Rename a field.
+        // - Change primitive data type
+        // - Change data type between primitive value, object, array
         ignoreUnknownKeys = true
         prettyPrint = false
         namingStrategy = JsonNamingStrategy.SnakeCase
@@ -322,6 +330,7 @@ data class WebResp<T, E>(
     val data: JsonElement
 ) {
     companion object {
+        @OptIn(ExperimentalSerializationApi::class)
         val json = Json {
             ignoreUnknownKeys = true
             prettyPrint = false

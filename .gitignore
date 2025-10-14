@@ -19,3 +19,5 @@ captures
 composeApp/release
 .local
 .run
+/wix
+/kotlin-js-store

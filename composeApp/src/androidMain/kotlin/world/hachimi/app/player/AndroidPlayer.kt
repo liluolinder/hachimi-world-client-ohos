@@ -8,6 +8,8 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import io.github.vinceglb.filekit.AndroidFile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import world.hachimi.app.getPlatform
 import world.hachimi.app.logging.Logger
@@ -18,7 +20,7 @@ class AndroidPlayer(
     private var controller: MediaController? = null
     private var ready = false
     private val listeners: MutableSet<Player.Listener> = mutableSetOf()
-
+    private var initialized = MutableStateFlow<Boolean>(false)
 
     init {
         Logger.i("player", "Waiting for MediaController")
@@ -31,6 +33,7 @@ class AndroidPlayer(
                 throw e
             }
             ready = true
+            initialized.tryEmit(true)
             Logger.i("player", "MediaController is ready")
             controller.addListener(object : androidx.media3.common.Player.Listener {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -146,4 +149,7 @@ class AndroidPlayer(
         listeners.remove(listener)
     }
 
+    override suspend fun initialize() {
+        initialized.first { initialized -> initialized }
+    }
 }

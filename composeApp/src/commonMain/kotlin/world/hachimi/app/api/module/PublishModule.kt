@@ -1,9 +1,9 @@
 package world.hachimi.app.api.module
 
-import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import world.hachimi.app.api.ApiClient
 import world.hachimi.app.api.WebResult
+import kotlin.time.Instant
 
 class PublishModule(
     private val client: ApiClient
@@ -74,6 +74,7 @@ class PublishModule(
         val productionCrew: List<SongModule.SongProductionCrew>,
         val creationType: Int,
         val originInfos: List<SongModule.CreationTypeInfo>,
+        val externalLink: List<SongModule.ExternalLink>
     ) {
         companion object {
             const val CREATION_TYPE_ORIGINAL = 0

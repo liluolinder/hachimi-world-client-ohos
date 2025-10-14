@@ -23,6 +23,7 @@ interface Player {
     suspend fun isReady(): Boolean
 
     suspend fun release()
+    suspend fun initialize()
     fun addListener(listener: Listener)
     fun removeListener(listener: Listener)
 

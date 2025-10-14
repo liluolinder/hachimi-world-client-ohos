@@ -31,6 +31,7 @@ import kotlinx.browser.window
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.khronos.webgl.ArrayBuffer
@@ -59,15 +60,10 @@ fun WithFont(
     val error = remember { mutableStateOf<FontLoadError?>(null) }
     var bytesRead by remember { mutableLongStateOf(0L) }
     var bytesTotal by remember { mutableStateOf<Long?>(null) }
-    val progress by remember {
-        derivedStateOf {
-            bytesTotal?.let {
-                (bytesRead.toFloat() / it.toFloat()).coerceIn(0f, 1f)
-            } ?: 0f
-        }
-    }
 
     LaunchedEffect(Unit) {
+        if (fontsLoaded.value) return@LaunchedEffect
+
         withContext(Dispatchers.Default) {
             /*val result = handlePermission().await<PermissionStatus>()
 
@@ -128,7 +124,9 @@ fun WithFont(
                         if (error.value == null) {
                             val bytesTotal = bytesTotal
                             if (bytesTotal != null) {
-                                val animatedProgress = animateFloatAsState(targetValue = progress)
+                                val animatedProgress = animateFloatAsState(targetValue = bytesTotal.let {
+                                    (bytesRead.toFloat() / it.toFloat()).coerceIn(0f, 1f)
+                                })
                                 CircularProgressIndicator(progress = { animatedProgress.value })
 
                                 Text("${formatBytes(bytesRead)} / ${ formatBytes(bytesTotal) }")
@@ -360,6 +358,7 @@ suspend fun loadFontsFromWeb(
             totalBytesRead += chunk.remaining
             chunk.transferTo(buffer)
             onProgress(totalBytesRead, contentLength)
+            yield()
         }
         buffer
     }

@@ -541,7 +541,7 @@ private fun AddExternalLinkDialog(vm: PublishViewModel) {
 
 @Stable
 @Composable
-private fun translatePlatformLabel(label: String): String = when (label) {
+fun translatePlatformLabel(label: String): String = when (label) {
     // TODO: i18n
     "bilibili" -> "哔哩哔哩"
     "douyin" -> "抖音"

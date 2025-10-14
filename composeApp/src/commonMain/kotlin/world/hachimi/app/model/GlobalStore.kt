@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.StringResource
 import world.hachimi.app.BuildKonfig
 import world.hachimi.app.api.*
@@ -29,7 +30,7 @@ import kotlin.time.Duration
 class GlobalStore(
     private val dataStore: MyDataStore,
     private val api: ApiClient,
-    player: Player,
+    private val innerPlayer: Player,
     songCache: SongCache
 ) {
     var initialized by mutableStateOf(false)
@@ -42,10 +43,11 @@ class GlobalStore(
         private set
     var playerExpanded by mutableStateOf(false)
         private set
-    val player = PlayerService(this, api, player, songCache)
+    val player = PlayerService(this, dataStore, api, innerPlayer, songCache)
     private val scope = CoroutineScope(Dispatchers.Default)
     val snackbarHostState = SnackbarHostState()
 
+    @Serializable
     data class MusicQueueItem(
         val id: Long,
         val displayId: String,
@@ -55,7 +57,7 @@ class GlobalStore(
         val coverUrl: String
     )
 
-    fun initialize() {
+    fun initialize() = scope.launch {
         scope.launch(Dispatchers.Default) {
             coroutineScope {
                 launch { this@GlobalStore.darkMode = dataStore.get(PreferencesKeys.SETTINGS_DARK_MODE) }
@@ -126,7 +128,7 @@ class GlobalStore(
         userInfo = null
     }
 
-    @Deprecated("Use alert with i18n instead")
+//    @Deprecated("Use alert with i18n instead")
     fun alert(text: String?) {
         scope.launch {
             snackbarHostState.showSnackbar(text?.take(64) ?: "Unknown Error", withDismissAction = true)

@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +18,10 @@ fun SongControl(
     modifier: Modifier = Modifier,
     isPlaying: Boolean,
     isLoading: Boolean,
+    shuffle: Boolean,
+    onShuffleModeChange: (Boolean) -> Unit,
+    repeat: Boolean,
+    onRepeatModeChange: (Boolean) -> Unit,
     loadingProgress: () -> Float,
     onPlayPauseClick: () -> Unit,
     onPreviousClick: () -> Unit,
@@ -30,6 +31,12 @@ fun SongControl(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
     ) {
+        IconButton(onClick = {
+            onShuffleModeChange(!shuffle)
+        }) {
+            if (shuffle) Icon(Icons.Default.ShuffleOn, "Shuffle On")
+            else Icon(Icons.Default.Shuffle, "Shuffle Off")
+        }
         IconButton(onClick = onPreviousClick) {
             Icon(Icons.Default.SkipPrevious, "Skip Previous")
         }
@@ -61,6 +68,12 @@ fun SongControl(
         }
         IconButton(onClick = onNextClick) {
             Icon(Icons.Default.SkipNext, "Skip Next")
+        }
+        IconButton(onClick = {
+            onRepeatModeChange(!repeat)
+        }) {
+            if (repeat) Icon(Icons.Default.RepeatOn, "Repeat On")
+            else Icon(Icons.Default.Repeat, "Repeat Off")
         }
     }
 }

@@ -96,26 +96,38 @@ class PlayerUIState() {
     }
 
     fun setLyrics(content: String) {
+        if (content.isBlank()) {
+            lyricsLines = emptyList()
+            timedLyricsEnabled = false
+            return
+        }
+
         try {
             val lrcLines = LrcParser.parse(content)
-            val result = mutableListOf<TimedLyricsSegment>()
-            for ((index, line) in lrcLines.withIndex()) {
-                val startTime = line.timestampMs
+            if (lrcLines.isNotEmpty()) {
+                val result = mutableListOf<TimedLyricsSegment>()
+                for ((index, line) in lrcLines.withIndex()) {
+                    val startTime = line.timestampMs
 
-                val next = lrcLines.getOrNull(index + 1)
-                val endTime = next?.timestampMs ?: Long.MAX_VALUE
+                    val next = lrcLines.getOrNull(index + 1)
+                    val endTime = next?.timestampMs ?: Long.MAX_VALUE
 
-                val segment = TimedLyricsSegment(
-                    startTimeMs = startTime,
-                    endTimeMs = endTime,
-                    // TODO: Support enhanced lrc later
-                    spans = listOf(TimedLyricsSpan(startTime, endTime, line.content))
-                )
-                result.add(segment)
+                    val segment = TimedLyricsSegment(
+                        startTimeMs = startTime,
+                        endTimeMs = endTime,
+                        // TODO: Support enhanced lrc later
+                        spans = listOf(TimedLyricsSpan(startTime, endTime, line.content))
+                    )
+                    result.add(segment)
+                }
+//                result.sortBy { it.startTimeMs }
+                lrcSegments = result
+                lyricsLines = lrcSegments.map { it.spans.first().text }
+                timedLyricsEnabled = true
+            } else {
+                lyricsLines = emptyList()
+                timedLyricsEnabled = false
             }
-            this.lrcSegments = result
-            lyricsLines = lrcSegments.map { it.spans.first().text }
-            timedLyricsEnabled = true
         } catch (e: Throwable) {
             Logger.e("player", "Failed to parse lyrics", e)
             lyricsLines = content.lines()
@@ -131,5 +143,11 @@ class PlayerUIState() {
 
     fun updatePreviewMetadata(data: PreviewMetadata) {
         previewMetadata = data
+    }
+
+    fun clear() {
+        songInfo = null
+        hasSong = false
+        setLyrics("")
     }
 }
