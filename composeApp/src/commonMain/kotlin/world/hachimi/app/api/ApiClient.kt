@@ -322,6 +322,7 @@ data class WebResp<T, E>(
     val data: JsonElement
 ) {
     companion object {
+        @OptIn(ExperimentalSerializationApi::class)
         val json = Json {
             ignoreUnknownKeys = true
             prettyPrint = false

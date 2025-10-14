@@ -128,7 +128,7 @@ class GlobalStore(
         userInfo = null
     }
 
-    @Deprecated("Use alert with i18n instead")
+//    @Deprecated("Use alert with i18n instead")
     fun alert(text: String?) {
         scope.launch {
             snackbarHostState.showSnackbar(text?.take(64) ?: "Unknown Error", withDismissAction = true)

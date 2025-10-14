@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class, ExperimentalUnsignedTypes::class)
+
 package world.hachimi.app.player
 
 import howler.Howl
