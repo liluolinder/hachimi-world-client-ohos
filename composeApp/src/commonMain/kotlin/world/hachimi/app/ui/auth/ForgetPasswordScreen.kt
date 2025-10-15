@@ -22,6 +22,7 @@ import world.hachimi.app.ui.auth.components.CaptchaDialog
 import world.hachimi.app.ui.auth.components.FormCard
 import world.hachimi.app.ui.insets.currentSafeAreaInsets
 import world.hachimi.app.ui.theme.PreviewTheme
+import world.hachimi.app.util.singleLined
 
 @Composable
 fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
@@ -50,7 +51,7 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
                 TextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = vm.email,
-                    onValueChange = { vm.email = it },
+                    onValueChange = { vm.email = it.singleLined() },
                     label = { Text("邮箱") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -58,7 +59,7 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
                 TextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = vm.password,
-                    onValueChange = { vm.password = it },
+                    onValueChange = { vm.password = it.singleLined() },
                     label = { Text("新密码") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -67,7 +68,7 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
                 TextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = vm.passwordRepeat,
-                    onValueChange = { vm.passwordRepeat = it },
+                    onValueChange = { vm.passwordRepeat = it.singleLined() },
                     label = { Text("确认密码") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
@@ -89,7 +90,7 @@ fun ForgetPasswordScreen(vm: ForgetPasswordViewModel = koinViewModel()) {
                     TextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.verifyCode,
-                        onValueChange = { vm.verifyCode = it },
+                        onValueChange = { vm.verifyCode = it.singleLined() },
                         label = { Text("验证码") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),

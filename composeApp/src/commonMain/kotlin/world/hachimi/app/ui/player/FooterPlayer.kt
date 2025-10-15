@@ -34,6 +34,7 @@ import world.hachimi.app.ui.player.components.SongControl
 import world.hachimi.app.ui.player.components.SongProgress
 import world.hachimi.app.ui.player.components.VolumeControl
 import world.hachimi.app.ui.root.component.MusicQueue
+import world.hachimi.app.util.singleLined
 import kotlin.random.Random
 
 @Composable
@@ -407,7 +408,7 @@ private fun CreatePlaylistDialog(vm: PlaylistViewModel = koinViewModel()) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 TextField(
                     value = vm.createPlaylistName,
-                    onValueChange = { vm.createPlaylistName = it },
+                    onValueChange = { vm.createPlaylistName = it.singleLined() },
                     label = { Text("名称") },
                     singleLine = true
                 )

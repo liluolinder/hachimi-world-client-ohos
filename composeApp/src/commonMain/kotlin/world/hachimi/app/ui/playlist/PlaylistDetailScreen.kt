@@ -25,6 +25,7 @@ import world.hachimi.app.model.PlaylistDetailViewModel
 import world.hachimi.app.ui.component.LoadingPage
 import world.hachimi.app.ui.component.ReloadPage
 import world.hachimi.app.util.formatSongDuration
+import world.hachimi.app.util.singleLined
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -238,7 +239,7 @@ private fun EditDialog(vm: PlaylistDetailViewModel) {
                 Text(text = "编辑歌单信息", style = MaterialTheme.typography.titleLarge)
                 TextField(
                     value = vm.editName,
-                    onValueChange = { vm.editName = it },
+                    onValueChange = { vm.editName = it.singleLined() },
                     label = { Text("名称") },
                     singleLine = true
                 )

@@ -27,6 +27,7 @@ import world.hachimi.app.model.PublishViewModel
 import world.hachimi.app.ui.creation.publish.components.FormItem
 import world.hachimi.app.ui.creation.publish.components.TagEdit
 import world.hachimi.app.util.formatSongDuration
+import world.hachimi.app.util.singleLined
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -106,7 +107,7 @@ fun PublishScreen(
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = vm.title,
-                    onValueChange = { vm.title = it },
+                    onValueChange = { vm.title = it.singleLined() },
                     singleLine = true
                 )
             }
@@ -118,7 +119,7 @@ fun PublishScreen(
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = vm.subtitle,
-                    onValueChange = { vm.subtitle = it },
+                    onValueChange = { vm.subtitle = it.singleLined() },
                     singleLine = true
                 )
             }
@@ -207,7 +208,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originId,
-                        onValueChange = { vm.originId = it },
+                        onValueChange = { vm.originId = it.singleLined() },
                         singleLine = true,
                         supportingText = { Text("如果原作是基米天堂站内的作品，填写基米 ID 即可，无需再填写标题与链接") }
                     )
@@ -216,7 +217,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originTitle,
-                        onValueChange = { vm.originTitle = it },
+                        onValueChange = { vm.originTitle = it.singleLined() },
                         singleLine = true,
                         supportingText = { Text("如 D大调卡农") }
                     )
@@ -225,7 +226,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originArtist,
-                        onValueChange = { vm.originArtist = it },
+                        onValueChange = { vm.originArtist = it.singleLined() },
                         singleLine = true,
                         supportingText = { Text("涉及到多位艺术家的，暂时填写主要的一位歌手即可") }
                     )
@@ -234,7 +235,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originLink,
-                        onValueChange = { vm.originLink = it },
+                        onValueChange = { vm.originLink = it.singleLined() },
                         singleLine = true,
                         placeholder = { Text("https://") },
                         supportingText = { Text("建议填写，请使用 https:// 格式的链接") }
@@ -247,7 +248,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveId,
-                        onValueChange = { vm.deriveId = it },
+                        onValueChange = { vm.deriveId = it.singleLined() },
                         singleLine = true,
                         supportingText = { Text("如果二作是站内作品，填写 ID 即可，则无需再填写标题与链接") }
                     )
@@ -256,7 +257,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveTitle,
-                        onValueChange = { vm.deriveTitle = it },
+                        onValueChange = { vm.deriveTitle = it.singleLined() },
                         singleLine = true
                     )
                 }
@@ -264,7 +265,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveArtist,
-                        onValueChange = { vm.deriveArtist = it },
+                        onValueChange = { vm.deriveArtist = it.singleLined() },
                         singleLine = true
                     )
                 }
@@ -272,7 +273,7 @@ fun PublishScreen(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveLink,
-                        onValueChange = { vm.deriveLink = it },
+                        onValueChange = { vm.deriveLink = it.singleLined() },
                         singleLine = true
                     )
                 }
@@ -385,7 +386,7 @@ private fun AddStaffDialog(vm: PublishViewModel) {
 
                 OutlinedTextField(
                     value = vm.addStaffRole,
-                    onValueChange = { vm.addStaffRole = it },
+                    onValueChange = { vm.addStaffRole = it.singleLined() },
                     label = { Text("角色") },
                     singleLine = true,
                     supportingText = {
@@ -408,14 +409,14 @@ private fun AddStaffDialog(vm: PublishViewModel) {
 
                 if (type == 0) OutlinedTextField(
                     value = vm.addStaffUid,
-                    onValueChange = { vm.addStaffUid = it },
+                    onValueChange = { vm.addStaffUid = it.singleLined() },
                     label = { Text("UID") },
                     singleLine = true
                 )
 
                 if (type == 1) OutlinedTextField(
                     value = vm.addStaffName,
-                    onValueChange = { vm.addStaffName = it },
+                    onValueChange = { vm.addStaffName = it.singleLined() },
                     label = { Text("名称") },
                     singleLine = true
                 )
@@ -495,7 +496,7 @@ private fun AddExternalLinkDialog(vm: PublishViewModel) {
                     OutlinedTextField(
                         modifier = Modifier,
                         value = link,
-                        onValueChange = { link = it },
+                        onValueChange = { link = it.singleLined() },
                         label = { Text("链接") },
                         placeholder = { Text("https://") },
                         singleLine = true,
