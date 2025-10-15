@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
@@ -48,7 +49,7 @@ fun PublishScreen(
             )
 
             FormItem(
-                header = { Text("上传音频") },
+                header = { Text("上传音频*") },
                 subtitle = { Text("支持 flac 和 mp3 格式，大小不超过 20MB") }
             ) {
                 Row(
@@ -74,7 +75,7 @@ fun PublishScreen(
             }
 
             FormItem(
-                header = { Text("设置封面") },
+                header = { Text("设置封面*") },
                 subtitle = {
                     Text("支持 jpg, png, webp 格式的图片。封面在所有地方都只会以裁剪的方式显示为正方形，如果您的封面原先是长方形，建议进行适当的调整。请勿通过拉伸比例的方式来调整，请勿使用透明图片。")
                 }
@@ -101,7 +102,7 @@ fun PublishScreen(
             }
 
             FormItem(
-                header = { Text("标题") },
+                header = { Text("标题*") },
                 subtitle = { Text("填写一个您认为适合永久流传的纯文字标题。如 钢铁雄基4 这类与原曲标题关联性强的纯文字标题。请不要在标题中添加标签、Emoji等复杂内容。请不要使用标题来引流，后续可能会做专门用于推荐的标题。") }
             ) {
                 OutlinedTextField(
@@ -181,7 +182,7 @@ fun PublishScreen(
             }
 
             FormItem(
-                header = { Text("创作类型") },
+                header = { Text("创作类型*") },
                 subtitle = { Text("如果你的作品是对现有作品的再创作（如对《D大调卡农》的改编），请选择二创并填写原作信息。如果你的作品是对哈基米音乐的再创作（如翻唱），请选择三创") }
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -204,7 +205,7 @@ fun PublishScreen(
             }
 
             if (vm.creationType > 0) {
-                FormItem(header = { Text("原作基米ID") }) {
+                /*FormItem(header = { Text("原作基米ID") }) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originId,
@@ -212,14 +213,14 @@ fun PublishScreen(
                         singleLine = true,
                         supportingText = { Text("如果原作是基米天堂站内的作品，填写基米 ID 即可，无需再填写标题与链接") }
                     )
-                }
-                FormItem(header = { Text("原作标题") }) {
+                }*/
+                FormItem(header = { Text("原作标题*") }) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.originTitle,
                         onValueChange = { vm.originTitle = it.singleLined() },
                         singleLine = true,
-                        supportingText = { Text("如 D大调卡农") }
+                        supportingText = { Text("如 D 大调卡农") }
                     )
                 }
                 FormItem(header = { Text("原作艺术家") }) {
@@ -244,7 +245,7 @@ fun PublishScreen(
             }
 
             if (vm.creationType > 1) {
-                FormItem(header = { Text("二作 ID") }) {
+                FormItem(header = { Text("二作基米ID") }) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveId,
@@ -253,7 +254,7 @@ fun PublishScreen(
                         supportingText = { Text("如果二作是站内作品，填写 ID 即可，则无需再填写标题与链接") }
                     )
                 }
-                FormItem(header = { Text("二作标题") }) {
+                FormItem(header = { Text("二作标题*") }) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = vm.deriveTitle,
@@ -438,11 +439,13 @@ private fun AddStaffDialog(vm: PublishViewModel) {
     )
 }
 
+private val presetPlatforms = listOf("bilibili", "niconico", "youtube", "douyin")
+
 @Composable
 private fun AddExternalLinkDialog(vm: PublishViewModel) {
     if (vm.showAddExternalLinkDialog) {
         var platform by remember { mutableStateOf<String?>(null) }
-        var link by remember { mutableStateOf("") }
+        var value by remember { mutableStateOf("") }
         var error by remember { mutableStateOf<String?>(null) }
 
         AlertDialog(
@@ -462,41 +465,54 @@ private fun AddExternalLinkDialog(vm: PublishViewModel) {
                             )
                             Icon(Icons.Default.ArrowDropDown, contentDescription = "ArrowDropDown")
                         }
+                        fun changePlatform(v: String) {
+                            platform = v
+                            value = ""
+                            dropdown = false
+                        }
                         DropdownMenu(dropdown, onDismissRequest = { dropdown = false }) {
-                            DropdownMenuItem(
-                                text = { Text("哔哩哔哩") },
-                                onClick = {
-                                    platform = "bilibili"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("niconico") },
-                                onClick = {
-                                    platform = "niconico"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("YouTube") },
-                                onClick = {
-                                    platform = "youtube"
-                                    dropdown = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("抖音") },
-                                onClick = {
-                                    platform = "douyin"
-                                    dropdown = false
-                                }
-                            )
+                            presetPlatforms.fastForEach {
+                                DropdownMenuItem(
+                                    text = { Text(translatePlatformLabel(it)) },
+                                    onClick = { changePlatform(it) }
+                                )
+                            }
                         }
                     }
-                    OutlinedTextField(
+                    if (platform == "bilibili") {
+                        OutlinedTextField(
+                            modifier = Modifier,
+                            value = value,
+                            onValueChange = {
+                                value = it.singleLined()
+                            },
+                            label = { Text("BV号") },
+                            placeholder = { Text("BV...") },
+                            singleLine = true,
+                            supportingText = {
+                                error?.let { error ->
+                                    Text(error, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        )
+                    } else if (platform == "niconico") {
+                        OutlinedTextField(
+                            modifier = Modifier,
+                            value = value,
+                            onValueChange = { value = it.singleLined() },
+                            label = { Text("sm号") },
+                            placeholder = { Text("sm...") },
+                            singleLine = true,
+                            supportingText = {
+                                error?.let { error ->
+                                    Text(error, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        )
+                    } else OutlinedTextField(
                         modifier = Modifier,
-                        value = link,
-                        onValueChange = { link = it.singleLined() },
+                        value = value,
+                        onValueChange = { value = it.singleLined() },
                         label = { Text("链接") },
                         placeholder = { Text("https://") },
                         singleLine = true,
@@ -512,16 +528,39 @@ private fun AddExternalLinkDialog(vm: PublishViewModel) {
                 TextButton(
                     onClick = {
                         val platform = platform
-                        val link = link
+                        val value = value
+                        var link = value
 
                         if (platform == null) {
                             error = "请选择平台"
                             return@TextButton
                         }
 
-                        if (!link.startsWith("https://")) {
-                            error = "请使用 https:// 格式的链接"
-                            return@TextButton
+                        when (platform) {
+                            "bilibili" -> {
+                                if (link.matches("""BV[1-9A-HJ-NP-Za-km-z]{10}""".toRegex())) {
+                                    link = "https://www.bilibili.com/video/$value"
+                                } else {
+                                    error = "请输入正确的 BV 号"
+                                    return@TextButton
+                                }
+                            }
+
+                            "niconico" -> {
+                                if (link.matches("""sm\d+""".toRegex())) {
+                                    link = "https://www.nicovideo.jp/watch/$value"
+                                } else {
+                                    error = "请输入正确的 sm 号"
+                                    return@TextButton
+                                }
+                            }
+
+                            else -> {
+                                if (!link.startsWith("https://")) {
+                                    error = "请使用 https:// 格式的链接"
+                                    return@TextButton
+                                }
+                            }
                         }
 
                         vm.addLink(platform, link)
