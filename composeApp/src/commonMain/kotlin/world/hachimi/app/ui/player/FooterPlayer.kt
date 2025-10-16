@@ -190,7 +190,7 @@ fun ExpandedFooterPlayer() {
     // TODO[refactor](footer): I really should not write this garbage. Refactor later.
     var tobeAddedSong by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
-    Row(Modifier.height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
+    Row(Modifier.padding(bottom = currentSafeAreaInsets().bottom).height(120.dp).padding(horizontal = 24.dp, vertical = 12.dp)) {
         Surface(
             modifier = Modifier.aspectRatio(1f),
             shape = MaterialTheme.shapes.medium,
