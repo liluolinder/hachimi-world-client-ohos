@@ -6,6 +6,7 @@ import { BasicDataSource } from "commonpackage";
 import { USER_AGENT } from "../../commons/commonItem";
 import { I_SearchSongRes, I_SearchSongRes_data_hit } from "../interfaces/I_SearchSong";
 import { __User__ } from "../../commons/shareDatas";
+import { I_UpdateHistoryRes } from "../interfaces/I_UpdateHistory";
 
 
 @ObservedV2
@@ -81,7 +82,7 @@ export class hachimi {
   }
 
 
-  async updateHistory(songID:number): Promise<undefined | number> {
+  async updateHistory(songID:number): Promise<undefined | boolean> {
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/play_history/touch`, {
       method: http.RequestMethod.POST,
@@ -98,8 +99,8 @@ export class hachimi {
     }).then(async (data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
-      let res: I_SearchSongRes = result as I_SearchSongRes
-      return undefined
+      let res: I_UpdateHistoryRes = result as I_UpdateHistoryRes
+      return res.ok
     })
       .catch((err: BusinessError) => {
         console.log(`Liquid:${JSON.stringify(err)}`)
@@ -108,6 +109,7 @@ export class hachimi {
         req.destroy();
       });
   }
+
 }
 
 export let __Client__: hachimi = new hachimi()

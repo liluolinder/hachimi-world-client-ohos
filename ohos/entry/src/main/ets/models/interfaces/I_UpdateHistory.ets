@@ -4,5 +4,6 @@ export interface I_UpdateHistoryRes{
 }
 
 export interface I_UpdateHistoryRes_data{
-
+  code: string
+  msg: string
 }
