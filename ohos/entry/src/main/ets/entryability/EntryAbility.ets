@@ -1,9 +1,10 @@
-import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, Configuration, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { XContext, XPreferencesManager } from 'commonpackage';
 import { initPreferences } from '../models/utils/initPreferences';
 import WindowsUtil from '../models/classes/WindowsUtil';
+import { __System__ } from '../commons/shareDatas';
 
 const DOMAIN = 0x0000;
 
@@ -57,4 +58,9 @@ export default class EntryAbility extends UIAbility {
     // Ability has back to background
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
   }
+
+  onConfigurationUpdate(newConfig: Configuration): void {
+    __System__.currentColorMode = newConfig.colorMode ?? ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
+  }
+
 }

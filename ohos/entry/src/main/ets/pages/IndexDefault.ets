@@ -5,6 +5,7 @@ import { CustomBackground } from '../../../productDefault/components/CustomBackg
 import { DecorBar } from '../../../productDefault/components/DecorBar';
 import { Body } from '../../../productDefault/pages/index/Body';
 import { SideBar } from '../../../productDefault/pages/index/SideBar';
+import { __Client__ } from '../models/classes/hachimi';
 
 @Entry
 @ComponentV2
@@ -13,7 +14,7 @@ struct Index {
     @Provider('currentTabIndex') currentTabIndex: number = XPreferencesManager.getPreferencesValue("pilipala", "currentTabIndex", 0) as number
 
     async aboutToAppear(): Promise<void> {
-
+        __Client__.getRecentSong()
     }
 
     onBackPress(): boolean | void {

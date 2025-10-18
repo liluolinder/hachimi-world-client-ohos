@@ -45,8 +45,7 @@ export let __System__: SysShareData = new SysShareData()
 @ObservedV2
 export class UserData {
     @Trace isLogin: boolean = false
-    @Trace cookie: string = ''
-    @Trace csrf:string=''
+    @Trace authorization:string = ''
 }
 
 export let __User__: UserData = new UserData()
