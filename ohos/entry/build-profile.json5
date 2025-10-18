@@ -1,0 +1,79 @@
+{
+  "apiType": "stageMode",
+  "buildOption": {
+    "resOptions": {
+      "copyCodeResource": {
+        "enable": false
+      }
+    }
+  },
+  "buildOptionSet": [
+    {
+      "name": "release",
+      "arkOptions": {
+        "obfuscation": {
+          "ruleOptions": {
+            "enable": false,
+            "files": [
+              "./obfuscation-rules.txt"
+            ]
+          }
+        }
+      }
+    },
+  ],
+  "targets": [
+    {
+      "name": "default",
+      "config": {
+        "buildOption": {
+          "arkOptions": {
+            "buildProfileFields": {
+              "productName": "default"
+            }
+          },
+        }
+      },
+      "runtimeOS": "HarmonyOS",
+      "output": {
+        "artifactName": "default"
+      },
+      "source": {
+        "sourceRoots": [
+          "./src/productDefault"
+        ]
+      },
+      "resource": {
+        "directories": [
+          "./src/main/resources"
+        ]
+      }
+    },
+    {
+      "name": "wearable",
+      "config": {
+        "buildOption": {
+          "arkOptions": {
+            "buildProfileFields": {
+              "productName": "wearable"
+            }
+          }
+        }
+      },
+      "runtimeOS": "HarmonyOS",
+      "output": {
+        "artifactName": "wearable"
+      },
+          "source": {
+            "sourceRoots": [
+              "./src/productWearable"
+            ]
+          },
+      "resource": {
+        "directories": [
+          "./src/main/resources"
+        ]
+      }
+    }
+  ]
+}

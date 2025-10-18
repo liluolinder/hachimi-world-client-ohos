@@ -1,0 +1,32 @@
+{
+    "color": [
+        {
+            "name": "start_window_background",
+            "value": "#FFFFFF"
+        },
+        {
+            "name": "linder_blue",
+            "value": "#6AA7E2"
+        },
+        {
+            "name": "seline_pink",
+            "value": "#F7D7E7"
+        },
+        {
+            "name": "pixelartisan_blue",
+            "value": "#007dff"
+        },
+        {
+            "name": "sweet_blue",
+            "value": "#103fb6"
+        },
+        {
+            "name": "Adaptive_BackBlur",
+            "value": "#b2e7e9ec"
+        },
+        {
+            "name": "shadow_color",
+            "value": "#70000000"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "color": [
+        {
+            "name": "color_1",
+            "value": "#ff0000"
+        },
+        {
+            "name": "Adaptive_BackBlur",
+            "value": "#cb292929"
+        },
+        {
+            "name": "shadow_color",
+            "value": "#90000000"
+        }
+    ]
+}

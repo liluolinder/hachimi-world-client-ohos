@@ -1,0 +1,77 @@
+{
+    "apiType": "stageMode",
+    "buildOption": {
+    },
+    "buildOptionSet": [
+        {
+            "name": "release",
+            "arkOptions": {
+                "obfuscation": {
+                    "ruleOptions": {
+                        "enable": false,
+                        "files": [
+                            "./obfuscation-rules.txt"
+                        ]
+                    },
+                    "consumerFiles": [
+                        "./consumer-rules.txt"
+                    ]
+                }
+            },
+        },
+    ],
+    "targets": [
+        {
+            "name": "default",
+            "config": {
+                "buildOption": {
+                    "arkOptions": {
+                        "buildProfileFields": {
+                            "productName": "default"
+                        }
+                    },
+                }
+            },
+            "runtimeOS": "HarmonyOS",
+            "output": {
+                "artifactName": "default"
+            },
+            "source": {
+                "sourceRoots": [
+                    "./src/main"
+                ]
+            },
+            "resource": {
+                "directories": [
+                    "./src/main/resources"
+                ]
+            }
+        },
+        {
+            "name": "wearable",
+            "config": {
+                "buildOption": {
+                    "arkOptions": {
+                        "buildProfileFields": {
+                            "productName": "wearable"
+                        }
+                    }
+                }
+            },
+            "runtimeOS": "HarmonyOS",
+            "output": {
+                "artifactName": "wearable"
+            },
+            "source": {
+                "sourceRoots": [
+                    "./src/main"
+                ]
+            },
+            "resource": {
+                "directories": [
+                    "./src/main/resources"
+                ]
+            }
+        }
+    ]
+}

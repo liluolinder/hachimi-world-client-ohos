@@ -1,0 +1,15 @@
+{
+    "module": {
+        "name": "commonPackage",
+        "type": "shared",
+        "description": "$string:shared_desc",
+        "deviceTypes": [
+            "phone",
+            "tablet",
+            "2in1",
+            "wearable"
+        ],
+        "deliveryWithInstall": true,
+        "pages": "$profile:main_pages"
+    }
+}
