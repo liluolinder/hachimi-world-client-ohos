@@ -3,7 +3,7 @@
 @ComponentV2
 export struct Cover {
     @Param @Require data: ResourceStr | undefined
-    @Param defaultImg: ResourceStr = $r('app.media.default_cover')
+    @Param defaultImg: ResourceStr = $r('app.media.startIcon')
     @Param isVideo: boolean = false
     @Param haveShadow: boolean = true
     @Param imageFit: ImageFit = ImageFit.Auto

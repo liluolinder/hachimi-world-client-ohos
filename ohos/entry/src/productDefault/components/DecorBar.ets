@@ -41,7 +41,7 @@ export struct DecorBar {
                 alignItems: ItemAlign.Center
             }) {
                 Row({ space: 10 }) {
-                    Image($r('app.media.app_icon')).size({ height: 23, width: 23 }).borderRadius(5).draggable(false)
+                    Image($r('app.media.startIcon')).size({ height: 23, width: 23 }).borderRadius(5).draggable(false)
                     Text($r('app.string.app_name')).fontSize(16).fontWeight(FontWeight.Medium)
                 }
 

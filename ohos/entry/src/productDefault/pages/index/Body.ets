@@ -1,8 +1,6 @@
 import { XAnimation, XPreferencesManager } from "commonpackage";
 import { min_width, __SettingsUIData__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas";
-import { collectionMainPage, __CollectionMainPage__ } from "../collection/collectionMainPage"
-import { History } from "../history/History";
-import { IndexRecommendVideo, __IndexRecommendVideoData__ } from "../indexRecommendVideo/IndexRecommendVideo";
+
 import { settingsPageBuilder } from "../settings/SettingsMainPage";
 
 @ComponentV2
@@ -11,30 +9,11 @@ export struct Body {
     @Consumer('mainPageStack') pageStack: NavPathStack = new NavPathStack()
     @Consumer('currentTabIndex') currentTabIndex: number = 0
 
-    @Monitor('currentTabIndex')
-    changeIndexNavigationMode() {
-        XPreferencesManager.putPreferencesValue("pilipala", "currentTabIndex", this.currentTabIndex)
-        XAnimation.runWithAnimation(() => {
-            __IndexRecommendVideoData__.inSearchMode = false
-            __CollectionMainPage__.inSearchMode = false
-        })
-
-    }
 
     build() {
         Stack() {
             Tabs({ controller: this.tabController, index: $$this.currentTabIndex }) {
-                TabContent() {
-                    IndexRecommendVideo()
-                }
 
-                TabContent() {
-                    History()
-                }
-
-                TabContent() {
-                    collectionMainPage()
-                }
             }
             .height('100%')
             .scrollable(false)

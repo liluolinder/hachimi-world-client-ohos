@@ -1,5 +1,4 @@
 import { ListItemWithArrow } from "../../components/ListItemWithArrow"
-import { LoginOrUserInfoBuilder } from "./LoginOrUserInfo"
 import { XAnimation } from "commonpackage";
 import { ImageModifier } from "@ohos.arkui.modifier";
 import { __CustomBackgroundData__ } from "../../components/CustomBackground";
@@ -30,7 +29,7 @@ export struct SideBar {
                 Column({ space: 10 }) {
                     Row({ space: 12 }) {
                         Stack(){
-                            Image(__User__.userDetailedInfo?.face ?? $r('app.media.bilibili_icon'))
+                            Image(__User__.userDetailedInfo?.face ?? $r('app.media.startIcon'))
                                 .attributeModifier(__UI__.isLargeSidebar ? this.avatarModifier_Large :
                                     this.avatarModifier_Small)
                         }
@@ -38,18 +37,7 @@ export struct SideBar {
                         if (__UI__.isLargeSidebar) {
                             if(__User__.isLogin){
                                 Column({space: 2}){
-                                    Text(__User__.userDetailedInfo?.uname)
-                                        .fontWeight(FontWeight.Bold)
-                                        .fontSize(20)
-                                        .maxLines(1)
-                                        .textOverflow({ overflow: TextOverflow.MARQUEE })
-                                    Text(`硬币数: ${__User__.userDetailedInfo?.money ?? 0}`).maxLines(1).borderRadius(5).fontSize(10).opacity(0.8)
-                                    Row({space: 5}){
-                                        Text(`LV${__User__.userDetailedInfo?.level_info.current_level ?? 0}`).maxLines(1).padding({left: 5, right: 5, top: 2, bottom: 2}).borderRadius(5).fontSize(10).backgroundColor($r('app.color.bilibili_pink')).fontColor(Color.White).fontWeight(FontWeight.Medium)
-                                        if(__User__.userDetailedInfo?.vipStatus){
-                                            Text((__User__.userDetailedInfo?.vipType ?? 0) == 1? '大会员': '年度大会员').maxLines(1).padding({left: 5, right: 5, top: 2, bottom: 2}).borderRadius(5).fontSize(10).backgroundColor($r('app.color.bilibili_pink')).fontColor(Color.White).fontWeight(FontWeight.Medium)
-                                        }
-                                    }.margin({top: 2})
+
                                 }.alignItems(HorizontalAlign.Start)
                                 .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ x: -100 })))
                             }else{
@@ -71,11 +59,11 @@ export struct SideBar {
                     .onClick(() => {
                         this.showLoginOrUserInfo = true
                     })
-                    .bindSheet($$this.showLoginOrUserInfo, LoginOrUserInfoBuilder, {
+                   /* .bindSheet($$this.showLoginOrUserInfo, LoginOrUserInfoBuilder, {
                         height: SheetSize.MEDIUM,
                         preferType: SheetType.CENTER,
                         title: { title: '登录' }
-                    })
+                    })*/
 
 
                     Column({space: __UI__.isLargeSidebar ? 0 : 10}){

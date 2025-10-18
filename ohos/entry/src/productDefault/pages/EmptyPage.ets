@@ -7,7 +7,7 @@ export struct EmptyPage {
     build() {
         NavDestination() {
             Stack() {
-                Image($r('app.media.bilibili'))
+                Image($r('app.media.startIcon'))
                     .constraintSize({ maxWidth: '40%', maxHeight: '40%' })
                     .draggable(false)
                     .opacity(0.5)
