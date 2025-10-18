@@ -1,6 +1,20 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_ohos_sr2Eeeo59NXHLc7dr7gcozy5Pm7TjxQrFRM-e6yQ0kg=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B6B91A237E7DBB72972828BEB221CAC8383DD90CF776BB42C3420F60AC5013364ED667B47A683BF",
+          "profile": "C:\\Users\\liluo\\.ohos\\config\\default_ohos_sr2Eeeo59NXHLc7dr7gcozy5Pm7TjxQrFRM-e6yQ0kg=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_ohos_sr2Eeeo59NXHLc7dr7gcozy5Pm7TjxQrFRM-e6yQ0kg=.p12",
+          "storePassword": "0000001BA81FC30DA79EF6219BFCC969EBB363FA3BC5FFB299B59AA3FC68B7452D8636C22C83F0319E6CF3"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",

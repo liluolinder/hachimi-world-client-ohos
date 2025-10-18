@@ -1,5 +1,4 @@
 import { window } from "@kit.ArkUI"
-import { I_GetUserDetailedInfoRes_data } from "../models/interfaces/I_GetUserDetailedInfoRes"
 import { ConfigurationConstant } from "@kit.AbilityKit"
 import { XAnimation } from "commonpackage"
 import { __CustomBackgroundData__ } from "../../../productDefault/components/CustomBackground"
@@ -48,7 +47,6 @@ export class UserData {
     @Trace isLogin: boolean = false
     @Trace cookie: string = ''
     @Trace csrf:string=''
-    @Trace userDetailedInfo?: I_GetUserDetailedInfoRes_data
 }
 
 export let __User__: UserData = new UserData()

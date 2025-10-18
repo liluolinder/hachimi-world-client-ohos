@@ -2,7 +2,6 @@ import { ListItemWithArrow } from "../../components/ListItemWithArrow"
 import { XAnimation } from "commonpackage";
 import { ImageModifier } from "@ohos.arkui.modifier";
 import { __CustomBackgroundData__ } from "../../components/CustomBackground";
-import { I_PageInfo } from "../../../main/ets/models/interfaces/I_PageInfo";
 import { min_width, __SettingsUIData__, __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas";
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect";
 import { LengthUnit } from "@kit.ArkUI";
@@ -12,24 +11,21 @@ export struct SideBar {
     @Consumer('tabController') tabController: TabsController = new TabsController();
     @Consumer('currentTabIndex') currentTabIndex: number = 0
     @Local showLoginOrUserInfo: boolean = false
-    pageArray: I_PageInfo[] = [
-        { name: '推荐视频', symbol: $r('sys.symbol.wand_and_stars') },
-        { name: '历史观看', symbol: $r('sys.symbol.clock') },
-        { name: '收藏集', symbol: $r('sys.symbol.rectangle') },
-
+    pageArray: string[] = [
+        '124',
+        '13421'
     ]
     avatarModifier_Large: ImageModifier = new ImageModifier().height(75).width(75).borderRadius(1000).draggable(false)
     avatarModifier_Small: ImageModifier =
         new ImageModifier().size({ width: '100%' }).aspectRatio(1).borderRadius(1000).clip(true)
 
     build() {
-
         Column({ space: 10 }) {
             Scroll() {
                 Column({ space: 10 }) {
                     Row({ space: 12 }) {
                         Stack(){
-                            Image(__User__.userDetailedInfo?.face ?? $r('app.media.startIcon'))
+                            Image( $r('app.media.startIcon'))
                                 .attributeModifier(__UI__.isLargeSidebar ? this.avatarModifier_Large :
                                     this.avatarModifier_Small)
                         }
@@ -67,11 +63,9 @@ export struct SideBar {
 
 
                     Column({space: __UI__.isLargeSidebar ? 0 : 10}){
-                        ForEach(this.pageArray, (item: I_PageInfo, index: number) => {
+                        ForEach(this.pageArray, (item: string, index: number) => {
                             ListItemWithArrow({
-                                symbol: item.symbol,
-                                image: item.image,
-                                message: item.name,
+                                message: item,
                                 isLarge: __UI__.isLargeSidebar,
                                 isHighlight: this.currentTabIndex == index
                             })
