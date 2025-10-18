@@ -7,6 +7,7 @@ import { USER_AGENT } from "../../commons/commonItem";
 import { I_SearchSongRes, I_SearchSongRes_data_hit } from "../interfaces/I_SearchSong";
 import { __User__ } from "../../commons/shareDatas";
 import { I_UpdateHistoryRes } from "../interfaces/I_UpdateHistory";
+import { I_GenerateCaptchaRes, I_GenerateCaptchaRes_data } from "../interfaces/I_GenerateCaptcha";
 
 
 @ObservedV2
@@ -14,6 +15,32 @@ export class hachimi {
   @Trace recentSongArray: BasicDataSource<I_GetRecentSongRes_data_song> =
     new BasicDataSource<I_GetRecentSongRes_data_song>()
   @Trace searchSongArray: BasicDataSource<I_SearchSongRes_data_hit> = new BasicDataSource<I_SearchSongRes_data_hit>()
+
+  async generateCaptcha():Promise<I_GenerateCaptchaRes_data|undefined>{
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/auth/captcha/generate`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GenerateCaptchaRes = result as I_GenerateCaptchaRes
+      if (res.ok) {
+        return res.data
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
 
   async getRecentSong(): Promise<undefined | number> {
     let req = http.createHttp()
@@ -45,7 +72,6 @@ export class hachimi {
       }).finally(() => {
         req.destroy();
       });
-
   }
 
   async searchSong(songName: string, needClear:boolean = false): Promise<undefined | number> {
@@ -80,7 +106,6 @@ export class hachimi {
         req.destroy();
       });
   }
-
 
   async updateHistory(songID:number): Promise<undefined | boolean> {
     let req = http.createHttp()

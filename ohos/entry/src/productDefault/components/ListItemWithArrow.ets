@@ -21,7 +21,6 @@ export struct ListItemWithArrow {
                                 .fontColor([$r('sys.color.font')])
                         }
                         if (this.image) {
-
                             Image(this.image)
                                 .size({ width: 30, height: 30 })
                                 .borderRadius(10)

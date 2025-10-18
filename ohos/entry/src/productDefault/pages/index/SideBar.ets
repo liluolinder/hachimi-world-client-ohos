@@ -6,6 +6,7 @@ import { min_width, __SettingsUIData__, __System__, __UI__, __User__ } from "../
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect";
 import { LengthUnit } from "@kit.ArkUI";
 import { I_PageInfo } from "../../../main/ets/models/interfaces/I_PageInfo";
+import { personalSheetBuilder } from "./personalSheet/personalSheet";
 
 @ComponentV2
 export struct SideBar {
@@ -52,19 +53,17 @@ export struct SideBar {
 
             }
           }
-          .backgroundColor($r('sys.color.comp_background_list_card'))
           .borderRadius(20)
           .padding(__UI__.isLargeSidebar ? 12 : 0)
           .width('100%')
           .onClick(() => {
             this.showLoginOrUserInfo = true
           })
-
-          /* .bindSheet($$this.showLoginOrUserInfo, LoginOrUserInfoBuilder, {
-               height: SheetSize.MEDIUM,
+           .bindSheet($$this.showLoginOrUserInfo, personalSheetBuilder(), {
+               height: SheetSize.LARGE,
                preferType: SheetType.CENTER,
                title: { title: '登录' }
-           })*/
+           })
 
 
           Column({ space: __UI__.isLargeSidebar ? 0 : 10 }) {
