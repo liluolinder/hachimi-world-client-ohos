@@ -77,7 +77,7 @@ export struct ListItemWithArrow {
         .borderRadius(20)
         .enabled(this.isEnabled)
         .padding(2)
-        .backgroundColor(this.isLarge && !this.hasBackground? Color.Transparent: $r('sys.color.comp_background_list_card'))
+        .backgroundColor(Color.Transparent)
 
     }
 }

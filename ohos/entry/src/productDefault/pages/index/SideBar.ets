@@ -83,7 +83,7 @@ export struct SideBar {
           }
           .borderRadius(20)
           .width('100%')
-          .backgroundColor(__UI__.isLargeSidebar ? $r('sys.color.comp_background_list_card') : Color.Transparent)
+          .backgroundColor( Color.Transparent)
 
         }
       }

@@ -6,6 +6,7 @@ import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGro
 import { __Client__ } from "../../../main/ets/models/classes/hachimi"
 import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
 import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
+import { ArcList } from "@ohos.arkui.ArcList"
 
 
 @ObservedV2
@@ -24,36 +25,6 @@ export struct Home {
   build() {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.circle_viewfinder'))
-            .fontSize(24)
-            .fontColor([$r('sys.color.font_secondary')])
-        }
-        .width(40)
-        .height(40)
-        .attributeModifier(backgroundBlurModifier)
-        .backgroundColor(Color.Transparent)
-        .useEffect(true)
-        .onClick(() => {
-          let options: scanBarcode.ScanOptions = {
-            scanTypes: [scanCore.ScanType.ONE_D_CODE],
-            enableMultiMode: true,
-            enableAlbum: true
-          };
-          try {
-            scanBarcode.startScanForResult(XContext.getAbilityContext(), options)
-              .then((result: scanBarcode.ScanResult) => {
-
-              })
-              .catch((error: BusinessError) => {
-                console.log(`Liquid:${error}`)
-              });
-          } catch (error) {
-            console.log(`Liquid:${error}`)
-
-          }
-        })
-        .visibility(__Home__.inSearchMode ? Visibility.None : Visibility.Visible)
 
         Search()
           .attributeModifier(backgroundBlurModifier)
