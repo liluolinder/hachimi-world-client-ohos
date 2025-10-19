@@ -38,6 +38,7 @@ export class musicPlayer {
           this.currentTime = this.avPlayer?.currentTime! // 播放的时间进度
           this.durationTime = this.avPlayer?.duration! //  歌曲总共时间
           backgroundRunningManager.startBackgroundRunning()
+          this.avSessionController?.setAVMetadata();
           this.isPlaying = false
           this.Play()
           break;
@@ -74,7 +75,6 @@ export class musicPlayer {
     this.avPlayer = await media.createAVPlayer()
     this.setAVPlayerCallback()
     this.avPlayer.url = url
-    this.avSessionController?.setAVMetadata();
   }
 
   SetSpeed(speed: number): void {

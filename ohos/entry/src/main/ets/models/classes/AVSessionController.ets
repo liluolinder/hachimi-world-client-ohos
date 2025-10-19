@@ -38,8 +38,8 @@ export class AVSessionController {
     this.AVSession.on('playNext', this.onPlayNext);
     this.AVSession.on('playPrevious', this.onPlayPrevious);
     this.AVSession.on('seek', this.onSeek);
-    this.AVSession.on('setLoopMode', this.onSetLoopMode);
-    this.AVSession.on('toggleFavorite', this.onToggleFavorite);
+    //this.AVSession.on('setLoopMode', this.onSetLoopMode);
+    //this.AVSession.on('toggleFavorite', this.onToggleFavorite);
   }
 
   async unregisterSessionListener() {
@@ -50,9 +50,9 @@ export class AVSessionController {
     this.AVSession.off('pause');
     this.AVSession.off('playNext');
     this.AVSession.off('playPrevious');
-    this.AVSession.off('setLoopMode');
+    //this.AVSession.off('setLoopMode');
     this.AVSession.off('seek');
-    this.AVSession.off('toggleFavorite');
+    //this.AVSession.off('toggleFavorite');
   }
 
   private setLaunchAbility() {
