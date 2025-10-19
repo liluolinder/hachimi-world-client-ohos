@@ -5,10 +5,11 @@ import { __Client__ } from "../../../main/ets/models/classes/hachimi"
 import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
 import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
 import { text } from "@kit.ArkGraphics2D"
+import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
 
 
 @ObservedV2
-export class HomeData{
+export class HomeData {
   @Trace inSearchMode: boolean = false
 }
 
@@ -18,7 +19,7 @@ export const __Home__ = new HomeData()
 export struct Home {
   @Local ColumnNumber: number = -1
   @Local canGetMore: boolean = true
-  @Local showType:number = 0  //0为最新歌曲 , 1为搜索
+  @Local showType: number = 0 //0为最新歌曲 , 1为搜索
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
@@ -34,7 +35,7 @@ export struct Home {
             })
             if (value != '') {
               this.showType = 1
-              __Client__.searchSong(value,true)
+              __Client__.searchSong(value, true)
             }
           })
           .onChange((value: string) => {
@@ -60,14 +61,19 @@ export struct Home {
       List({ space: 10 }) {
         if (this.showType == 0) {
           LazyForEach(__Client__.recentSongArray, (item: I_GetRecentSongRes_data_song, index: number) => {
-            HomeCover({ data: item,type: 0 })
+            HomeCover({ data: item, type: 0 })
               .onClick(async () => {
                 __Play__.playNow = item
+
+                __musicPlayer__.init(item.audio_url)
+                __musicPlayer__.Play()
+
+
               })
           }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
-        }else {
+        } else {
           LazyForEach(__Client__.searchSongArray, (item: I_SearchSongRes_data_hit, index: number) => {
-            HomeCover({ data: item, type:1})
+            HomeCover({ data: item, type: 1 })
           }, (item: I_SearchSongRes_data_hit) => JSON.stringify(item))
         }
       }
@@ -84,25 +90,24 @@ export struct Home {
       .layoutWeight(1)
       .cachedCount(this.ColumnNumber * 10)
       .edgeEffect(EdgeEffect.Spring)
-      .blur(__Home__.inSearchMode? 50: 0)
+      .blur(__Home__.inSearchMode ? 50 : 0)
 
-      Column(){
-        Column({space:10}){
-          if (__Play__.playNow == undefined)
-          {
+      Column() {
+        Column({ space: 10 }) {
+          if (__Play__.playNow == undefined) {
             Text('暂未播放')
               .layoutWeight(1)
               .fontSize(26)
               .fontWeight(FontWeight.Bold)
               .textAlign(TextAlign.Center)
-          }else {
-            Row(){
+          } else {
+            Row() {
               Image(__Play__.playNow.cover_url)
-                .size({width:65, height:65})
+                .size({ width: 65, height: 65 })
                 .borderRadius(16)
 
 
-              Column(){
+              Column() {
                 Text(__Play__.playNow.title)
                   .width('100%')
                   .textAlign(TextAlign.Center)
@@ -115,25 +120,26 @@ export struct Home {
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.MARQUEE })
 
-              } .layoutWeight(1)
+              }.layoutWeight(1)
 
-              Row({space:10}){
-                Button({type:ButtonType.ROUNDED_RECTANGLE})
-                {
-                    SymbolGlyph($r('sys.symbol.backward_end_fill'))
-                      .fontSize(36)
-                }
-                .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
-
-                Button({type:ButtonType.ROUNDED_RECTANGLE})
-                {
-                  SymbolGlyph($r('sys.symbol.pause'))
+              Row({ space: 10 }) {
+                Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
+                  SymbolGlyph($r('sys.symbol.backward_end_fill'))
                     .fontSize(36)
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
 
-                Button({type:ButtonType.ROUNDED_RECTANGLE})
-                {
+                Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
+                  SymbolGlyph(__musicPlayer__.isPlaying ? $r('sys.symbol.pause') : $r('sys.symbol.play_fill'))
+                    .fontSize(36)
+                }
+                .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+                .onClick(()=>{
+                  __musicPlayer__.isPlaying ? __musicPlayer__.Pause() : __musicPlayer__.Play()
+
+                })
+
+                Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph($r('sys.symbol.forward_end_fill'))
                     .fontSize(36)
                 }
@@ -141,19 +147,19 @@ export struct Home {
 
               }
 
-            }  .size({width:'100%', height:'100%'})
+            }.size({ width: '100%', height: '100%' })
             .padding(8)
             .justifyContent(FlexAlign.SpaceBetween)
           }
         }
-        .size({width:'100%', height:78})
+        .size({ width: '100%', height: 78 })
         .borderRadius(20)
         .backgroundColor($r('app.color.start_window_background_blur'))
         .backdropBlur(100)
         .useEffect(true)
-      }.position({bottom:40})
-      .size({width:'100%', height:78})
-      .padding({left:8, right:8})
+      }.position({ bottom: 40 })
+      .size({ width: '100%', height: 78 })
+      .padding({ left: 8, right: 8 })
 
 
       if (__Home__.inSearchMode) {
@@ -167,7 +173,6 @@ export struct Home {
       }
 
 
-
     }
     .size({ width: '100%', height: '100%' })
 
@@ -176,7 +181,7 @@ export struct Home {
 
 @ComponentV2
 export struct HomeCover {
-  @Param @Require type:number
+  @Param @Require type: number
   @Param @Require data: I_GetRecentSongRes_data_song | I_SearchSongRes_data_hit
   @Param defaultImg: ResourceStr = $r('app.media.layered_image')
   @Param imageFit: ImageFit = ImageFit.Cover
@@ -187,45 +192,60 @@ export struct HomeCover {
       Column() {
         RelativeContainer() {
           Stack() {
-            Image((this.type == 0 ?(this.data as I_GetRecentSongRes_data_song).cover_url :(this.data as I_SearchSongRes_data_hit).cover_art_url) ?? this.defaultImg)
+            Image((this.type == 0 ? (this.data as I_GetRecentSongRes_data_song).cover_url :
+              (this.data as I_SearchSongRes_data_hit).cover_art_url) ?? this.defaultImg)
               .transition(TransitionEffect.OPACITY)
               .objectFit(this.imageFit)
               .onComplete((res) => {
                 this.isFinish = true
               })
-            if(!this.isFinish){
+            if (!this.isFinish) {
               Image(this.defaultImg)
-                .transition(TransitionEffect.OPACITY.animation({duration: 150, curve: Curve.Ease}))
+                .transition(TransitionEffect.OPACITY.animation({ duration: 150, curve: Curve.Ease }))
                 .objectFit(ImageFit.Cover)
             }
           }.width('100%').enabled(false).aspectRatio(3 / 2)
 
 
-          Text(StringFormat.formatSeconds(this.data.duration_seconds)).fontSize(12).fontColor(Color.White)
+          Text(StringFormat.formatSeconds(this.data.duration_seconds))
+            .fontSize(12)
+            .fontColor(Color.White)
             .backgroundColor('#40000000')
             .alignRules({
               bottom: { anchor: "__container__", align: VerticalAlign.Bottom },
               right: { anchor: "__container__", align: HorizontalAlign.End }
             })
-            .padding({ left: 5, right: 5, top: 3, bottom: 3 })
+            .padding({
+              left: 5,
+              right: 5,
+              top: 3,
+              bottom: 3
+            })
             .borderRadius({ topLeft: 5 })
 
-          Text(){
+          Text() {
             SymbolSpan($r('sys.symbol.eye')).fontColor([Color.White])
             Span(' ')
             Span(StringFormat.formatNumber(this.data.play_count ?? 0))
-          }.fontSize(12).fontColor(Color.White)
+          }
+          .fontSize(12)
+          .fontColor(Color.White)
           .backgroundColor('#40000000')
           .alignRules({
             bottom: { anchor: "__container__", align: VerticalAlign.Bottom },
             left: { anchor: "__container__", align: HorizontalAlign.Start }
           })
-          .padding({ left: 5, right: 5, top: 3, bottom: 3 })
+          .padding({
+            left: 5,
+            right: 5,
+            top: 3,
+            bottom: 3
+          })
           .borderRadius({ topRight: 5 })
         }.aspectRatio(3 / 2)
 
         Column({ space: 10 }) {
-          Column(){
+          Column() {
             Text(this.data.title)
               .fontSize(15)
               .maxLines(2)
@@ -235,31 +255,34 @@ export struct HomeCover {
           }.height(32)
 
 
-          Flex({justifyContent: FlexAlign.SpaceBetween, space: {main: {value: 5, unit: undefined}}}) {
+          Flex({ justifyContent: FlexAlign.SpaceBetween, space: { main: { value: 5, unit: undefined } } }) {
 
-            Row({space: 5}){
+            Row({ space: 5 }) {
 
               Text(this.data.uploader_name)
                 .fontSize(12)
                 .maxLines(1)
                 .layoutWeight(1)
                 .opacity(0.8)
-                .textOverflow({overflow: TextOverflow.Ellipsis})
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
             }
 
           }.width('100%')
 
-
-
         }.width('100%')
-        .padding({top: 8, bottom: 8, left: 10, right: 10})
+        .padding({
+          top: 8,
+          bottom: 8,
+          left: 10,
+          right: 10
+        })
         .alignItems(HorizontalAlign.Start)
 
       }.alignItems(HorizontalAlign.Start)
     }
     .attributeModifier(backgroundBlurModifier)
 
-    .transition(TransitionEffect.OPACITY.animation({duration: 150, curve: Curve.Ease}))
+    .transition(TransitionEffect.OPACITY.animation({ duration: 150, curve: Curve.Ease }))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
     .width('100%')
     .clip(true)

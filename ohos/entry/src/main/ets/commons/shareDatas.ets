@@ -3,6 +3,7 @@ import { ConfigurationConstant } from "@kit.AbilityKit"
 import { XAnimation } from "commonpackage"
 import { __CustomBackgroundData__ } from "../../../productDefault/components/CustomBackground"
 import { I_GetRecentSongRes_data_song } from "../models/interfaces/I_GetRecentSong"
+import { musicPlayer } from "../models/classes/musicPlayer"
 
 export const min_width: number = 700
 

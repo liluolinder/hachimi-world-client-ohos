@@ -5,6 +5,7 @@ import { XContext, XPreferencesManager } from 'commonpackage';
 import { initPreferences } from '../models/utils/initPreferences';
 import WindowsUtil from '../models/classes/WindowsUtil';
 import { __System__ } from '../commons/shareDatas';
+import { __musicPlayer__ } from '../models/classes/musicPlayer';
 
 const DOMAIN = 0x0000;
 
