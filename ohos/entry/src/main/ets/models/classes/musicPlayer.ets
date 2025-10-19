@@ -1,6 +1,7 @@
 import { media } from "@kit.MediaKit";
 import { BusinessError } from "@kit.BasicServicesKit";
-import { audio } from "@kit.AudioKit";
+import { backgroundRunningManager } from "./BackgroundRunningManager";
+import { AVSessionController } from "./AVSessionController";
 
 @ObservedV2
 export class musicPlayer {
@@ -8,10 +9,10 @@ export class musicPlayer {
   @Trace durationTime: number = 0
   @Trace currentTime: number = 0
   @Trace isPlaying: boolean = false
-
+  private avSessionController: AVSessionController = new AVSessionController()
   @Monitor('isPlaying')
   startOrStopContinuesTasks(){
-    //this.isPlaying?startContinuousTask():stopContinuousTask()
+    this.avSessionController?.setPlayState(this.isPlaying)
   }
 
   setAVPlayerCallback() {
@@ -36,6 +37,7 @@ export class musicPlayer {
         case 'prepared': // prepare调用成功后上报该状态机
           this.currentTime = this.avPlayer?.currentTime! // 播放的时间进度
           this.durationTime = this.avPlayer?.duration! //  歌曲总共时间
+          backgroundRunningManager.startBackgroundRunning()
           this.isPlaying = false
           this.Play()
           break;
@@ -52,14 +54,18 @@ export class musicPlayer {
           break;
         case 'released':
           this.isPlaying = false
+          backgroundRunningManager.stopBackgroundRunning()
           break;
       }
     })
     this.avPlayer.on('durationUpdate', (duration: number) => {
       this.durationTime = duration
+      console.log('duration'+duration.toString())
     });
     this.avPlayer.on('timeUpdate', (time:number) => {
      this.currentTime = time
+      console.log(time.toString())
+      this.avSessionController?.setProgressState(time)
     });
   }
 
@@ -68,6 +74,7 @@ export class musicPlayer {
     this.avPlayer = await media.createAVPlayer()
     this.setAVPlayerCallback()
     this.avPlayer.url = url
+    this.avSessionController?.setAVMetadata();
   }
 
   SetSpeed(speed: number): void {

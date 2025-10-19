@@ -6,13 +6,13 @@ import { DecorBar } from '../../../productDefault/components/DecorBar';
 import { Body } from '../../../productDefault/pages/index/Body';
 import { SideBar } from '../../../productDefault/pages/index/SideBar';
 import { __Client__ } from '../models/classes/hachimi';
+import { AVSessionController } from '../models/classes/AVSessionController';
 
 @Entry
 @ComponentV2
 struct Index {
     @Provider('tabController') tabController: TabsController = new TabsController()
     @Provider('currentTabIndex') currentTabIndex: number = XPreferencesManager.getPreferencesValue("pilipala", "currentTabIndex", 0) as number
-
     async aboutToAppear(): Promise<void> {
        __Client__.getRecentSong()
     }
