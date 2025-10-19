@@ -109,13 +109,11 @@ export struct Home {
 
               Column() {
                 Text(__Play__.playNow.title)
-                  .width('100%')
                   .textAlign(TextAlign.Center)
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.MARQUEE })
                   .fontWeight(FontWeight.Medium)
                 Text(__Play__.playNow.uploader_name)
-                  .width('100%')
                   .textAlign(TextAlign.Center)
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.MARQUEE })

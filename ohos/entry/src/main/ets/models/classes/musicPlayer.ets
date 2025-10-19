@@ -1,7 +1,6 @@
 import { media } from "@kit.MediaKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { audio } from "@kit.AudioKit";
-import { startContinuousTask, stopContinuousTask } from "../utils/requestForLongTasks";
 
 @ObservedV2
 export class musicPlayer {
@@ -12,7 +11,7 @@ export class musicPlayer {
 
   @Monitor('isPlaying')
   startOrStopContinuesTasks(){
-    this.isPlaying?startContinuousTask():stopContinuousTask()
+    //this.isPlaying?startContinuousTask():stopContinuousTask()
   }
 
   setAVPlayerCallback() {
