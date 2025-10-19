@@ -1,4 +1,6 @@
-import { common } from "@kit.AbilityKit";
+import { bundleManager, common, Want } from "@kit.AbilityKit";
+import { BusinessError } from "@kit.BasicServicesKit";
+import { WindowMode } from "@ohos.UiTest";
 
 export class XContext {
     private static UIAbilityContext: common.UIAbilityContext
@@ -55,6 +57,16 @@ export class XContext {
 
     public static getPromptAction() {
         return XContext.UIContext.getPromptAction();
+    }
+
+    public static startAbility(want:Want){
+        XContext.getAbilityContext().startAbility(want)
+            .then(() => {
+                console.error('Start browsableAbility successfully.');
+            })
+            .catch((err: BusinessError) => {
+                console.error(`Failed to startAbility. Code: ${err.code}, message: ${err.message}`);
+            });
     }
 
     public static toast(msg: ResourceStr, duration: number = 1500) {

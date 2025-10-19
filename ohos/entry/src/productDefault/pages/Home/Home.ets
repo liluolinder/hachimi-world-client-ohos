@@ -1,12 +1,10 @@
-import { scanBarcode, scanCore } from "@kit.ScanKit"
-import { BusinessError } from "@kit.BasicServicesKit"
 import { StringFormat, XAnimation, XContext } from "commonpackage"
-import { __System__, __UI__ } from "../../../main/ets/commons/shareDatas"
+import { __Play__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas"
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect"
 import { __Client__ } from "../../../main/ets/models/classes/hachimi"
 import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
 import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
-import { ArcList } from "@ohos.arkui.ArcList"
+import { text } from "@kit.ArkGraphics2D"
 
 
 @ObservedV2
@@ -63,6 +61,9 @@ export struct Home {
         if (this.showType == 0) {
           LazyForEach(__Client__.recentSongArray, (item: I_GetRecentSongRes_data_song, index: number) => {
             HomeCover({ data: item,type: 0 })
+              .onClick(async () => {
+                __Play__.playNow = item
+              })
           }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
         }else {
           LazyForEach(__Client__.searchSongArray, (item: I_SearchSongRes_data_hit, index: number) => {
@@ -73,7 +74,7 @@ export struct Home {
       .padding({ left: 16, right: 16 })
       .scrollBar(BarState.Off)
       .contentStartOffset(__System__.topRectHeight + 70)
-      .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
+      .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 118)
       .onAreaChange((_, newValue) => {
         XAnimation.runWithAnimation(() => {
           this.ColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 300), 2)
@@ -85,6 +86,76 @@ export struct Home {
       .edgeEffect(EdgeEffect.Spring)
       .blur(__Home__.inSearchMode? 50: 0)
 
+      Column(){
+        Column({space:10}){
+          if (__Play__.playNow == undefined)
+          {
+            Text('暂未播放')
+              .layoutWeight(1)
+              .fontSize(26)
+              .fontWeight(FontWeight.Bold)
+              .textAlign(TextAlign.Center)
+          }else {
+            Row(){
+              Image(__Play__.playNow.cover_url)
+                .size({width:65, height:65})
+                .borderRadius(16)
+
+
+              Column(){
+                Text(__Play__.playNow.title)
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.MARQUEE })
+                  .fontWeight(FontWeight.Medium)
+                Text(__Play__.playNow.uploader_name)
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.MARQUEE })
+
+              } .layoutWeight(1)
+
+              Row({space:10}){
+                Button({type:ButtonType.ROUNDED_RECTANGLE})
+                {
+                    SymbolGlyph($r('sys.symbol.backward_end_fill'))
+                      .fontSize(36)
+                }
+                .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+
+                Button({type:ButtonType.ROUNDED_RECTANGLE})
+                {
+                  SymbolGlyph($r('sys.symbol.pause'))
+                    .fontSize(36)
+                }
+                .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+
+                Button({type:ButtonType.ROUNDED_RECTANGLE})
+                {
+                  SymbolGlyph($r('sys.symbol.forward_end_fill'))
+                    .fontSize(36)
+                }
+                .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+
+              }
+
+            }  .size({width:'100%', height:'100%'})
+            .padding(8)
+            .justifyContent(FlexAlign.SpaceBetween)
+          }
+        }
+        .size({width:'100%', height:78})
+        .borderRadius(20)
+        .backgroundColor($r('app.color.start_window_background_blur'))
+        .backdropBlur(100)
+        .useEffect(true)
+      }.position({bottom:40})
+      .size({width:'100%', height:78})
+      .padding({left:8, right:8})
+
+
       if (__Home__.inSearchMode) {
         Column()
           .size({ width: '100%', height: '100%' })
@@ -94,6 +165,8 @@ export struct Home {
             })
           })
       }
+
+
 
     }
     .size({ width: '100%', height: '100%' })
@@ -165,9 +238,6 @@ export struct HomeCover {
           Flex({justifyContent: FlexAlign.SpaceBetween, space: {main: {value: 5, unit: undefined}}}) {
 
             Row({space: 5}){
-            /*  Image(this.data.)
-                .size({ width: 15, height: 15 })
-                .borderRadius(1000)*/
 
               Text(this.data.uploader_name)
                 .fontSize(12)
@@ -188,9 +258,7 @@ export struct HomeCover {
       }.alignItems(HorizontalAlign.Start)
     }
     .attributeModifier(backgroundBlurModifier)
-    .onClick(async () => {
 
-    })
     .transition(TransitionEffect.OPACITY.animation({duration: 150, curve: Curve.Ease}))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
     .width('100%')

@@ -2,12 +2,14 @@ import { http } from "@kit.NetworkKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { JSON } from "@kit.ArkTS";
 import { I_GetRecentSongRes, I_GetRecentSongRes_data_song } from "../interfaces/I_GetRecentSong";
-import { BasicDataSource } from "commonpackage";
+import { BasicDataSource, XPreferencesManager } from "commonpackage";
 import { USER_AGENT } from "../../commons/commonItem";
 import { I_SearchSongRes, I_SearchSongRes_data_hit } from "../interfaces/I_SearchSong";
-import { __User__ } from "../../commons/shareDatas";
+import { __System__, __User__ } from "../../commons/shareDatas";
 import { I_UpdateHistoryRes } from "../interfaces/I_UpdateHistory";
 import { I_GenerateCaptchaRes, I_GenerateCaptchaRes_data } from "../interfaces/I_GenerateCaptcha";
+import { I_LoginRes, I_LoginRes_data, I_LoginRes_dataError } from "../interfaces/I_Login";
+import { I_GetProfileRes } from "../interfaces/I_GetProfile";
 
 
 @ObservedV2
@@ -16,7 +18,7 @@ export class hachimi {
     new BasicDataSource<I_GetRecentSongRes_data_song>()
   @Trace searchSongArray: BasicDataSource<I_SearchSongRes_data_hit> = new BasicDataSource<I_SearchSongRes_data_hit>()
 
-  async generateCaptcha():Promise<I_GenerateCaptchaRes_data|undefined>{
+  async generateCaptcha(): Promise<I_GenerateCaptchaRes_data | undefined> {
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/auth/captcha/generate`, {
       method: http.RequestMethod.GET,
@@ -30,6 +32,76 @@ export class hachimi {
       let res: I_GenerateCaptchaRes = result as I_GenerateCaptchaRes
       if (res.ok) {
         return res.data
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async login(email: string, password: string, captcha_key: string): Promise<string | undefined> {
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/auth/login/email`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+      },
+      extraData: {
+        'email': email,
+        'password': password,
+        'captcha_key': captcha_key,
+        'device_info': 'OHOS Client',
+        'code': null
+      }
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_LoginRes = result as I_LoginRes
+      console.log(JSON.stringify(res))
+      if (res.ok) {
+        __User__.isLogin = true
+        __User__.access_token = (res.data as I_LoginRes_data).token.access_token
+        __User__.refresh_token = (res.data as I_LoginRes_data).token.refresh_token
+        __User__.uid = (res.data as I_LoginRes_data).uid
+        __User__.username = (res.data as I_LoginRes_data).username
+        XPreferencesManager.putPreferencesValue("hachimi", "isLogin", true)
+        XPreferencesManager.putPreferencesValue("hachimi", "refresh_token", __User__.refresh_token)
+        XPreferencesManager.putPreferencesValue("hachimi", "access_token", __User__.access_token)
+        XPreferencesManager.putPreferencesValue("hachimi", "uid", __User__.uid)
+        XPreferencesManager.putPreferencesValue("hachimi", "username", __User__.username)
+        return 'ok'
+      } else {
+        return (res.data as I_LoginRes_dataError).msg
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async getProfile(uid:number){
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/user/profile?uid=${uid}`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetProfileRes = result as I_GetProfileRes
+      if (res.ok) {
+        return 'ok'
       } else {
         return undefined
       }
@@ -74,7 +146,7 @@ export class hachimi {
       });
   }
 
-  async searchSong(songName: string, needClear:boolean = false): Promise<undefined | number> {
+  async searchSong(songName: string, needClear: boolean = false): Promise<undefined | number> {
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/song/search?q=${encodeURI(songName)}`, {
       method: http.RequestMethod.GET,
@@ -107,19 +179,19 @@ export class hachimi {
       });
   }
 
-  async updateHistory(songID:number): Promise<undefined | boolean> {
+  async updateHistory(songID: number): Promise<undefined | boolean> {
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/play_history/touch`, {
       method: http.RequestMethod.POST,
       header: {
         'sec-ch-ua-platform': '"Windows"',
         'user-agent': USER_AGENT,
-        'authorization':__User__.authorization,
-        'origin':'https://hachimi.world',
-        'referer':'https://hachimi.world'
+        'authorization': __User__.access_token,
+        'origin': 'https://hachimi.world',
+        'referer': 'https://hachimi.world'
       },
-      extraData:{
-        'song_id':songID
+      extraData: {
+        'song_id': songID
       }
     }).then(async (data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))
@@ -134,7 +206,6 @@ export class hachimi {
         req.destroy();
       });
   }
-
 }
 
 export let __Client__: hachimi = new hachimi()

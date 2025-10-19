@@ -12,7 +12,8 @@ import { personalSheetBuilder } from "./personalSheet/personalSheet";
 export struct SideBar {
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('currentTabIndex') currentTabIndex: number = 0
-  @Local showLoginOrUserInfo: boolean = false
+  @Provider('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
+
   pageArray: I_PageInfo[] = [
     { name: '主页', symbol: $r('sys.symbol.house') },
     { name: '最近点赞', symbol: $r('sys.symbol.heart') },
@@ -38,8 +39,16 @@ export struct SideBar {
             if (__UI__.isLargeSidebar) {
               if (__User__.isLogin) {
                 Column({ space: 2 }) {
-
+                  Text(__User__.username)
+                    .fontWeight(FontWeight.Bold)
+                    .fontSize(20)
+                    .textAlign(TextAlign.Center)
+                    .maxLines(1)
+                    .textOverflow({ overflow: TextOverflow.MARQUEE })
+                    .layoutWeight(1)
                 }.alignItems(HorizontalAlign.Start)
+                .height(24)
+                .layoutWeight(1)
                 .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ x: -100 })))
               } else {
                 Text('请先登录')
@@ -56,14 +65,18 @@ export struct SideBar {
           .borderRadius(20)
           .padding(__UI__.isLargeSidebar ? 12 : 0)
           .width('100%')
+          .height(100)
           .onClick(() => {
-            this.showLoginOrUserInfo = true
+            if (!__User__.isLogin) {
+              this.showLoginOrUserInfo = true
+            }
           })
            .bindSheet($$this.showLoginOrUserInfo, personalSheetBuilder(), {
                height: SheetSize.LARGE,
                preferType: SheetType.CENTER,
                title: { title: '登录' }
            })
+
 
 
           Column({ space: __UI__.isLargeSidebar ? 0 : 10 }) {

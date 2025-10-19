@@ -14,7 +14,7 @@ struct Index {
     @Provider('currentTabIndex') currentTabIndex: number = XPreferencesManager.getPreferencesValue("pilipala", "currentTabIndex", 0) as number
 
     async aboutToAppear(): Promise<void> {
-        __Client__.getRecentSong()
+       __Client__.getRecentSong()
     }
 
     onBackPress(): boolean | void {
