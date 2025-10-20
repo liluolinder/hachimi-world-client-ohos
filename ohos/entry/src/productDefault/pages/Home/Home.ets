@@ -6,7 +6,6 @@ import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interface
 import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
 import { text } from "@kit.ArkGraphics2D"
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
-import { backgroundRunningManager } from "../../../main/ets/models/classes/BackgroundRunningManager"
 
 
 @ObservedV2
@@ -68,8 +67,6 @@ export struct Home {
 
                 __musicPlayer__.init(item.audio_url)
                 __musicPlayer__.Play()
-                backgroundRunningManager.startBackgroundRunning()
-
 
               })
           }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))

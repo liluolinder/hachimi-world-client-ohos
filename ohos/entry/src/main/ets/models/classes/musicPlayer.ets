@@ -1,7 +1,7 @@
 import { media } from "@kit.MediaKit";
 import { BusinessError } from "@kit.BasicServicesKit";
-import { backgroundRunningManager } from "./BackgroundRunningManager";
 import { AVSessionController } from "./AVSessionController";
+import { BackgroundUtil } from "./BackgroundRunningManager";
 
 @ObservedV2
 export class musicPlayer {
@@ -37,7 +37,6 @@ export class musicPlayer {
         case 'prepared': // prepare调用成功后上报该状态机
           this.currentTime = this.avPlayer?.currentTime! // 播放的时间进度
           this.durationTime = this.avPlayer?.duration! //  歌曲总共时间
-          backgroundRunningManager.startBackgroundRunning()
           this.avSessionController?.setAVMetadata();
           this.isPlaying = false
           this.Play()
@@ -55,7 +54,6 @@ export class musicPlayer {
           break;
         case 'released':
           this.isPlaying = false
-          backgroundRunningManager.stopBackgroundRunning()
           break;
       }
     })
@@ -114,6 +112,7 @@ export class musicPlayer {
 
   Play() {
     if (this.avPlayer) {
+      BackgroundUtil.startContinuousTask()
       this.avPlayer.play().then(() => {
         console.info('Succeeded in playing');
       }, (err: BusinessError) => {
@@ -149,6 +148,7 @@ export class musicPlayer {
           console.info('Succeeded in releasing');
         }
       });
+      BackgroundUtil.stopContinuousTask()
     }
   }
 
