@@ -1,5 +1,5 @@
 import { XAnimation, XContext, XPreferencesManager } from 'commonpackage';
-import { min_split_width, min_width, __System__, __UI__, __User__ } from '../commons/shareDatas';
+import { __System__, __UI__, __User__ } from '../commons/shareDatas';
 
 import { CustomBackground } from '../../../productDefault/components/CustomBackground';
 import { DecorBar } from '../../../productDefault/components/DecorBar';
@@ -7,6 +7,7 @@ import { Body } from '../../../productDefault/pages/index/Body';
 import { SideBar } from '../../../productDefault/pages/index/SideBar';
 import { __Client__ } from '../models/classes/hachimi';
 import { AVSessionController } from '../models/classes/AVSessionController';
+import { min_width } from '../commons/commonItem';
 
 @Entry
 @ComponentV2

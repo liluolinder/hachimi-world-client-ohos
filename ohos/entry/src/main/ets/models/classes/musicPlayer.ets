@@ -93,6 +93,8 @@ export class musicPlayer {
   }
 
   async init(url: string) {
+    this.durationTime = 0
+    this.currentTime = 0
     this.Release()
     this.avPlayer = await media.createAVPlayer()
     this.setAVPlayerCallback()

@@ -130,6 +130,7 @@ export struct Home {
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph($r('sys.symbol.backward_end_fill'))
                     .fontSize(36)
+                    .fontColor([$r('sys.color.font')])
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
                 .onClick(()=>{
@@ -139,6 +140,7 @@ export struct Home {
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph(__musicPlayer__.isPlaying ? $r('sys.symbol.pause') : $r('sys.symbol.play_fill'))
                     .fontSize(36)
+                    .fontColor([$r('sys.color.font')])
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
                 .onClick(()=>{
@@ -148,6 +150,7 @@ export struct Home {
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph($r('sys.symbol.forward_end_fill'))
                     .fontSize(36)
+                    .fontColor([$r('sys.color.font')])
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
                 .onClick(()=>{

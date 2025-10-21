@@ -2,11 +2,12 @@ import { ListItemWithArrow } from "../../components/ListItemWithArrow"
 import { XAnimation } from "commonpackage";
 import { ImageModifier } from "@ohos.arkui.modifier";
 import { __CustomBackgroundData__ } from "../../components/CustomBackground";
-import { min_width, __SettingsUIData__, __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas";
+import {  __SettingsUIData__, __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas";
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect";
 import { LengthUnit } from "@kit.ArkUI";
 import { I_PageInfo } from "../../../main/ets/models/interfaces/I_PageInfo";
 import { personalSheetBuilder } from "./personalSheet/personalSheet";
+import { min_width } from "../../../main/ets/commons/commonItem";
 
 @ComponentV2
 export struct SideBar {

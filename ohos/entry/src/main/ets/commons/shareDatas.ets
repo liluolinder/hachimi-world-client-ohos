@@ -6,12 +6,8 @@ import { I_GetRecentSongRes_data_song } from "../models/interfaces/I_GetRecentSo
 import { musicPlayer, __musicPlayer__ } from "../models/classes/musicPlayer"
 import { AVSessionController } from "../models/classes/AVSessionController"
 import { __Client__ } from "../models/classes/hachimi"
+import { min_split_width, min_width } from "./commonItem"
 
-export const min_width: number = 700
-
-export const min_split_width: number = 1100
-
-export const min_player_landscape_width: number = 900
 
 @ObservedV2
 export class SysShareData {
@@ -28,6 +24,7 @@ export class SysShareData {
 
   @Monitor('windowWidth')
   changeSideBarWidthByBreakPoint() {
+    console.log(this.windowWidth.toString())
     XAnimation.runWithAnimation(() => {
       __UI__.isSplitLayout = __System__.windowWidth > min_split_width
       __UI__.indexNavigationMode = __System__.windowWidth < min_split_width ? NavigationMode.Stack :

@@ -1,5 +1,6 @@
 import { XAnimation, XPreferencesManager } from "commonpackage";
-import { min_width, __SettingsUIData__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas";
+import { min_width } from "../../../main/ets/commons/commonItem";
+import {  __SettingsUIData__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas";
 import { Home } from "../Home/Home";
 
 import { settingsPageBuilder } from "../settings/SettingsMainPage";
