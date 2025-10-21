@@ -1,5 +1,5 @@
 import { StringFormat, XAnimation, XContext } from "commonpackage"
-import { __Play__, __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas"
+import { __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas"
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect"
 import { __Client__ } from "../../../main/ets/models/classes/hachimi"
 import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
@@ -73,8 +73,8 @@ export struct Home {
           LazyForEach(__Client__.recentSongArray, (item: I_GetRecentSongRes_data_song, index: number) => {
             HomeCover({ data: item, type: 0 })
               .onClick(async () => {
-                __Play__.playList = __Client__.recentSongArray.dataArray
-                __Play__.playIndex = index
+                __musicPlayer__.playList = __Client__.recentSongArray.dataArray
+                __musicPlayer__.playIndex = index
               })
           }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
         } else {
@@ -100,7 +100,7 @@ export struct Home {
 
       Column() {
         Column({ space: 10 }) {
-          if (__Play__.playNow == undefined) {
+          if (__musicPlayer__.playNow == undefined) {
             Text('暂未播放')
               .layoutWeight(1)
               .fontSize(26)
@@ -108,18 +108,18 @@ export struct Home {
               .textAlign(TextAlign.Center)
           } else {
             Row() {
-              Image(__Play__.playNow.cover_url)
+              Image(__musicPlayer__.playNow.cover_url)
                 .size({ width: 65, height: 65 })
                 .borderRadius(16)
 
 
               Column() {
-                Text(__Play__.playNow.title)
+                Text(__musicPlayer__.playNow.title)
                   .textAlign(TextAlign.Center)
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.MARQUEE })
                   .fontWeight(FontWeight.Medium)
-                Text(__Play__.playNow.uploader_name)
+                Text(__musicPlayer__.playNow.uploader_name)
                   .textAlign(TextAlign.Center)
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.MARQUEE })

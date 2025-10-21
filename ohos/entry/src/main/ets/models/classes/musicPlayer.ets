@@ -2,7 +2,9 @@ import { media } from "@kit.MediaKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { AVSessionController } from "./AVSessionController";
 import { BackgroundUtil } from "./BackgroundRunningManager";
-import { __Play__ } from "../../commons/shareDatas";
+import {  __User__ } from "../../commons/shareDatas";
+import { I_GetRecentSongRes_data_song } from "../interfaces/I_GetRecentSong";
+import { __Client__ } from "./hachimi";
 
 @ObservedV2
 export class musicPlayer {
@@ -10,7 +12,27 @@ export class musicPlayer {
   @Trace durationTime: number = 0
   @Trace currentTime: number = 0
   @Trace isPlaying: boolean = false
+
+  @Trace playNow?:I_GetRecentSongRes_data_song
+  @Trace playIndex:number = -1
+  @Trace playList:I_GetRecentSongRes_data_song[]=[]
+
   private avSessionController: AVSessionController = new AVSessionController()
+
+  @Monitor('playIndex')
+  changePlayNow(){
+    this.playNow = this.playList[this.playIndex]
+    if (__musicPlayer__) {
+      __musicPlayer__.init( this.playList[this.playIndex].audio_url)
+      __musicPlayer__.Play()
+    }
+    if (__User__.isLogin) {
+      __Client__.updateHistory(this.playList[this.playIndex].id)
+    }else {
+      __Client__.updateHistoryNoLogin(this.playList[this.playIndex].id)
+    }
+  }
+
   @Monitor('isPlaying')
   startOrStopContinuesTasks(){
     this.avSessionController?.setPlayState(this.isPlaying)
@@ -56,15 +78,16 @@ export class musicPlayer {
         case 'released':
           this.isPlaying = false
           break;
+        case 'completed':
+          this.Next()
+          break;
       }
     })
     this.avPlayer.on('durationUpdate', (duration: number) => {
       this.durationTime = duration
-      console.log('duration'+duration.toString())
     });
     this.avPlayer.on('timeUpdate', (time:number) => {
      this.currentTime = time
-      console.log(time.toString())
       this.avSessionController?.setProgressState(time)
     });
   }
@@ -74,6 +97,7 @@ export class musicPlayer {
     this.avPlayer = await media.createAVPlayer()
     this.setAVPlayerCallback()
     this.avPlayer.url = url
+    this.avSessionController?.setAVMetadata();
   }
 
   SetSpeed(speed: number): void {
@@ -166,11 +190,13 @@ export class musicPlayer {
   }
 
   Next(){
-    __Play__.playIndex == __Play__.playList.length -1 ? 0:++__Play__.playIndex
+    console.log(this.playIndex.toString())
+    this.playIndex = this.playIndex == this.playList.length -1 ? 0:this.playIndex+1
+    console.log(this.playIndex.toString())
   }
 
   Last(){
-    __Play__.playIndex == 0 ? __Play__.playList.length -1:--__Play__.playIndex
+    this.playIndex = this.playIndex == 0 ? this.playList.length -1:this.playIndex-1
   }
 
 

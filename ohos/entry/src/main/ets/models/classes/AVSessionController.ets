@@ -2,7 +2,6 @@ import { avSession } from '@kit.AVSessionKit';
 import { common, wantAgent } from '@kit.AbilityKit';
 import { XContext } from 'commonpackage';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { __Play__ } from '../../commons/shareDatas';
 import { __musicPlayer__ } from './musicPlayer';
 
 export class AVSessionController {
@@ -81,10 +80,10 @@ export class AVSessionController {
     try {
       if (this.context) {
         let metadata: avSession.AVMetadata = {
-          assetId: __Play__.playList[__Play__.playIndex].id.toString(),
-          title:  __Play__.playList[__Play__.playIndex]?.title,
-          artist:  __Play__.playList[__Play__.playIndex]?.uploader_name??'',
-          mediaImage:  __Play__.playList[__Play__.playIndex]?.cover_url,
+          assetId: __musicPlayer__.playList[__musicPlayer__.playIndex].id.toString(),
+          title:  __musicPlayer__.playList[__musicPlayer__.playIndex]?.title,
+          artist:  __musicPlayer__.playList[__musicPlayer__.playIndex]?.uploader_name??'',
+          mediaImage:  __musicPlayer__.playList[__musicPlayer__.playIndex]?.cover_url,
           duration: __musicPlayer__.durationTime,
         };
        // let lrc = await MediaTools.getLrcFromRawFile(this.context, this.songList[this.musicIndex].lyric);
@@ -119,6 +118,7 @@ export class AVSessionController {
     }
   }
 
+
   public setPlayState(isPlay: boolean) {
     if (this.AVSession) {
       this.AVSession.setAVPlaybackState({
@@ -142,11 +142,11 @@ export class AVSessionController {
   }
 
   private onPlayNext(){
-
+    __musicPlayer__.Next()
   }
 
   private onPlayPrevious(){
-
+    __musicPlayer__.Last()
   }
   private onSeek: (curMs: number) => void = (curMs: number) => {
     __musicPlayer__.Seek(curMs);

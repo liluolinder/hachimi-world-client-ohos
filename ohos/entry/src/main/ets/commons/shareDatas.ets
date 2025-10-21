@@ -88,24 +88,3 @@ export class PlayerUIData {
 
 export let __PlayerUIData__: PlayerUIData = new PlayerUIData()
 
-@ObservedV2
-export class PlayData {
-  @Trace playNow?:I_GetRecentSongRes_data_song
-  @Trace playIndex:number = -1
-  @Trace playList:I_GetRecentSongRes_data_song[]=[]
-
-  @Monitor('playIndex')
-  changePlayNow(){
-    this.playNow = this.playList[this.playIndex]
-    __musicPlayer__.init( this.playList[this.playIndex].audio_url)
-    __musicPlayer__.Play()
-    if (__User__.isLogin) {
-      __Client__.updateHistory(this.playList[this.playIndex].id)
-    }else {
-      __Client__.updateHistoryNoLogin(this.playList[this.playIndex].id)
-    }
-  }
-
-}
-
-export let __Play__: PlayData = new PlayData()
