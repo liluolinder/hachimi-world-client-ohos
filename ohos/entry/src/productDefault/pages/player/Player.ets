@@ -10,7 +10,7 @@ export struct Player {
 
   @Builder
   songInfo() {
-    RelativeContainer() {
+    Column() {
       Image(__musicPlayer__.playNow?.cover_url ?? $r('app.media.linder'))
         .size({ width: '60%', height: '60%' })
         .aspectRatio(1)
@@ -19,11 +19,7 @@ export struct Player {
           maxHeight: 350
         })
         .borderRadius(20)
-        .alignRules({
-          middle: { anchor: "__container__", align: HorizontalAlign.Center },
-        })
         .margin({ top: this.ImageMarginTop })
-        .id('SongImage')
 
       Column({space:10}) {
         Text(__musicPlayer__.playNow?.title ?? '暂未播放')
@@ -40,12 +36,7 @@ export struct Player {
           .maxLines(1)
 
       }.size({ width: '60%' })
-      .alignRules({
-        middle: { anchor: "__container__", align: HorizontalAlign.Center },
-        top: { anchor: "SongImage", align: VerticalAlign.Bottom }
-      })
       .margin({ top: 20 })
-      .id('SongName')
 
       Row({ space: 10 }) {
         Text(StringFormat.formatMilliseconds(__musicPlayer__.currentTime))
@@ -65,12 +56,7 @@ export struct Player {
         Text(StringFormat.formatMilliseconds(__musicPlayer__.durationTime))
       }
       .width('100%')
-      .id('duration')
       .justifyContent(FlexAlign.Center)
-      .alignRules({
-        middle: { anchor: "__container__", align: HorizontalAlign.Center },
-        top: { anchor: "SongName", align: VerticalAlign.Bottom }
-      })
       .margin({ top: 30 })
 
       Row({ space: 10 }) {
@@ -104,15 +90,13 @@ export struct Player {
           __musicPlayer__.Next()
         })
 
-      }.size({ width: '60%' })
+      }.size({ width: '80%' })
       .justifyContent(FlexAlign.SpaceBetween)
-      .alignRules({
-        middle: { anchor: "__container__", align: HorizontalAlign.Center },
-        top: { anchor: "duration", align: VerticalAlign.Bottom }
-      })
       .margin({ top: 40 })
 
-    }.size({ width: '100%', height: '100%' })
+    }.size({ width: '100%', height: '90%' })
+    .margin({bottom:40})
+    .justifyContent(FlexAlign.SpaceBetween)
     .onAreaChange((_, newArea) => {
       this.ImageMarginTop = (Number(newArea.width) - Number(newArea.width) * 0.6) / 2
     })
