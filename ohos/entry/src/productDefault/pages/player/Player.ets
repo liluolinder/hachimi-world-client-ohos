@@ -25,19 +25,29 @@ export struct Player {
         .margin({ top: this.ImageMarginTop })
         .id('SongImage')
 
-      Text(__musicPlayer__.playNow?.title ?? '暂未播放')
-        .fontWeight(FontWeight.Bolder)
-        .fontSize(24)
-        .textAlign(TextAlign.Center)
-        .size({ width: '60%' })
-        .alignRules({
-          middle: { anchor: "__container__", align: HorizontalAlign.Center },
-          top: { anchor: "SongImage", align: VerticalAlign.Bottom }
-        })
-        .margin({ top: 20 })
-        .id('SongName')
+      Column({space:10}) {
+        Text(__musicPlayer__.playNow?.title ?? '暂未播放')
+          .fontWeight(FontWeight.Bolder)
+          .fontSize(24)
+          .textAlign(TextAlign.Center)
+          .size({ width: '100%' })
+          .maxLines(2)
+        Text(__musicPlayer__.playNow?.uploader_name ?? '')
+          .fontWeight(FontWeight.Normal)
+          .fontSize(16)
+          .textAlign(TextAlign.Center)
+          .size({ width: '100%' })
+          .maxLines(1)
 
-      Row({space:10}) {
+      }.size({ width: '60%' })
+      .alignRules({
+        middle: { anchor: "__container__", align: HorizontalAlign.Center },
+        top: { anchor: "SongImage", align: VerticalAlign.Bottom }
+      })
+      .margin({ top: 20 })
+      .id('SongName')
+
+      Row({ space: 10 }) {
         Text(StringFormat.formatMilliseconds(__musicPlayer__.currentTime))
         Slider({
           value: __musicPlayer__.currentTime,
@@ -94,7 +104,7 @@ export struct Player {
           __musicPlayer__.Next()
         })
 
-      } .size({ width: '60%' })
+      }.size({ width: '60%' })
       .justifyContent(FlexAlign.SpaceBetween)
       .alignRules({
         middle: { anchor: "__container__", align: HorizontalAlign.Center },
