@@ -6,6 +6,11 @@ export interface I_GetRecentSongRes_data{
   songs:I_GetRecentSongRes_data_song[]
 }
 
+export interface I_GetSongDetailRes{
+  data:I_GetRecentSongRes_data_song
+  ok:boolean
+}
+
 export interface I_GetRecentSongRes_data_song{
   id: number    //歌曲编号
   display_id: string  //展示ID

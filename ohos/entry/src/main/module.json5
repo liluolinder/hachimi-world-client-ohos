@@ -26,7 +26,10 @@
         ],
         "startWindowIcon": "$media:icon",
         "startWindowBackground": "$color:start_window_background",
+        "orientation": "auto_rotation_restricted",
         "exported": true,
+        "minWindowHeight": 500,
+        "minWindowWidth": 400,
         "skills": [
           {
             "entities": [

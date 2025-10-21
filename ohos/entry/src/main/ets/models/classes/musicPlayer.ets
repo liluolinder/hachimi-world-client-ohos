@@ -2,6 +2,7 @@ import { media } from "@kit.MediaKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { AVSessionController } from "./AVSessionController";
 import { BackgroundUtil } from "./BackgroundRunningManager";
+import { __Play__ } from "../../commons/shareDatas";
 
 @ObservedV2
 export class musicPlayer {
@@ -163,6 +164,16 @@ export class musicPlayer {
       });
     }
   }
+
+  Next(){
+    __Play__.playIndex == __Play__.playList.length -1 ? 0:++__Play__.playIndex
+  }
+
+  Last(){
+    __Play__.playIndex == 0 ? __Play__.playList.length -1:--__Play__.playIndex
+  }
+
+
 }
 
 export let __musicPlayer__: musicPlayer = new musicPlayer()

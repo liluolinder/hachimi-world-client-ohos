@@ -1,4 +1,5 @@
 export interface I_UpdateHistoryRes{
+  error:string
   ok:boolean
   data:null | I_UpdateHistoryRes_data
 }

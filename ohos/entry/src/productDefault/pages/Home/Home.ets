@@ -1,11 +1,12 @@
 import { StringFormat, XAnimation, XContext } from "commonpackage"
-import { __Play__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas"
+import { __Play__, __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas"
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect"
 import { __Client__ } from "../../../main/ets/models/classes/hachimi"
 import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
 import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
 import { text } from "@kit.ArkGraphics2D"
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
+import { Player } from "../player/Player"
 
 
 @ObservedV2
@@ -17,9 +18,18 @@ export const __Home__ = new HomeData()
 
 @ComponentV2
 export struct Home {
+  @Local isShow: boolean = false
   @Local ColumnNumber: number = -1
   @Local canGetMore: boolean = true
   @Local showType: number = 0 //0为最新歌曲 , 1为搜索
+
+  @Builder
+  PlayerBuilder(){
+    Column(){
+      Player()
+    }.height('100%')
+    .width('100%')
+  }
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
@@ -63,11 +73,8 @@ export struct Home {
           LazyForEach(__Client__.recentSongArray, (item: I_GetRecentSongRes_data_song, index: number) => {
             HomeCover({ data: item, type: 0 })
               .onClick(async () => {
-                __Play__.playNow = item
-
-                __musicPlayer__.init(item.audio_url)
-                __musicPlayer__.Play()
-
+                __Play__.playList = __Client__.recentSongArray.dataArray
+                __Play__.playIndex = index
               })
           }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
         } else {
@@ -125,6 +132,9 @@ export struct Home {
                     .fontSize(36)
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+                .onClick(()=>{
+                    __musicPlayer__.Last()
+                })
 
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph(__musicPlayer__.isPlaying ? $r('sys.symbol.pause') : $r('sys.symbol.play_fill'))
@@ -133,7 +143,6 @@ export struct Home {
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
                 .onClick(()=>{
                   __musicPlayer__.isPlaying ? __musicPlayer__.Pause() : __musicPlayer__.Play()
-
                 })
 
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
@@ -141,6 +150,9 @@ export struct Home {
                     .fontSize(36)
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+                .onClick(()=>{
+                  __musicPlayer__.Next()
+                })
 
               }
 
@@ -157,6 +169,13 @@ export struct Home {
       }.position({ bottom: 40 })
       .size({ width: '100%', height: 78 })
       .padding({ left: 8, right: 8 })
+      .onClick(() => {
+        this.isShow = true;
+      })
+      .bindContentCover($$this.isShow, this.PlayerBuilder(), {
+        modalTransition: ModalTransition.DEFAULT,
+        backgroundColor:$r('sys.color.comp_background_gray')
+      })
 
 
       if (__Home__.inSearchMode) {

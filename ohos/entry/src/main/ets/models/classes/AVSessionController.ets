@@ -81,10 +81,10 @@ export class AVSessionController {
     try {
       if (this.context) {
         let metadata: avSession.AVMetadata = {
-          assetId: '0',
-          title: __Play__.playNow?.title,
-          artist: __Play__.playNow?.uploader_name??'',
-          mediaImage: __Play__.playNow?.cover_url,
+          assetId: __Play__.playList[__Play__.playIndex].id.toString(),
+          title:  __Play__.playList[__Play__.playIndex]?.title,
+          artist:  __Play__.playList[__Play__.playIndex]?.uploader_name??'',
+          mediaImage:  __Play__.playList[__Play__.playIndex]?.cover_url,
           duration: __musicPlayer__.durationTime,
         };
        // let lrc = await MediaTools.getLrcFromRawFile(this.context, this.songList[this.musicIndex].lyric);

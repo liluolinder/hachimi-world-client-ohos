@@ -1,7 +1,7 @@
 import { http } from "@kit.NetworkKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { JSON } from "@kit.ArkTS";
-import { I_GetRecentSongRes, I_GetRecentSongRes_data_song } from "../interfaces/I_GetRecentSong";
+import { I_GetRecentSongRes, I_GetRecentSongRes_data_song, I_GetSongDetailRes } from "../interfaces/I_GetRecentSong";
 import { BasicDataSource, XPreferencesManager } from "commonpackage";
 import { USER_AGENT } from "../../commons/commonItem";
 import { I_SearchSongRes, I_SearchSongRes_data_hit } from "../interfaces/I_SearchSong";
@@ -146,6 +146,33 @@ export class hachimi {
       });
   }
 
+  async getSongDetail(id:string):Promise<undefined | I_GetRecentSongRes_data_song >{
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/song/detail?id=${id}`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetSongDetailRes = result as I_GetSongDetailRes
+      if (res.ok) {
+        return res.data
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
   async searchSong(songName: string, needClear: boolean = false): Promise<undefined | number> {
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/song/search?q=${encodeURI(songName)}`, {
@@ -186,7 +213,7 @@ export class hachimi {
       header: {
         'sec-ch-ua-platform': '"Windows"',
         'user-agent': USER_AGENT,
-        'authorization': __User__.access_token,
+        'authorization': `Bearer ${__User__.access_token}`,
         'origin': 'https://hachimi.world',
         'referer': 'https://hachimi.world'
       },
@@ -197,6 +224,35 @@ export class hachimi {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
       let res: I_UpdateHistoryRes = result as I_UpdateHistoryRes
+      console.log(JSON.stringify(res))
+      return res.ok
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async updateHistoryNoLogin(songID: number): Promise<undefined | boolean> {
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/play_history/touch_anonymous`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+        'origin': 'https://hachimi.world',
+        'referer': 'https://hachimi.world'
+      },
+      extraData: {
+        'song_id': songID
+      }
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_UpdateHistoryRes = result as I_UpdateHistoryRes
+      console.log(JSON.stringify(res))
       return res.ok
     })
       .catch((err: BusinessError) => {

@@ -6,11 +6,6 @@ import { XContext } from 'commonpackage';
 const TAG = 'BackgroundUtil';
 
 export class BackgroundUtil {
-  /**
-   * Start background task.
-   *
-   * @param context
-   */
   public static startContinuousTask(): void {
     if (!XContext.getAbilityContext()) {
       console.error(TAG, 'startContinuousTask failed', `context undefined`);
@@ -42,11 +37,7 @@ export class BackgroundUtil {
     });
   }
 
-  /**
-   * Stop background task.
-   *
-   * @param context
-   */
+
   public static stopContinuousTask(): void {
     try {
       backgroundTaskManager.stopBackgroundRunning(XContext.getAbilityContext()).then(() => {
