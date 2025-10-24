@@ -89,10 +89,16 @@ class WasmPlayer : Player {
                 val uint8array = item.audioBytes.toUByteArray().toUint8Array()
                 val blob = Blob(arrayOf(uint8array as JsAny?).toJsArray(), BlobPropertyBag())
                 val url = URL.createObjectURL(blob)
+
+                val coverUint8Array = item.coverBytes?.toUByteArray()?.toUint8Array()
+                val coverBlob = coverUint8Array?.let { Blob(arrayOf(it as JsAny?).toJsArray(), BlobPropertyBag()) }
+                val coverUrl = coverBlob?.let { URL.createObjectURL(it) }
+
                 Logger.d("player", "URL: $url")
                 val options = buildHowlerOptions(
                     src = listOf(url.toJsString()).toJsArray(),
                     format = listOf("mp3".toJsString(), "flac".toJsString()).toJsArray(),
+                    html5 = true.toJsBoolean(), // Set this to true to enable the Media Session API
                     onplay = {
                         Logger.d("player", "onplay")
                         listeners.forEach { listener -> listener.onEvent(PlayEvent.Play) }
@@ -111,6 +117,18 @@ class WasmPlayer : Player {
                 setVolume(previousVolume)
                 isReadyMutex.withLock {
                     this.isReady = true
+                }
+
+                val metadata = MediaMetadata(MediaMetadataInit(
+                    title = item.title,
+                    artist = item.artist,
+                    artwork = (coverUrl?.let {
+                        arrayOf(MediaImage(src = it))
+                    } ?: emptyArray()).toJsArray()
+                ))
+                navigator.mediaSession?.let {
+                    Logger.d("player", "set metadata: $metadata")
+                    it.metadata = metadata
                 }
 
                 if (autoPlay) howl.play()

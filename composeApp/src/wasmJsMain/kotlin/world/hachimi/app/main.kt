@@ -12,6 +12,7 @@ import org.koin.core.context.startKoin
 import world.hachimi.app.di.appModule
 import world.hachimi.app.font.WithFont
 import world.hachimi.app.model.GlobalStore
+import world.hachimi.app.player.WasmPlayerHelper
 import world.hachimi.app.ui.App
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalWasmJsInterop::class)
@@ -22,6 +23,8 @@ fun main() {
 
     val global = koin.koin.get<GlobalStore>()
     global.initialize()
+    val wasmPlayerHelper = koin.koin.get<WasmPlayerHelper>()
+    wasmPlayerHelper.initialize()
 
     window.addEventListener("popstate") {
         it.preventDefault()
