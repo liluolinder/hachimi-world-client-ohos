@@ -96,6 +96,8 @@ class PlayerUIState() {
     }
 
     fun setLyrics(content: String) {
+        currentLyricsLine = -1
+        
         if (content.isBlank()) {
             lyricsLines = emptyList()
             timedLyricsEnabled = false
