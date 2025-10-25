@@ -15,12 +15,29 @@ import world.hachimi.app.MainActivity
 import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.model.PlayerService
 
-@UnstableApi
+@OptIn(UnstableApi::class)
 class PlaybackService : MediaSessionService(), MediaSession.Callback {
     private var mediaSession: MediaSession? = null
     private var globalPlayer: PlayerService = get<GlobalStore>().player
 
-    @OptIn(UnstableApi::class)
+    companion object {
+        private val PREVIOUS_ACTION = "custom_previous"
+        private val NEXT_ACTION = "custom_next"
+
+
+        private val previousButton = CommandButton.Builder(CommandButton.ICON_PREVIOUS)
+            .setDisplayName("Previous")
+            .setSessionCommand(SessionCommand(PREVIOUS_ACTION, Bundle.EMPTY))
+            .setSlots(CommandButton.SLOT_BACK)
+            .build()
+
+        private val nextButton = CommandButton.Builder(CommandButton.ICON_NEXT)
+            .setDisplayName("Next")
+            .setSessionCommand(SessionCommand(NEXT_ACTION, Bundle.EMPTY))
+            .setSlots(CommandButton.SLOT_FORWARD)
+            .build()
+    }
+
     override fun onCreate() {
         super.onCreate()
         val player = ExoPlayer.Builder(this).build()
@@ -85,21 +102,4 @@ class PlaybackService : MediaSessionService(), MediaSession.Callback {
         }
         return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
     }
-
 }
-
-private val PREVIOUS_ACTION = "custom_previous"
-private val NEXT_ACTION = "custom_next"
-
-
-private val previousButton = CommandButton.Builder(CommandButton.ICON_PREVIOUS)
-    .setDisplayName("Previous")
-    .setSessionCommand(SessionCommand(PREVIOUS_ACTION, Bundle.EMPTY))
-    .setSlots(CommandButton.SLOT_BACK)
-    .build()
-
-private val nextButton = CommandButton.Builder(CommandButton.ICON_NEXT)
-    .setDisplayName("Next")
-    .setSessionCommand(SessionCommand(NEXT_ACTION, Bundle.EMPTY))
-    .setSlots(CommandButton.SLOT_FORWARD)
-    .build()
