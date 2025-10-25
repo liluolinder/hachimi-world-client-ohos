@@ -20,6 +20,7 @@ import world.hachimi.app.model.GlobalStore
 import world.hachimi.app.ui.auth.components.CaptchaDialog
 import world.hachimi.app.ui.auth.components.FormCard
 import world.hachimi.app.ui.insets.currentSafeAreaInsets
+import world.hachimi.app.util.singleLined
 
 @Composable
 fun AuthScreen(
@@ -85,7 +86,7 @@ private fun LoginContent(vm: AuthViewModel, toRegister: () -> Unit) {
         TextField(
             modifier = Modifier.fillMaxWidth(),
             value = vm.email,
-            onValueChange = { vm.email = it },
+            onValueChange = { vm.email = it.singleLined() },
             label = { Text("邮箱") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -94,7 +95,7 @@ private fun LoginContent(vm: AuthViewModel, toRegister: () -> Unit) {
         TextField(
             modifier = Modifier.fillMaxWidth(),
             value = vm.password,
-            onValueChange = { vm.password = it },
+            onValueChange = { vm.password = it.singleLined() },
             label = { Text("密码") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
@@ -138,7 +139,7 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = vm.regEmail,
-                onValueChange = { vm.regEmail = it },
+                onValueChange = { vm.regEmail = it.singleLined() },
                 label = { Text("邮箱") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -146,7 +147,7 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = vm.regPassword,
-                onValueChange = { vm.regPassword = it },
+                onValueChange = { vm.regPassword = it.singleLined() },
                 label = { Text("密码") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
@@ -155,7 +156,7 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = vm.regPasswordRepeat,
-                onValueChange = { vm.regPasswordRepeat = it },
+                onValueChange = { vm.regPasswordRepeat = it.singleLined() },
                 label = { Text("确认密码") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
@@ -192,7 +193,7 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
                 TextField(
                     modifier = Modifier.weight(1f),
                     value = vm.regCode,
-                    onValueChange = { vm.regCode = it },
+                    onValueChange = { vm.regCode = it.singleLined() },
                     label = { Text("验证码") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
@@ -235,7 +236,7 @@ private fun RegisterContent(vm: AuthViewModel, toLogin: () -> Unit) {
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = vm.name,
-                onValueChange = { vm.name = it },
+                onValueChange = { vm.name = it.singleLined() },
                 label = { Text("昵称") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
