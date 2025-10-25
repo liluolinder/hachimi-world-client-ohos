@@ -23,6 +23,7 @@ import world.hachimi.app.api.module.SongModule
 import world.hachimi.app.api.module.UserModule
 import world.hachimi.app.api.ok
 import world.hachimi.app.logging.Logger
+import kotlin.time.Duration.Companion.seconds
 
 class UserSpaceViewModel(
     private val api: ApiClient,
@@ -265,6 +266,23 @@ class UserSpaceViewModel(
             global.alert(e.message)
         } finally {
             loadingSongs = false
+        }
+    }
+
+    fun playAll() {
+        if (songs.isEmpty()) return
+        viewModelScope.launch {
+            global.player.replaceQueue(songs.map {
+                GlobalStore.MusicQueueItem(
+                    id = it.id,
+                    displayId = it.displayId,
+                    name = it.title,
+                    artist = it.uploaderName,
+                    duration = it.durationSeconds.seconds,
+                    coverUrl = it.coverUrl
+                )
+            })
+            global.player.next()
         }
     }
 }

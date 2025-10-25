@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Female
 import androidx.compose.material.icons.filled.Male
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -122,11 +123,22 @@ fun UserSpaceScreen(uid: Long?, vm: UserSpaceViewModel = koinViewModel()) {
                             }
                         }
 
-                        Text(
-                            text = "全部作品",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "全部作品",
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier
+                            )
+                            Box(Modifier.weight(1f))
+                            if (vm.songs.isNotEmpty()) Button(
+                                modifier = Modifier,
+                                onClick = { vm.playAll() }
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                                Spacer(Modifier.width(8.dp))
+                                Text("播放全部")
+                            }
+                        }
 
                         if (vm.loadingSongs) Box(Modifier.fillMaxWidth().height(300.dp), Alignment.Center) {
                             CircularProgressIndicator()
