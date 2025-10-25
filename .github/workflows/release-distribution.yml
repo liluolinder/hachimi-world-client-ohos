@@ -88,7 +88,7 @@ jobs:
             version_number: $code,
             url: $url,
             changelog: $changelog,
-            variant: "test-ios",
+            variant: "release-ios",
             release_time: (now | todateiso8601)
           }')
           echo "Sending webhook to PUBLISH_VERSION_URL"
