@@ -2,6 +2,7 @@ import { StringFormat, XAnimation, XContext } from "commonpackage"
 import { __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas"
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect"
 import { __Client__ } from "../../../main/ets/models/classes/hachimi"
+import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
 import { I_GetHistoryRes_Data_Item } from "../../../main/ets/models/interfaces/I_GetHistory"
 
 
@@ -16,6 +17,7 @@ export const __HistoryData__ = new HistoryData()
 export struct PlayHistory {
   @Local ColumnNumber: number = -1
   @Local canGetMore: boolean = true
+
 
   build() {
     if(!__User__.isLogin){
@@ -32,16 +34,22 @@ export struct PlayHistory {
             .borderRadius(10)
             .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
             .clip(true)
-
+            .onClick(async () => {
+              __musicPlayer__.playNow = item.song_info
+              __musicPlayer__.playList = []
+              __Client__.playHistoryArray.dataArray.forEach((itemA)=>{
+                __musicPlayer__.playList.push(itemA.song_info.display_id)
+              })
+              __musicPlayer__.playIndex = index
+            })
 
 
           }, (item: I_GetHistoryRes_Data_Item) => JSON.stringify(item))
         }
-
         .padding({ left: 16, right: 16 })
         .scrollBar(BarState.Off)
         .contentStartOffset(Math.max(10, __System__.topRectHeight) + 60)
-        .contentEndOffset(Math.max(__System__.bottomRectHeight, 16))
+        .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 118)
         .onAreaChange((_, newValue) => {
           XAnimation.runWithAnimation(() => {
             this.ColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 700), 1)
@@ -52,17 +60,11 @@ export struct PlayHistory {
         .cachedCount(this.ColumnNumber * 2)
         .edgeEffect(EdgeEffect.Spring)
         .onReachEnd(async () => {
-         /* if (__HistoryData__.lastRequestCursor?.max != 0 && __HistoryData__.lastRequestCursor?.view_at != 0 && client.history.dataArray.length!=0) {
-            __HistoryData__.req.destroy()
-            __HistoryData__.req = http.createHttp()
-            __HistoryData__.lastRequestCursor = await client.getHistory(__HistoryData__.req,{
-              max: __HistoryData__.lastRequestCursor?.max,
-              business: __HistoryData__.lastRequestCursor?.business,
-              view_at: __HistoryData__.lastRequestCursor?.view_at,
-              type: __HistoryData__.requestType
-            })
-          }*/
-
+          if (__Client__.playHistoryArray.dataArray.length!=0 && this.canGetMore) {
+            this.canGetMore  = false
+            __Client__.getHistory(__Client__.playHistoryArray.dataArray[__Client__.playHistoryArray.dataArray.length-1].play_time)
+            this.canGetMore  = true
+          }
         })
 
       }
@@ -132,9 +134,6 @@ export struct historyCover {
     .width('100%')
     .height(120)
     .attributeModifier(backgroundBlurModifier)
-    .onClick(async () => {
-
-    })
     .transition(TransitionEffect.OPACITY.animation({ duration: 150, curve: Curve.Ease }))
     .width('100%')
     .clip(true)

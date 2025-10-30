@@ -15,28 +15,25 @@ export class musicPlayer {
 
   @Trace playNow?:I_GetRecentSongRes_data_song
   @Trace playIndex:number = -1
-  @Trace playList:I_GetRecentSongRes_data_song[]=[]
+  @Trace playList:string[]=[]
 
   private avSessionController: AVSessionController = new AVSessionController()
 
+
   @Monitor('playIndex')
   async changePlayNow(){
-    await __Client__.getSongDetail(this.playList[this.playIndex].display_id).then((res)=>{
-      if (res) {
-        this.playList[this.playIndex] = res
-        console.log(res.lyrics)
+    await __Client__.getSongDetail(this.playList[this.playIndex]).then((res)=>{
+      this.playNow = res
+      if (__musicPlayer__) {
+        __musicPlayer__.init(this.playNow?.audio_url!)
+        __musicPlayer__.Play()
+      }
+      if (__User__.isLogin) {
+        __Client__.updateHistory(this.playNow?.id!)
+      }else {
+        __Client__.updateHistoryNoLogin(this.playNow?.id!)
       }
      })
-    this.playNow = this.playList[this.playIndex]
-    if (__musicPlayer__) {
-      __musicPlayer__.init(this.playList[this.playIndex].audio_url)
-      __musicPlayer__.Play()
-    }
-    if (__User__.isLogin) {
-      __Client__.updateHistory(this.playList[this.playIndex].id)
-    }else {
-      __Client__.updateHistoryNoLogin(this.playList[this.playIndex].id)
-    }
   }
 
   @Monitor('isPlaying')

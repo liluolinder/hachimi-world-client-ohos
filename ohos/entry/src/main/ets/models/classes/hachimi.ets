@@ -12,16 +12,19 @@ import { I_LoginRes, I_LoginRes_data, I_LoginRes_dataError } from "../interfaces
 import { I_GetProfileRes } from "../interfaces/I_GetProfile";
 import { I_GetHistoryRes, I_GetHistoryRes_Data_Item } from "../interfaces/I_GetHistory";
 import { I_RefreshToken, I_RefreshToken_data_OK } from "../interfaces/I_RefreshToken";
+import { I_CreateSongListRes } from "../interfaces/I_CreateSongList";
+import { I_GetSongListRes, I_GetSongListRes_data_item } from "../interfaces/I_GetSongList";
+import { I_AddSong2SongListInfoParm, I_AddSong2SongListInfoRes } from "../interfaces/I_AddSong2SongListInfo";
 
 
 @ObservedV2
 export class hachimi {
   @Trace recentSongArray: BasicDataSource<I_GetRecentSongRes_data_song> =
     new BasicDataSource<I_GetRecentSongRes_data_song>()
-
   @Trace searchSongArray: BasicDataSource<I_SearchSongRes_data_hit> = new BasicDataSource<I_SearchSongRes_data_hit>()
-
   @Trace playHistoryArray: BasicDataSource<I_GetHistoryRes_Data_Item> = new BasicDataSource<I_GetHistoryRes_Data_Item>()
+  @Trace songListArray: BasicDataSource<I_GetSongListRes_data_item> = new BasicDataSource<I_GetSongListRes_data_item>()
+
 
   async generateCaptcha(): Promise<I_GenerateCaptchaRes_data | undefined> {
     let req = http.createHttp()
@@ -96,6 +99,7 @@ export class hachimi {
   }
 
   async getProfile(uid: number) {
+    await this.refreshToken()
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/user/profile?uid=${uid}`, {
       method: http.RequestMethod.GET,
@@ -121,52 +125,59 @@ export class hachimi {
       });
   }
 
-  async refreshToken(){
-    let req = http.createHttp()
-    return await req.request(`https://api.hachimi.world/auth/refresh_token`, {
-      method: http.RequestMethod.GET,
-      header: {
-        'sec-ch-ua-platform': '"Windows"',
-        'user-agent': USER_AGENT,
-      },
-      extraData:{
-        'refresh_token':__User__.refresh_token,
-        'device_info': 'OHOS Client'
-      }
-    }).then(async (data: http.HttpResponse) => {
-      let obj = JSON.parse(JSON.stringify(data))
-      let result = JSON.parse((obj as object)?.['result'])
-      let res: I_RefreshToken = result as I_RefreshToken
-      console.log(JSON.stringify(res))
-      if (res.ok) {
-        let resOK = res.data as I_RefreshToken_data_OK
-        __User__.access_token = resOK.access_token
-        __User__.refresh_token = resOK.refresh_token
-        __User__.expires_in = resOK.expires_in
-        XPreferencesManager.putPreferencesValue("hachimi", "refresh_token", __User__.refresh_token)
-        XPreferencesManager.putPreferencesValue("hachimi", "access_token", __User__.access_token)
-        XPreferencesManager.putPreferencesValue("hachimi", "expires_in", __User__.expires_in)
-        return 'ok'
-      } else {
-        return undefined
-      }
-    })
-      .catch((err: BusinessError) => {
-        console.log(`Liquid:${JSON.stringify(err)}`)
-        return undefined
-      }).finally(() => {
-        req.destroy();
-      });
+  async refreshToken(): Promise<undefined | 'ok'> {
+    let nowTime = new Date()
+    if (__User__.isLogin && nowTime.getTime() >= (new Date(__User__.expires_in)).getTime()) {
+      console.log(`触发刷新token`)
+      console.log(__User__.refresh_token)
+      let req = http.createHttp()
+      return await req.request(`https://api.hachimi.world/auth/refresh_token`, {
+        method: http.RequestMethod.POST,
+        header: {
+          'sec-ch-ua-platform': '"Windows"',
+          'user-agent': USER_AGENT,
+        },
+        extraData: {
+          'refresh_token': __User__.refresh_token,
+          'device_info': 'OHOS Client'
+        }
+      }).then(async (data: http.HttpResponse) => {
+        let obj = JSON.parse(JSON.stringify(data))
+        let result = JSON.parse((obj as object)?.['result'])
+        let res: I_RefreshToken = result as I_RefreshToken
+        console.log(JSON.stringify(res))
+        if (res.ok) {
+          let resOK = res.data as I_RefreshToken_data_OK
+          __User__.access_token = resOK.access_token
+          __User__.refresh_token = resOK.refresh_token
+          __User__.expires_in = resOK.expires_in
+          XPreferencesManager.putPreferencesValue("hachimi", "refresh_token", __User__.refresh_token)
+          XPreferencesManager.putPreferencesValue("hachimi", "access_token", __User__.access_token)
+          XPreferencesManager.putPreferencesValue("hachimi", "expires_in", __User__.expires_in)
+          return 'ok'
+        } else {
+          return undefined
+        }
+      })
+        .catch((err: BusinessError) => {
+          console.log(`Liquid:${JSON.stringify(err)}`)
+          return undefined
+        }).finally(() => {
+          req.destroy();
+        });
+    } else {
+      return undefined
+    }
   }
 
   async getRecentSong(): Promise<undefined | number> {
+    await this.refreshToken()
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/song/recent_v2`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
         'user-agent': USER_AGENT,
-
       },
     }).then(async (data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))
@@ -198,7 +209,6 @@ export class hachimi {
       header: {
         'sec-ch-ua-platform': '"Windows"',
         'user-agent': USER_AGENT,
-
       },
     }).then(async (data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))
@@ -252,6 +262,7 @@ export class hachimi {
   }
 
   async updateHistory(songID: number): Promise<undefined | boolean> {
+    await this.refreshToken()
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/play_history/touch`, {
       method: http.RequestMethod.POST,
@@ -308,9 +319,11 @@ export class hachimi {
       });
   }
 
-  async getHistory(cursor:string = ''):Promise<number | undefined>{
+  async getHistory(cursor: string = ''): Promise<number | undefined> {
+    await this.refreshToken()
     let req = http.createHttp()
-    return await req.request(`https://api.hachimi.world/play_history/cursor?${cursor == ''?'':`cursor=${cursor}&`}size=20`, {
+    return await req.request(`https://api.hachimi.world/play_history/cursor?${cursor == '' ? '' :
+      `cursor=${cursor}&`}size=20`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -324,15 +337,14 @@ export class hachimi {
       let result = JSON.parse((obj as object)?.['result'])
       let res: I_GetHistoryRes = result as I_GetHistoryRes
       console.log(JSON.stringify(res))
-      if (res.ok)
-      {
-        if (res.data.list.length!=0) {
-          res.data.list.forEach((item)=>{
+      if (res.ok) {
+        if (res.data.list.length != 0) {
+          res.data.list.forEach((item) => {
             this.playHistoryArray.pushData(item)
           })
         }
-        return  res.data.list.length
-      }else {
+        return res.data.list.length
+      } else {
         return undefined
       }
     })
@@ -343,6 +355,141 @@ export class hachimi {
         req.destroy();
       });
   }
+
+  async getSongList(): Promise<number | undefined> {
+    await this.refreshToken()
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/playlist/list`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+        'authorization': `Bearer ${__User__.access_token}`,
+        'origin': 'https://hachimi.world',
+        'referer': 'https://hachimi.world'
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetSongListRes = result as I_GetSongListRes
+
+      if (res.ok) {
+        return res.data.playlists.length
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async getSongListInfo(id:number): Promise<number | undefined> {
+    await this.refreshToken()
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/playlist/detail_private?id=${id}`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+        'authorization': `Bearer ${__User__.access_token}`,
+        'origin': 'https://hachimi.world',
+        'referer': 'https://hachimi.world'
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetSongListRes = result as I_GetSongListRes
+      if (res.ok) {
+        res.data.playlists.forEach((item)=>{
+          this.songListArray.pushData(item)
+        })
+        return res.data.playlists.length
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async createSongList(name: string, is_public: boolean, des: string | null = null): Promise<undefined | number> {
+    await this.refreshToken()
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/playlist/create`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+        'authorization': `Bearer ${__User__.access_token}`,
+        'origin': 'https://hachimi.world',
+        'referer': 'https://hachimi.world'
+      },
+      extraData: {
+        'description': des,
+        'name': name,
+        'is_public': is_public
+      }
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_CreateSongListRes = result as I_CreateSongListRes
+      if (res.ok) {
+        return res.data.id
+      } else {
+        return undefined
+      }
+
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async addSong2SongListInfo(param:I_AddSong2SongListInfoParm): Promise<'ok' | undefined> {
+    await this.refreshToken()
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/playlist/add_song`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+        'authorization': `Bearer ${__User__.access_token}`,
+        'origin': 'https://hachimi.world',
+        'referer': 'https://hachimi.world'
+      },
+      extraData:{
+        'playlist_id':param.playlist_id,
+        'song_id':param.song_id
+      }
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_AddSong2SongListInfoRes = result as I_AddSong2SongListInfoRes
+      if (res.ok) {
+        return 'ok'
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
 }
 
 export let __Client__: hachimi = new hachimi()

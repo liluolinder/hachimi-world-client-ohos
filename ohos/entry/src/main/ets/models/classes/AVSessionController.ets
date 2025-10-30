@@ -80,10 +80,10 @@ export class AVSessionController {
     try {
       if (this.context) {
         let metadata: avSession.AVMetadata = {
-          assetId: __musicPlayer__.playList[__musicPlayer__.playIndex].id.toString(),
-          title:  __musicPlayer__.playList[__musicPlayer__.playIndex]?.title,
-          artist:  __musicPlayer__.playList[__musicPlayer__.playIndex]?.uploader_name??'',
-          mediaImage:  __musicPlayer__.playList[__musicPlayer__.playIndex]?.cover_url,
+          assetId: __musicPlayer__.playNow?.id.toString()!,
+          title: __musicPlayer__.playNow?.title,
+          artist: __musicPlayer__.playNow?.uploader_name??'',
+          mediaImage:  __musicPlayer__.playNow?.cover_url,
           duration: __musicPlayer__.durationTime,
         };
 
