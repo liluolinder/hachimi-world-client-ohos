@@ -27,9 +27,9 @@ export class SysShareData {
     console.log(this.windowWidth.toString())
     XAnimation.runWithAnimation(() => {
       __UI__.isSplitLayout = __System__.windowWidth > min_split_width
-      __UI__.indexNavigationMode = __System__.windowWidth < min_split_width ? NavigationMode.Stack :
+/*      __UI__.indexNavigationMode = __System__.windowWidth < min_split_width ? NavigationMode.Stack :
         __UI__.mainPageStack.getAllPathName().length > 0 && !__PlayerUIData__.isFullScreen ? NavigationMode.Split :
-          __UI__.indexNavigationMode
+          __UI__.indexNavigationMode*/
       __UI__.isLargeSidebar = __System__.windowWidth < min_width
       __UI__.isShowSideBar = __System__.windowWidth > min_width
       __UI__.sideBarMode =
@@ -51,6 +51,7 @@ export class UserData {
   @Trace isLogin: boolean = false
   @Trace access_token: string = ''
   @Trace refresh_token: string = ''
+  @Trace expires_in: string = ''
   @Trace uid:number = 0
   @Trace username:string = ''
 }
@@ -68,7 +69,7 @@ export class UIData {
   @Trace isSplitLayout: boolean = __System__.windowWidth > min_split_width
 }
 
-export let __UI__: UIData = new UIData()
+export const __UI__: UIData = new UIData()
 
 @ObservedV2
 export class SettingsUIData {
@@ -81,6 +82,7 @@ export let __SettingsUIData__: SettingsUIData = new SettingsUIData()
 @ObservedV2
 export class PlayerUIData {
   @Trace isFullScreen: boolean = false
+  @Trace lrcIndex:number= -1
 }
 
 export let __PlayerUIData__: PlayerUIData = new PlayerUIData()

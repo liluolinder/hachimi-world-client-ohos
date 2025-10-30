@@ -1,0 +1,30 @@
+{
+    "routerMap": [
+        {
+            "name": "indexPage",
+            "pageSourceFile": "src/main/ets/pages/IndexDefault.ets",
+            "buildFunction": "indexPageBuilder"
+        },
+        {
+            "name": "emptyPage",
+            "pageSourceFile": "src/productDefault/pages/EmptyPage.ets",
+            "buildFunction": "emptyPageBuilder"
+        },
+        {
+            "name": "player",
+            "pageSourceFile": "src/productDefault/pages/player/Player.ets",
+            "buildFunction": "playerBuilder"
+        },
+
+        {
+            "name": "settingsMainPage",
+            "pageSourceFile": "src/productDefault/pages/settings/SettingsMainPage.ets",
+            "buildFunction": "settingsMainPageBuilder"
+        },
+        {
+            "name": "settingsCustomBackground",
+            "pageSourceFile": "src/productDefault/pages/settings/SettingsCustomBackground.ets",
+            "buildFunction": "settingsCustomBackgroundBuilder"
+        }
+    ]
+}

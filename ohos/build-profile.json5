@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_ohos_sr2Eeeo59NXHLc7dr7gcozy5Pm7TjxQrFRM-e6yQ0kg=.cer",
+          "certpath": "C:\\Users\\liluo\\.ohos\\config\\default_HachimiWorld-ohos_am9LweL0uuwm2AgXTQ9ei2nSH8OLKDJkaNnAkOruzW8=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B6B91A237E7DBB72972828BEB221CAC8383DD90CF776BB42C3420F60AC5013364ED667B47A683BF",
-          "profile": "C:\\Users\\liluo\\.ohos\\config\\default_ohos_sr2Eeeo59NXHLc7dr7gcozy5Pm7TjxQrFRM-e6yQ0kg=.p7b",
+          "keyPassword": "00000019D28ECBD03B205ABFEAF11C8B13C107BE4BB2CFB40B9F00A75CB3134F449788814EF13C3D90",
+          "profile": "C:\\Users\\liluo\\.ohos\\config\\default_HachimiWorld-ohos_am9LweL0uuwm2AgXTQ9ei2nSH8OLKDJkaNnAkOruzW8=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_ohos_sr2Eeeo59NXHLc7dr7gcozy5Pm7TjxQrFRM-e6yQ0kg=.p12",
-          "storePassword": "0000001BA81FC30DA79EF6219BFCC969EBB363FA3BC5FFB299B59AA3FC68B7452D8636C22C83F0319E6CF3"
+          "storeFile": "C:\\Users\\liluo\\.ohos\\config\\default_HachimiWorld-ohos_am9LweL0uuwm2AgXTQ9ei2nSH8OLKDJkaNnAkOruzW8=.p12",
+          "storePassword": "00000019D277B03D2E8D6EA3BE741D4182021C75DD6BD10D3E9F9DB01302F407B85446496BFF1E0641"
         }
       }
     ],

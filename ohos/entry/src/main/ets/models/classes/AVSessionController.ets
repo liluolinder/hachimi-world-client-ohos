@@ -86,7 +86,12 @@ export class AVSessionController {
           mediaImage:  __musicPlayer__.playList[__musicPlayer__.playIndex]?.cover_url,
           duration: __musicPlayer__.durationTime,
         };
-       // let lrc = await MediaTools.getLrcFromRawFile(this.context, this.songList[this.musicIndex].lyric);
+
+        let lrc = ((__musicPlayer__?.playNow?.lyrics??'').replaceAll('\r',''))
+        if (lrc) {
+          metadata.lyric = lrc;
+        }
+
       
         if (this.AVSession) {
           this.AVSession.setAVMetadata(metadata).then(() => {

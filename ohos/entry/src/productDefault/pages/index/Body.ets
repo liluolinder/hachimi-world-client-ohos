@@ -1,21 +1,32 @@
-import { XAnimation, XPreferencesManager } from "commonpackage";
+import { XAnimation, XContext } from "commonpackage";
 import { min_width } from "../../../main/ets/commons/commonItem";
 import {  __SettingsUIData__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas";
 import { Home } from "../Home/Home";
+import { playerBuilder } from "../player/Player";
+import { PlayHistory } from "../PlayHistory/PlayHistory";
 
 import { settingsPageBuilder } from "../settings/SettingsMainPage";
 
+
 @ComponentV2
-export struct Body {
+export struct Body{
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('mainPageStack') pageStack: NavPathStack = new NavPathStack()
   @Consumer('currentTabIndex') currentTabIndex: number = 0
 
+
+
   build() {
-    Stack() {
+    NavDestination(){
       Tabs({ controller: this.tabController, index: $$this.currentTabIndex }) {
         TabContent() {
           Home()
+        }
+        TabContent() {
+          Home()
+        }
+        TabContent() {
+          PlayHistory()
         }
       }
       .height('100%')
@@ -30,13 +41,18 @@ export struct Body {
           XAnimation.runWithAnimation(() => __UI__.isShowSideBar = false)
         })
       }
-
-    }.size({ width: '100%', height: '100%' })
+    }
+    .transition(TransitionEffect.OPACITY)
+    .backgroundColor(Color.Transparent)
     .bindSheet(__SettingsUIData__.settingsShow, settingsPageBuilder(), {
       preferType: SheetType.CENTER,
       height: SheetSize.LARGE,
       onDisappear: () => __SettingsUIData__.settingsShow = false
     })
-
+    .hideTitleBar(true)
+    .onBackPressed(()=>{
+      XContext.getAbilityContext().moveAbilityToBackground()
+      return true
+    })
   }
 }

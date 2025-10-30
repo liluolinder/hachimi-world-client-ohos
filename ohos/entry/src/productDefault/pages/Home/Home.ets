@@ -1,10 +1,9 @@
-import { StringFormat, XAnimation, XContext } from "commonpackage"
+import { StringFormat, XAnimation } from "commonpackage"
 import { __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas"
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect"
 import { __Client__ } from "../../../main/ets/models/classes/hachimi"
 import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
 import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
-import { text } from "@kit.ArkGraphics2D"
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
 import { Player } from "../player/Player"
 
@@ -18,18 +17,9 @@ export const __Home__ = new HomeData()
 
 @ComponentV2
 export struct Home {
-  @Local isShow: boolean = false
   @Local ColumnNumber: number = -1
   @Local canGetMore: boolean = true
   @Local showType: number = 0 //0为最新歌曲 , 1为搜索
-
-  @Builder
-  PlayerBuilder(){
-    Column(){
-      Player()
-    }.height('100%')
-    .width('100%')
-  }
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
@@ -98,19 +88,31 @@ export struct Home {
       .edgeEffect(EdgeEffect.Spring)
       .blur(__Home__.inSearchMode ? 50 : 0)
 
-      Column() {
+      Stack() {
+        Image(__musicPlayer__.playNow?.cover_url ?? $r('app.media.linder'))
+          .brightness(0.75)
+          .width('100%')
+          .height('100%')
+          .blur(150)
+          .geometryTransition('playerBackground', {follow: true})
+          .transition(TransitionEffect.OPACITY)
+          .borderRadius(20)
         Column({ space: 10 }) {
           if (__musicPlayer__.playNow == undefined) {
             Text('暂未播放')
+              .fontColor(Color.White)
               .layoutWeight(1)
               .fontSize(26)
               .fontWeight(FontWeight.Bold)
               .textAlign(TextAlign.Center)
+
           } else {
             Row() {
               Image(__musicPlayer__.playNow.cover_url)
                 .size({ width: 65, height: 65 })
                 .borderRadius(16)
+                .geometryTransition('playerCoverImage', {follow: true})
+                .transition(TransitionEffect.OPACITY)
 
 
               Column() {
@@ -119,10 +121,16 @@ export struct Home {
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.MARQUEE })
                   .fontWeight(FontWeight.Medium)
+                  .geometryTransition('playerTitleText', {follow: true})
+                  .transition(TransitionEffect.OPACITY)
+                  .fontColor(Color.White)
                 Text(__musicPlayer__.playNow.uploader_name)
                   .textAlign(TextAlign.Center)
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.MARQUEE })
+                  .geometryTransition('playerArtistsText', {follow: true})
+                  .transition(TransitionEffect.OPACITY)
+                  .fontColor(Color.White)
 
               }.layoutWeight(1)
 
@@ -130,32 +138,38 @@ export struct Home {
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph($r('sys.symbol.backward_end_fill'))
                     .fontSize(36)
-                    .fontColor([$r('sys.color.font')])
+                    .fontColor([Color.White])
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
                 .onClick(()=>{
                     __musicPlayer__.Last()
                 })
+                .geometryTransition('playerPreviousButton', {follow: true})
+                .transition(TransitionEffect.OPACITY)
 
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph(__musicPlayer__.isPlaying ? $r('sys.symbol.pause') : $r('sys.symbol.play_fill'))
                     .fontSize(36)
-                    .fontColor([$r('sys.color.font')])
+                    .fontColor([Color.White])
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
                 .onClick(()=>{
                   __musicPlayer__.isPlaying ? __musicPlayer__.Pause() : __musicPlayer__.Play()
                 })
+                .geometryTransition('playerPlayPauseButton', {follow: true})
+                .transition(TransitionEffect.OPACITY)
 
                 Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
                   SymbolGlyph($r('sys.symbol.forward_end_fill'))
                     .fontSize(36)
-                    .fontColor([$r('sys.color.font')])
+                    .fontColor([Color.White])
                 }
                 .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
                 .onClick(()=>{
                   __musicPlayer__.Next()
                 })
+                .geometryTransition('playerNextButton', {follow: true})
+                .transition(TransitionEffect.OPACITY)
 
               }
 
@@ -166,18 +180,13 @@ export struct Home {
         }
         .size({ width: '100%', height: 78 })
         .borderRadius(20)
-        .backgroundColor($r('app.color.start_window_background_blur'))
-        .backdropBlur(100)
-        .useEffect(true)
+        .clip(true)
       }.position({ bottom: 40 })
       .size({ width: '100%', height: 78 })
       .padding({ left: 8, right: 8 })
       .onClick(() => {
-        this.isShow = true;
-      })
-      .bindContentCover($$this.isShow, this.PlayerBuilder(), {
-        modalTransition: ModalTransition.DEFAULT,
-        backgroundColor:$r('sys.color.comp_background_gray')
+        console.log('testTAG jump')
+        XAnimation.runWithAnimation(()=> {__UI__.mainPageStack.pushPathByName('player', undefined, false)})
       })
 
 

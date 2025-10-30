@@ -2,7 +2,7 @@ import { media } from "@kit.MediaKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { AVSessionController } from "./AVSessionController";
 import { BackgroundUtil } from "./BackgroundRunningManager";
-import {  __User__ } from "../../commons/shareDatas";
+import { __PlayerUIData__, __User__ } from "../../commons/shareDatas";
 import { I_GetRecentSongRes_data_song } from "../interfaces/I_GetRecentSong";
 import { __Client__ } from "./hachimi";
 
@@ -20,10 +20,16 @@ export class musicPlayer {
   private avSessionController: AVSessionController = new AVSessionController()
 
   @Monitor('playIndex')
-  changePlayNow(){
+  async changePlayNow(){
+    await __Client__.getSongDetail(this.playList[this.playIndex].display_id).then((res)=>{
+      if (res) {
+        this.playList[this.playIndex] = res
+        console.log(res.lyrics)
+      }
+     })
     this.playNow = this.playList[this.playIndex]
     if (__musicPlayer__) {
-      __musicPlayer__.init( this.playList[this.playIndex].audio_url)
+      __musicPlayer__.init(this.playList[this.playIndex].audio_url)
       __musicPlayer__.Play()
     }
     if (__User__.isLogin) {
@@ -95,6 +101,7 @@ export class musicPlayer {
   async init(url: string) {
     this.durationTime = 0
     this.currentTime = 0
+    __PlayerUIData__.lrcIndex = -1
     this.Release()
     this.avPlayer = await media.createAVPlayer()
     this.setAVPlayerCallback()

@@ -79,4 +79,11 @@ export class StringFormat {
             return result + 'kw';
         }
     }
+
+    static convertToMilliseconds(min: string, sec: string, ms: string): number {
+        const minutes = parseInt(min, 10);
+        const seconds = parseInt(sec, 10);
+        const milliseconds = parseInt(ms, 10);
+        return (minutes * 60 + seconds) * 1000 + milliseconds;
+    }
 }
