@@ -28,7 +28,7 @@ kotlin {
         }
     }
 
-    /*listOf(
+    listOf(
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
@@ -37,7 +37,13 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
-    }*/
+        iosTarget.compilations.getByName("main") {
+            // Add the NSKeyValueObserving interface so we can use KVO in kotlin native
+            // https://proandroiddev.com/leveraging-key-value-observing-kvo-in-kotlin-multiplatform-kmp-for-ios-231519e5c1ff
+            // FIXME: Enabling this will get KLIB resolver error
+//            val nskeyvalueobserving by cinterops.creating
+        }
+    }
 
     jvm()
 
@@ -98,7 +104,6 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.koin.compose.viewmodelNavigation)
 
-            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.client.encoding)
             implementation(libs.ktor.serialization.kotlinx.json)
@@ -133,7 +138,13 @@ kotlin {
             implementation(libs.jflac)
         }
         wasmJsMain.dependencies {
+            implementation(libs.ktor.client.cio)
             implementation(npm("howler", "2.2.4"))
+        }
+        listOf(iosX64Main, iosArm64Main, iosSimulatorArm64Main).forEach {
+            it.dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
         }
     }
 
@@ -242,6 +253,7 @@ compose.desktop {
                 macOS {
                     appCategory = "public.app-category.entertainment"
                     packageName = "基米天堂"
+                    dockName = "基米天堂"
                     bundleID = "world.hachimi.app"
                     iconFile.set(rootProject.file("icons/icon.icns"))
                 }

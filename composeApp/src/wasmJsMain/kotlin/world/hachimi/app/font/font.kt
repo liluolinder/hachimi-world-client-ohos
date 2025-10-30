@@ -22,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import io.ktor.client.*
-import io.ktor.client.plugins.cache.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.utils.io.*
@@ -31,7 +30,6 @@ import kotlinx.browser.window
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.await
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import org.khronos.webgl.ArrayBuffer
@@ -60,6 +58,9 @@ fun WithFont(
     val error = remember { mutableStateOf<FontLoadError?>(null) }
     var bytesRead by remember { mutableLongStateOf(0L) }
     var bytesTotal by remember { mutableStateOf<Long?>(null) }
+    var fullBytesRead by remember { mutableLongStateOf(0L) }
+    var fullBytesTotal by remember { mutableStateOf<Long?>(null) }
+    var fullFontLoaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (fontsLoaded.value) return@LaunchedEffect
@@ -96,16 +97,38 @@ fun WithFont(
             }*/
 
             try {
-                val fontFamily = loadFontsFromWeb(true, onProgress = { a, b ->
+                val minFontFamily = loadFontFromWeb(
+                    identify = "MiSansVF-Min",
+                    url = minFontUrl,
+                    size = minFontSize,
+                    onProgress = { a, b ->
                     bytesRead = a
                     bytesTotal = b
                 })
-                fontFamilyResolver.preload(fontFamily)
+                fontFamilyResolver.preload(minFontFamily)
                 fontsLoaded.value = true
             } catch (e: Throwable) {
                 error.value = FontLoadError.NotSupported
                 Logger.e("Font", "Failed to load fonts from web", e)
                 window.alert("加载字体失败")
+                return@withContext
+            }
+
+            try {
+                val fullFontFamily = loadFontFromWeb(
+                    identify = "MiSansVF",
+                    url = fullFontUrl,
+                    size = fullFontSize,
+                    onProgress = { a, b ->
+                        fullBytesRead = a
+                        fullBytesTotal = b
+                    })
+                // TODO: Will this correctly override the min font?
+                fontFamilyResolver.preload(fullFontFamily)
+                fullFontLoaded = true
+                Logger.i("font", "Full font loaded")
+            } catch (e: Throwable) {
+                Logger.e("font", "Failed to load full font", e)
             }
         }
     }
@@ -339,16 +362,23 @@ suspend fun loadFonts(enableEmoji: Boolean): FontFamily {
     return fontFamily
 }
 
-suspend fun loadFontsFromWeb(
-    enableEmoji: Boolean,
+private val fullFontUrl = BuildKonfig.ASSETS_BASE_URL + "/fonts/MiSansVF.ttf"
+private val fullFontSize = 20_093_424L // MiSansVF.ttf file size
+private val minFontUrl = BuildKonfig.ASSETS_BASE_URL + "/fonts/MiSansVF-Min.ttf"
+private val minFontSize = 20_093_424L // Not sure
+
+suspend fun loadFontFromWeb(
+    identify: String,
+    url: String,
+    size: Long,
     onProgress: (bytesRead: Long, bytesTotal: Long?) -> Unit
 ): FontFamily {
-    val client = HttpClient { install(HttpCache) }
+    val client = HttpClient { }
     /*val contentLength = client.head("https://storage.hachimi.world/fonts/MiSansVF.ttf")
         .headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: -1
     Logger.d("Font", "Content length: $contentLength bytes")*/
-    val contentLength = 20_093_424L // MiSansVF.ttf file size
-    val buffer = client.prepareGet(BuildKonfig.ASSETS_BASE_URL + "/fonts/MiSansVF.ttf").execute {
+
+    val buffer = client.prepareGet(url).execute {
         val buffer = Buffer()
         val channel = it.bodyAsChannel()
         var totalBytesRead = 0L
@@ -357,8 +387,7 @@ suspend fun loadFontsFromWeb(
             val chunk = channel.readRemaining(1024 * 8)
             totalBytesRead += chunk.remaining
             chunk.transferTo(buffer)
-            onProgress(totalBytesRead, contentLength)
-            yield()
+            onProgress(totalBytesRead, size)
         }
         buffer
     }
@@ -368,8 +397,8 @@ suspend fun loadFontsFromWeb(
 
     val fonts = weights.map { weight ->
         Font(
-            identity = "MiSansVF w_${weight.weight}",
-            data = bytes,
+            identity = "$identify w_${weight.weight}",
+            getData = { bytes },
             variationSettings = FontVariation.Settings(
                 FontVariation.weight(weight.weight),
             )

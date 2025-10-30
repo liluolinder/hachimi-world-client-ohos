@@ -2,6 +2,7 @@ package world.hachimi.app.api.module
 
 import io.ktor.client.content.ProgressListener
 import io.ktor.client.plugins.onUpload
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.forms.InputProvider
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
@@ -48,6 +49,10 @@ class UserModule(
 
     suspend fun setAvatar(filename: String, source: Source, listener: ProgressListener? = null): WebResult<Unit> {
         return client.postWith("/user/set_avatar") {
+            timeout {
+                connectTimeoutMillis = 30_000
+                requestTimeoutMillis = 30_000
+            }
             setBody(
                 MultiPartFormDataContent(
                     formData {

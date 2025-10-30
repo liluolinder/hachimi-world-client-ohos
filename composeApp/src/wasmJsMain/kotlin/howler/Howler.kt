@@ -95,8 +95,8 @@ return howl;
 }
 """)
 
-fun buildHowlerOptions(src: JsArray<JsString>, format: JsArray<JsString>, onplay: (JsAny?) -> Unit, onpause: (JsAny?) -> Unit, onend: (JsAny?) -> Unit): JsAny
-        = js("({ src: src, format: format, onplay, onpause, onend })")
+fun buildHowlerOptions(src: JsArray<JsString>, html5: JsBoolean, format: JsArray<JsString>, onplay: (JsAny?) -> Unit, onpause: (JsAny?) -> Unit, onend: (JsAny?) -> Unit): JsAny
+        = js("({ src: src, html5, format: format, onplay, onpause, onend })")
 
 external interface HowlOptions : JsAny {
     /**
