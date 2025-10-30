@@ -2,11 +2,12 @@ import { XAnimation, XContext } from "commonpackage";
 import { min_width } from "../../../main/ets/commons/commonItem";
 import {  __SettingsUIData__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas";
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer";
-import { Home } from "../Home/Home";
+import { Home } from "../home/Home";
 import { playerBuilder } from "../player/Player";
-import { PlayHistory } from "../PlayHistory/PlayHistory";
+import { PlayHistory } from "../playHistory/PlayHistory";
 
 import { settingsPageBuilder } from "../settings/SettingsMainPage";
+import { SongList } from "../songList/SongList";
 
 
 @ComponentV2
@@ -29,6 +30,9 @@ export struct Body{
           }
           TabContent() {
             PlayHistory()
+          }
+          TabContent() {
+            SongList()
           }
         }
         .height('100%')

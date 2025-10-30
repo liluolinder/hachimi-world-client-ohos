@@ -15,6 +15,7 @@ import { I_RefreshToken, I_RefreshToken_data_OK } from "../interfaces/I_RefreshT
 import { I_CreateSongListRes } from "../interfaces/I_CreateSongList";
 import { I_GetSongListRes, I_GetSongListRes_data_item } from "../interfaces/I_GetSongList";
 import { I_AddSong2SongListInfoParm, I_AddSong2SongListInfoRes } from "../interfaces/I_AddSong2SongListInfo";
+import { I_GetSongListInfoRes, I_GetSongListInfo_data } from "../interfaces/I_GetSongListInfo";
 
 
 @ObservedV2
@@ -170,8 +171,11 @@ export class hachimi {
     }
   }
 
-  async getRecentSong(): Promise<undefined | number> {
+  async getRecentSong(needClear:boolean = false): Promise<undefined | number> {
     await this.refreshToken()
+    if (needClear) {
+      this.recentSongArray.clearData()
+    }
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/song/recent_v2`, {
       method: http.RequestMethod.GET,
@@ -319,8 +323,11 @@ export class hachimi {
       });
   }
 
-  async getHistory(cursor: string = ''): Promise<number | undefined> {
+  async getHistory(cursor: string = '', needClear:boolean = false): Promise<number | undefined> {
     await this.refreshToken()
+    if (needClear) {
+      this.playHistoryArray.clearData()
+    }
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/play_history/cursor?${cursor == '' ? '' :
       `cursor=${cursor}&`}size=20`, {
@@ -356,7 +363,10 @@ export class hachimi {
       });
   }
 
-  async getSongList(): Promise<number | undefined> {
+  async getSongList(needClear:boolean = false): Promise<number | undefined> {
+    if (needClear) {
+      this.songListArray.clearData()
+    }
     await this.refreshToken()
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/playlist/list`, {
@@ -372,8 +382,11 @@ export class hachimi {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
       let res: I_GetSongListRes = result as I_GetSongListRes
-
+      console.log(JSON.stringify(res))
       if (res.ok) {
+        res.data.playlists.forEach((item)=>{
+          this.songListArray.pushData(item)
+        })
         return res.data.playlists.length
       } else {
         return undefined
@@ -402,12 +415,9 @@ export class hachimi {
     }).then(async (data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
-      let res: I_GetSongListRes = result as I_GetSongListRes
+      let res: I_GetSongListInfoRes = result as I_GetSongListInfoRes
       if (res.ok) {
-        res.data.playlists.forEach((item)=>{
-          this.songListArray.pushData(item)
-        })
-        return res.data.playlists.length
+        return 0
       } else {
         return undefined
       }

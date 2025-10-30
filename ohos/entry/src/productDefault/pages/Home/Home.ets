@@ -74,6 +74,13 @@ export struct Home {
         } else {
           LazyForEach(__Client__.searchSongArray, (item: I_SearchSongRes_data_hit, index: number) => {
             HomeCover({ data: item, type: 1 })
+              .onClick(async () => {
+                __musicPlayer__.playList = []
+                __Client__.searchSongArray.dataArray.forEach((itemA)=>{
+                  __musicPlayer__.playList.push(itemA.display_id)
+                })
+                __musicPlayer__.playIndex = index
+              })
           }, (item: I_SearchSongRes_data_hit) => JSON.stringify(item))
         }
       }

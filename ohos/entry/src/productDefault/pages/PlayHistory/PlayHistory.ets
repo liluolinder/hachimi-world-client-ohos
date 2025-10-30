@@ -48,7 +48,7 @@ export struct PlayHistory {
         }
         .padding({ left: 16, right: 16 })
         .scrollBar(BarState.Off)
-        .contentStartOffset(Math.max(10, __System__.topRectHeight) + 60)
+        .contentStartOffset(Math.max(10, __System__.topRectHeight))
         .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 118)
         .onAreaChange((_, newValue) => {
           XAnimation.runWithAnimation(() => {

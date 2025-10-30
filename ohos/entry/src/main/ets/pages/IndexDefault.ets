@@ -14,10 +14,9 @@ struct Index {
     @Provider('tabController') tabController: TabsController = new TabsController()
     @Provider('currentTabIndex') currentTabIndex: number = XPreferencesManager.getPreferencesValue("pilipala", "currentTabIndex", 0) as number
     async aboutToAppear(): Promise<void> {
-         __Client__.getRecentSong()
+         __Client__.getRecentSong(true)
         __UI__.mainPageStack.pushPathByName('indexPage', undefined, false)
-        __Client__.getHistory()
-        //__Client__.refreshToken()
+
     }
 
     onBackPress(): boolean | void {

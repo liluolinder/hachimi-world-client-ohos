@@ -2,19 +2,19 @@ import { ListItemWithArrow } from "../../components/ListItemWithArrow"
 import { XAnimation } from "commonpackage";
 import { ImageModifier } from "@ohos.arkui.modifier";
 import { __CustomBackgroundData__ } from "../../components/CustomBackground";
-import {  __SettingsUIData__, __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas";
+import { __SettingsUIData__, __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas";
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect";
 import { LengthUnit } from "@kit.ArkUI";
 import { I_PageInfo } from "../../../main/ets/models/interfaces/I_PageInfo";
 import { personalSheetBuilder } from "./personalSheet/personalSheet";
 import { min_width } from "../../../main/ets/commons/commonItem";
+import { __Client__ } from "../../../main/ets/models/classes/hachimi";
 
 @ComponentV2
 export struct SideBar {
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('currentTabIndex') currentTabIndex: number = 0
   @Provider('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
-
   pageArray: I_PageInfo[] = [
     { name: '主页', symbol: $r('sys.symbol.house') },
     { name: '最近点赞', symbol: $r('sys.symbol.heart') },
@@ -72,12 +72,11 @@ export struct SideBar {
               this.showLoginOrUserInfo = true
             }
           })
-           .bindSheet($$this.showLoginOrUserInfo, personalSheetBuilder(), {
-               height: SheetSize.LARGE,
-               preferType: SheetType.CENTER,
-               title: { title: '登录' }
-           })
-
+          .bindSheet($$this.showLoginOrUserInfo, personalSheetBuilder(), {
+            height: SheetSize.LARGE,
+            preferType: SheetType.CENTER,
+            title: { title: '登录' }
+          })
 
 
           Column({ space: __UI__.isLargeSidebar ? 0 : 10 }) {
@@ -91,12 +90,27 @@ export struct SideBar {
               })
                 .onClick(() => {
                   this.tabController.changeIndex(index)
+                  if (this.currentTabIndex != index) {
+                    switch (index) {
+                      case 0:
+                        __Client__.getRecentSong(true)
+                        break
+                      case 1:
+                        break
+                      case 2:
+                        __Client__.getHistory('',true)
+                        break
+                      case 3:
+                        __Client__.getSongList(true)
+                        break
+                    }
+                  }
                 })
             })
           }
           .borderRadius(20)
           .width('100%')
-          .backgroundColor( Color.Transparent)
+          .backgroundColor(Color.Transparent)
 
         }
       }
