@@ -5,6 +5,7 @@ import { BackgroundUtil } from "./BackgroundRunningManager";
 import { __PlayerUIData__, __User__ } from "../../commons/shareDatas";
 import { I_GetRecentSongRes_data_song } from "../interfaces/I_GetRecentSong";
 import { __Client__ } from "./hachimi";
+import { I_SearchSongRes_data_hit } from "../interfaces/I_SearchSong";
 
 @ObservedV2
 export class musicPlayer {
@@ -12,17 +13,14 @@ export class musicPlayer {
   @Trace durationTime: number = 0
   @Trace currentTime: number = 0
   @Trace isPlaying: boolean = false
-
-  @Trace playNow?:I_GetRecentSongRes_data_song
-  @Trace playIndex:number = -1
-  @Trace playList:string[]=[]
-
+  @Trace playNow?: I_GetRecentSongRes_data_song | I_SearchSongRes_data_hit
+  @Trace playIndex: number = -1
+  @Trace playList: string[] = []
   private avSessionController: AVSessionController = new AVSessionController()
 
-
   @Monitor('playIndex')
-  async changePlayNow(){
-    await __Client__.getSongDetail(this.playList[this.playIndex]).then((res)=>{
+  async changePlayNow() {
+    await __Client__.getSongDetail(this.playList[this.playIndex]).then((res) => {
       this.playNow = res
       if (__musicPlayer__) {
         __musicPlayer__.init(this.playNow?.audio_url!)
@@ -30,14 +28,14 @@ export class musicPlayer {
       }
       if (__User__.isLogin) {
         __Client__.updateHistory(this.playNow?.id!)
-      }else {
+      } else {
         __Client__.updateHistoryNoLogin(this.playNow?.id!)
       }
-     })
+    })
   }
 
   @Monitor('isPlaying')
-  startOrStopContinuesTasks(){
+  startOrStopContinuesTasks() {
     this.avSessionController?.setPlayState(this.isPlaying)
   }
 
@@ -89,8 +87,8 @@ export class musicPlayer {
     this.avPlayer.on('durationUpdate', (duration: number) => {
       this.durationTime = duration
     });
-    this.avPlayer.on('timeUpdate', (time:number) => {
-     this.currentTime = time
+    this.avPlayer.on('timeUpdate', (time: number) => {
+      this.currentTime = time
       this.avSessionController?.setProgressState(time)
     });
   }
@@ -195,17 +193,15 @@ export class musicPlayer {
     }
   }
 
-  Next(){
+  Next() {
     console.log(this.playIndex.toString())
-    this.playIndex = this.playIndex == this.playList.length -1 ? 0:this.playIndex+1
+    this.playIndex = this.playIndex == this.playList.length - 1 ? 0 : this.playIndex + 1
     console.log(this.playIndex.toString())
   }
 
-  Last(){
-    this.playIndex = this.playIndex == 0 ? this.playList.length -1:this.playIndex-1
+  Last() {
+    this.playIndex = this.playIndex == 0 ? this.playList.length - 1 : this.playIndex - 1
   }
-
-
 }
 
 export let __musicPlayer__: musicPlayer = new musicPlayer()

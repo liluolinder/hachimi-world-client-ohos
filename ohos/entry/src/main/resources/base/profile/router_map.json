@@ -25,6 +25,11 @@
             "name": "settingsCustomBackground",
             "pageSourceFile": "src/productDefault/pages/settings/SettingsCustomBackground.ets",
             "buildFunction": "settingsCustomBackgroundBuilder"
+        },
+        {
+            "name": "songListInfoPage",
+            "pageSourceFile": "src/productDefault/pages/songList/SongListInfoPage.ets",
+            "buildFunction": "SongListInfoPageBuilder"
         }
     ]
 }

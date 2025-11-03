@@ -26,4 +26,8 @@ export interface I_SearchSongRes_data_hit {
   uploader_name: string | null  //上传者昵称
   play_count: number     //播放次数
   like_count: number    //喜欢数量
+
+  cover_url:string
+  lyrics: string | null
+
 }

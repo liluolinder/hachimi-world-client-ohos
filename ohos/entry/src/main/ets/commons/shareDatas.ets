@@ -27,9 +27,6 @@ export class SysShareData {
     console.log(this.windowWidth.toString())
     XAnimation.runWithAnimation(() => {
       __UI__.isSplitLayout = __System__.windowWidth > min_split_width
-/*      __UI__.indexNavigationMode = __System__.windowWidth < min_split_width ? NavigationMode.Stack :
-        __UI__.mainPageStack.getAllPathName().length > 0 && !__PlayerUIData__.isFullScreen ? NavigationMode.Split :
-          __UI__.indexNavigationMode*/
       __UI__.isLargeSidebar = __System__.windowWidth < min_width
       __UI__.isShowSideBar = __System__.windowWidth > min_width
       __UI__.sideBarMode =

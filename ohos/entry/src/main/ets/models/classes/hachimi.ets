@@ -26,7 +26,6 @@ export class hachimi {
   @Trace playHistoryArray: BasicDataSource<I_GetHistoryRes_Data_Item> = new BasicDataSource<I_GetHistoryRes_Data_Item>()
   @Trace songListArray: BasicDataSource<I_GetSongListRes_data_item> = new BasicDataSource<I_GetSongListRes_data_item>()
 
-
   async generateCaptcha(): Promise<I_GenerateCaptchaRes_data | undefined> {
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/auth/captcha/generate`, {
@@ -171,7 +170,7 @@ export class hachimi {
     }
   }
 
-  async getRecentSong(needClear:boolean = false): Promise<undefined | number> {
+  async getRecentSong(needClear: boolean = false): Promise<undefined | number> {
     await this.refreshToken()
     if (needClear) {
       this.recentSongArray.clearData()
@@ -208,6 +207,7 @@ export class hachimi {
 
   async getSongDetail(id: string): Promise<undefined | I_GetRecentSongRes_data_song> {
     let req = http.createHttp()
+    console.log(`https://api.hachimi.world/song/detail?id=${id}`)
     return await req.request(`https://api.hachimi.world/song/detail?id=${id}`, {
       method: http.RequestMethod.GET,
       header: {
@@ -323,7 +323,7 @@ export class hachimi {
       });
   }
 
-  async getHistory(cursor: string = '', needClear:boolean = false): Promise<number | undefined> {
+  async getHistory(cursor: string = '', needClear: boolean = false): Promise<number | undefined> {
     await this.refreshToken()
     if (needClear) {
       this.playHistoryArray.clearData()
@@ -363,7 +363,7 @@ export class hachimi {
       });
   }
 
-  async getSongList(needClear:boolean = false): Promise<number | undefined> {
+  async getSongList(needClear: boolean = false): Promise<number | undefined> {
     if (needClear) {
       this.songListArray.clearData()
     }
@@ -384,7 +384,7 @@ export class hachimi {
       let res: I_GetSongListRes = result as I_GetSongListRes
       console.log(JSON.stringify(res))
       if (res.ok) {
-        res.data.playlists.forEach((item)=>{
+        res.data.playlists.forEach((item) => {
           this.songListArray.pushData(item)
         })
         return res.data.playlists.length
@@ -400,7 +400,7 @@ export class hachimi {
       });
   }
 
-  async getSongListInfo(id:number): Promise<number | undefined> {
+  async getSongListInfo(id: number): Promise<I_GetSongListInfo_data | undefined> {
     await this.refreshToken()
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/playlist/detail_private?id=${id}`, {
@@ -417,7 +417,7 @@ export class hachimi {
       let result = JSON.parse((obj as object)?.['result'])
       let res: I_GetSongListInfoRes = result as I_GetSongListInfoRes
       if (res.ok) {
-        return 0
+        return res.data
       } else {
         return undefined
       }
@@ -466,7 +466,7 @@ export class hachimi {
       });
   }
 
-  async addSong2SongListInfo(param:I_AddSong2SongListInfoParm): Promise<'ok' | undefined> {
+  async addSong2SongListInfo(param: I_AddSong2SongListInfoParm): Promise<'ok' | undefined> {
     await this.refreshToken()
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/playlist/add_song`, {
@@ -478,9 +478,9 @@ export class hachimi {
         'origin': 'https://hachimi.world',
         'referer': 'https://hachimi.world'
       },
-      extraData:{
-        'playlist_id':param.playlist_id,
-        'song_id':param.song_id
+      extraData: {
+        'playlist_id': param.playlist_id,
+        'song_id': param.song_id
       }
     }).then(async (data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))
@@ -499,7 +499,6 @@ export class hachimi {
         req.destroy();
       });
   }
-
 }
 
 export let __Client__: hachimi = new hachimi()

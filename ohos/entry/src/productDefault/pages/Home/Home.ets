@@ -6,6 +6,7 @@ import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interface
 import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
 import { Player } from "../player/Player"
+import { curves } from "@kit.ArkUI"
 
 
 @ObservedV2
@@ -58,46 +59,61 @@ export struct Home {
       .transition(XAnimation.getAnimation('up'))
       .zIndex(114514)
 
-      List({ space: 10 }) {
-        if (this.showType == 0) {
-          LazyForEach(__Client__.recentSongArray, (item: I_GetRecentSongRes_data_song, index: number) => {
-            HomeCover({ data: item, type: 0 })
-              .onClick(async () => {
-                __musicPlayer__.playNow = item
-                __musicPlayer__.playList = []
-                 __Client__.recentSongArray.dataArray.forEach((itemA)=>{
-                   __musicPlayer__.playList.push(itemA.display_id)
-                 })
-                __musicPlayer__.playIndex = index
-              })
-          }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
-        } else {
-          LazyForEach(__Client__.searchSongArray, (item: I_SearchSongRes_data_hit, index: number) => {
-            HomeCover({ data: item, type: 1 })
-              .onClick(async () => {
-                __musicPlayer__.playList = []
-                __Client__.searchSongArray.dataArray.forEach((itemA)=>{
-                  __musicPlayer__.playList.push(itemA.display_id)
+      if ((this.showType == 0 && __Client__.recentSongArray.dataArray.length == 0) ||
+        (this.showType == 1 && __Client__.searchSongArray.dataArray.length == 0)) {
+        Column({ space: 10 }) {
+          LoadingProgress()
+            .size({ width: 80, height: 80 })
+          Text('正在加载请稍后，加载速度取决于网速')
+            .fontWeight(FontWeight.Bold)
+            .fontSize(26)
+        }.size({ width: '100%', height: '100%' })
+        .justifyContent(FlexAlign.Center)
+      } else {
+        List({ space: 10 }) {
+          if (this.showType == 0) {
+            LazyForEach(__Client__.recentSongArray, (item: I_GetRecentSongRes_data_song, index: number) => {
+              HomeCover({ data: item, type: 0 })
+                .onClick(async () => {
+                  __musicPlayer__.playNow = item
+                  __musicPlayer__.playList = []
+                  __Client__.recentSongArray.dataArray.forEach((itemA) => {
+                    __musicPlayer__.playList.push(itemA.display_id)
+                  })
+                  __musicPlayer__.playIndex = index
                 })
-                __musicPlayer__.playIndex = index
-              })
-          }, (item: I_SearchSongRes_data_hit) => JSON.stringify(item))
+
+            }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
+          } else {
+            LazyForEach(__Client__.searchSongArray, (item: I_SearchSongRes_data_hit, index: number) => {
+              HomeCover({ data: item, type: 1 })
+                .onClick(async () => {
+                  __musicPlayer__.playNow = item
+                  __musicPlayer__.playList = []
+                  __Client__.searchSongArray.dataArray.forEach((itemA) => {
+                    __musicPlayer__.playList.push(itemA.display_id)
+                  })
+                  __musicPlayer__.playIndex = index
+                })
+            }, (item: I_SearchSongRes_data_hit) => JSON.stringify(item))
+          }
         }
+        .padding({ left: 16, right: 16 })
+        .scrollBar(BarState.Off)
+        .contentStartOffset(__System__.topRectHeight + 70)
+        .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 100)
+        .onAreaChange((_, newValue) => {
+          XAnimation.runWithAnimation(() => {
+            this.ColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 300), 2)
+          }, this.ColumnNumber > 0)
+        })
+        .lanes(this.ColumnNumber, 10)
+        .layoutWeight(1)
+        .cachedCount(this.ColumnNumber * 10)
+        .edgeEffect(EdgeEffect.Spring)
+        .blur(__Home__.inSearchMode ? 50 : 0)
       }
-      .padding({ left: 16, right: 16 })
-      .scrollBar(BarState.Off)
-      .contentStartOffset(__System__.topRectHeight + 70)
-      .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 118)
-      .onAreaChange((_, newValue) => {
-        XAnimation.runWithAnimation(() => {
-          this.ColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 300), 2)
-        }, this.ColumnNumber > 0)
-      })
-      .lanes(this.ColumnNumber, 10)
-      .layoutWeight(1)
-      .cachedCount(this.ColumnNumber * 10)
-      .edgeEffect(EdgeEffect.Spring)
-      .blur(__Home__.inSearchMode ? 50 : 0)
+
 
       if (__Home__.inSearchMode) {
         Column()
@@ -110,8 +126,7 @@ export struct Home {
       }
 
 
-    }
-    .size({ width: '100%', height: '100%' })
+    }.size({ width: '100%', height: '100%' })
 
   }
 }
@@ -218,8 +233,9 @@ export struct HomeCover {
       }.alignItems(HorizontalAlign.Start)
     }
     .attributeModifier(backgroundBlurModifier)
-
-    .transition(TransitionEffect.OPACITY.animation({ duration: 150, curve: Curve.Ease }))
+    .transition(TransitionEffect.OPACITY
+      .combine(TransitionEffect.scale({ x: 0.5, y: 0.5 }))
+      .animation({ curve: curves.springMotion(0.5, 0.7) }))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
     .width('100%')
     .clip(true)

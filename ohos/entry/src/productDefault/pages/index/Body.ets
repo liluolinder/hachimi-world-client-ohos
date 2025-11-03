@@ -132,11 +132,11 @@ export struct Body{
               .justifyContent(FlexAlign.SpaceBetween)
             }
           }
-          .size({ width: '100%', height: 78 })
+          .size({ width: '100%', height: 68 })
           .borderRadius(20)
           .clip(true)
-        }.position({ bottom: 40 })
-        .size({ width: '100%', height: 78 })
+        }.position({ bottom:Math.max( __System__.bottomRectHeight,5) })
+        .size({ width: '100%', height: 68 })
         .padding({ left: 8, right: 8 })
         .onClick(() => {
           console.log('testTAG jump')

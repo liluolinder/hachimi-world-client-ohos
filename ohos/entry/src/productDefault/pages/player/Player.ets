@@ -7,14 +7,15 @@ import WindowsUtil from "../../../main/ets/models/classes/WindowsUtil";
 import text from "@ohos.graphics.text";
 
 @Builder
-export function playerBuilder(){
+export function playerBuilder() {
   Player()
 }
 
 @ComponentV2
 export struct Player {
   @Local ImageMarginTop: number = 0
-  @Provider('lrcController') lrcController:ListScroller= new ListScroller()
+  @Provider('lrcController') lrcController: ListScroller = new ListScroller()
+
   @Builder
   songInfo() {
     Column() {
@@ -27,17 +28,17 @@ export struct Player {
         })
         .borderRadius(20)
         .margin({ top: this.ImageMarginTop })
-        .geometryTransition('playerCoverImage', {follow: true})
+        .geometryTransition('playerCoverImage', { follow: true })
         .transition(TransitionEffect.OPACITY)
 
-      Column({space:10}) {
+      Column({ space: 10 }) {
         Text(__musicPlayer__.playNow?.title ?? '暂未播放')
           .fontWeight(FontWeight.Bolder)
           .fontSize(24)
           .textAlign(TextAlign.Center)
           .size({ width: '100%' })
           .maxLines(2)
-          .geometryTransition('playerTitleText', {follow: true})
+          .geometryTransition('playerTitleText', { follow: true })
           .transition(TransitionEffect.OPACITY)
           .fontColor(Color.White)
         Text(__musicPlayer__.playNow?.uploader_name ?? '')
@@ -46,7 +47,7 @@ export struct Player {
           .textAlign(TextAlign.Center)
           .size({ width: '100%' })
           .maxLines(1)
-          .geometryTransition('playerArtistsText', {follow: true})
+          .geometryTransition('playerArtistsText', { follow: true })
           .transition(TransitionEffect.OPACITY)
           .fontColor(Color.White)
 
@@ -85,7 +86,7 @@ export struct Player {
         .onClick(() => {
           __musicPlayer__.Last()
         })
-        .geometryTransition('playerPreviousButton', {follow: true})
+        .geometryTransition('playerPreviousButton', { follow: true })
         .transition(TransitionEffect.OPACITY)
 
         Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
@@ -97,7 +98,7 @@ export struct Player {
         .onClick(() => {
           __musicPlayer__.isPlaying ? __musicPlayer__.Pause() : __musicPlayer__.Play()
         })
-        .geometryTransition('playerPlayPauseButton', {follow: true})
+        .geometryTransition('playerPlayPauseButton', { follow: true })
         .transition(TransitionEffect.OPACITY)
 
         Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
@@ -109,7 +110,7 @@ export struct Player {
         .onClick(() => {
           __musicPlayer__.Next()
         })
-        .geometryTransition('playerNextButton', {follow: true})
+        .geometryTransition('playerNextButton', { follow: true })
         .transition(TransitionEffect.OPACITY)
 
       }.size({ width: '80%' })
@@ -117,7 +118,7 @@ export struct Player {
       .margin({ top: 40 })
 
     }.size({ width: '100%', height: '90%' })
-    .margin({bottom:40})
+    .margin({ bottom: 40 })
     .justifyContent(FlexAlign.SpaceBetween)
     .onAreaChange((_, newArea) => {
       this.ImageMarginTop = (Number(newArea.width) - Number(newArea.width) * 0.6) / 2
@@ -126,33 +127,32 @@ export struct Player {
 
   @Builder
   lrc() {
-    Column(){
-      if (__musicPlayer__.playNow?.lyrics!=null && __musicPlayer__.playNow.lyrics != '')
-      {
-        List({space:50, scroller:this.lrcController}){
-          ForEach(__musicPlayer__.playNow.lyrics.replaceAll('\r','').split('\n'),(item:string,index:number)=>{
-            lrcItem({lrcString:item, index:index})
-          },(item:string)=>item)
+    Column() {
+      if (__musicPlayer__.playNow?.lyrics != null && __musicPlayer__.playNow.lyrics != '') {
+        List({ space: 50, scroller: this.lrcController }) {
+          ForEach(__musicPlayer__.playNow.lyrics.replaceAll('\r', '').split('\n'), (item: string, index: number) => {
+            lrcItem({ lrcString: item, index: index })
+          }, (item: string) => item)
         }.layoutWeight(1)
         .contentEndOffset(__System__.bottomRectHeight)
-      }else {
+      } else {
         Text('暂无歌词')
           .fontSize(26)
           .fontWeight(FontWeight.Bold)
       }
-    }.padding({top:__System__.topRectHeight})
+    }.padding({ top: __System__.topRectHeight })
     .justifyContent(FlexAlign.Center)
     .size({ width: '100%', height: '100%' })
   }
 
   build() {
-    NavDestination(){
+    NavDestination() {
       Stack() {
         Image(__musicPlayer__.playNow?.cover_url ?? $r('app.media.linder'))
           .width('100%')
           .height('100%')
           .blur(150)
-          .geometryTransition('playerBackground', {follow: true})
+          .geometryTransition('playerBackground', { follow: true })
           .transition(TransitionEffect.OPACITY)
           .brightness(0.9)
         if (__System__.windowWidth > minPlayerWidth) {
@@ -177,26 +177,28 @@ export struct Player {
       }.size({ width: '100%', height: '100%' })
     }
     .hideTitleBar(true)
-    .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({y: __System__.windowHeight})))
-    .onBackPressed(()=>{
-      XAnimation.runWithAnimation(()=> {__UI__.mainPageStack.pop(false)})
+    .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: __System__.windowHeight })))
+    .onBackPressed(() => {
+      XAnimation.runWithAnimation(() => {
+        __UI__.mainPageStack.pop(false)
+      })
       return true
     })
   }
 }
 
 @ComponentV2
-export struct lrcItem{
-  @Param @Require lrcString:string
-  @Param @Require index:number
-  @Local time:number = -1
-  @Local lrc:string =''
-  @Consumer('lrcController') lrcController:ListScroller= new ListScroller()
+export struct lrcItem {
+  @Param @Require lrcString: string
+  @Param @Require index: number
+  @Local time: number = -1
+  @Local lrc: string = ''
+  @Consumer('lrcController') lrcController: ListScroller = new ListScroller()
 
   aboutToAppear(): void {
     const LYRIC_REGEX = /(?:\[(\d{2}):(\d{2})\.(\d{3})\])?(.+)/
     const match = this.lrcString.match(LYRIC_REGEX);
-    if (match){
+    if (match) {
       const _ = match[0];
       const min = match[1];
       const sec = match[2];
@@ -207,43 +209,43 @@ export struct lrcItem{
       if (!min && !sec && !ms) {
         this.time = -1;
         this.lrc = trimmedLyric;
-      }else {
+      } else {
         this.time = StringFormat.convertToMilliseconds(min, sec, ms);
         this.lrc = trimmedLyric;
       }
-    }else {
+    } else {
       this.time = -1;
       this.lrc = this.lrcString;
     }
   }
 
-  changeLrcColor():ResourceStr|Color{
+  changeLrcColor(): ResourceStr | Color {
 
     if (__PlayerUIData__.lrcIndex <= this.index) {
       __PlayerUIData__.lrcIndex = this.index
-      this.lrcController.scrollToIndex(this.index,true,ScrollAlign.CENTER)
+      this.lrcController.scrollToIndex(this.index, true, ScrollAlign.CENTER)
       return Color.Blue
-    }else{
+    } else {
       return Color.White
     }
 
   }
 
   build() {
-    ListItem(){
-      Text(this.time+this.lrc)
+    ListItem() {
+      Text(this.time + this.lrc)
         .fontSize(28)
-        .fontColor(__musicPlayer__.currentTime >= this.time && this.time>=0 ? this.changeLrcColor():Color.White)
+        .fontColor(__musicPlayer__.currentTime >= this.time && this.time >= 0 ? this.changeLrcColor() : Color.White)
         .fontWeight(FontWeight.Bolder)
         .width('100%')
         .textAlign(TextAlign.Center)
     }.width('100%')
-    .onClick(()=>{
-      if (this.time!=-1) {
+    .onClick(() => {
+      if (this.time != -1) {
         __musicPlayer__.currentTime = this.time
         __PlayerUIData__.lrcIndex = this.index
         __musicPlayer__.Seek(this.time)
-        this.lrcController.scrollToIndex(this.index,true,ScrollAlign.CENTER)
+        this.lrcController.scrollToIndex(this.index, true, ScrollAlign.CENTER)
       }
     })
   }
