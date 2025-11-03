@@ -147,8 +147,11 @@ class GlobalStore(
         playerExpanded = false
     }
 
-    fun setLoginUser(uid: Long, name: String, avatarUrl: String?) {
+    fun setLoginUser(uid: Long, name: String, avatarUrl: String?, update: Boolean) {
         Snapshot.withMutableSnapshot {
+            if (update && userInfo == null) {
+                return
+            }
             userInfo = UserInfo(
                 uid = uid,
                 name = name,

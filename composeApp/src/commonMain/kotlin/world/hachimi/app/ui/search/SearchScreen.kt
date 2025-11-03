@@ -80,7 +80,7 @@ private fun Content(vm: SearchViewModel, global: GlobalStore) {
                     selected = vm.searchType == SearchViewModel.SearchType.USER,
                     onClick = { vm.updateSearchType(SearchViewModel.SearchType.USER) },
                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                    label = { Text("用户") }
+                    label = { Text("神人") }
                 )
             }
         }

@@ -1,9 +1,7 @@
 package world.hachimi.app.util
 
 import androidx.compose.runtime.Stable
-import io.ktor.http.URLParserException
-import io.ktor.http.URLProtocol
-import io.ktor.http.Url
+import io.ktor.http.*
 
 @Stable
 fun isValidHttpsUrl(content: String): Boolean {
@@ -17,3 +15,8 @@ fun isValidHttpsUrl(content: String): Boolean {
     }
     return false
 }
+
+/**
+ * TextField with `singleLine = true` could be bypassed by pasting multiline text.
+ */
+fun String.singleLined() = replace('\n', ' ').replace('\r', ' ')

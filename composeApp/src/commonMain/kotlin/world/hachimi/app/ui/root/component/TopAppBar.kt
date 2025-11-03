@@ -31,6 +31,7 @@ import world.hachimi.app.nav.Route
 import world.hachimi.app.ui.component.Logo
 import world.hachimi.app.ui.insets.currentSafeAreaInsets
 import world.hachimi.app.ui.theme.PreviewTheme
+import world.hachimi.app.util.singleLined
 
 @Composable
 fun TopAppBar(
@@ -146,7 +147,7 @@ private fun SearchBox(
     BasicTextField(
         modifier = modifier.defaultMinSize(300.dp),
         value = searchText,
-        onValueChange = onSearchTextChange,
+        onValueChange = { onSearchTextChange(it.singleLined()) },
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         decorationBox = { innerTextField ->

@@ -67,6 +67,38 @@ class SearchViewModel(
         loading = true
         try {
             songData.clear()
+            // If the query text is display id: JM-ABCD-123, use detail to get information.
+            // The `JM-` prefix and dash `-` is optional
+            val displayIdPattern = "^(?:JM-)?([A-Z]{3,4})-?(\\d{3})$".toRegex()
+            val matchResult = displayIdPattern.find(query.trim().uppercase())
+            if (matchResult != null) {
+                val part1 = matchResult.groupValues[1]
+                val part2 = matchResult.groupValues[2]
+                val displayId = "JM-$part1-$part2"
+                val resp = api.songModule.detail(displayId)
+                if (resp.ok) {
+                    val data = resp.okData<SongModule.PublicSongDetail>()
+                    Snapshot.withMutableSnapshot {
+                        songData.add(SongModule.SearchSongItem(
+                            id = data.id,
+                            displayId = data.displayId,
+                            title = data.title,
+                            subtitle = data.subtitle,
+                            description = data.description,
+                            artist = data.uploaderName,
+                            durationSeconds = data.durationSeconds,
+                            playCount = data.playCount,
+                            likeCount = data.likeCount,
+                            coverArtUrl = data.coverUrl,
+                            audioUrl = data.audioUrl,
+                            uploaderUid = data.uploaderUid,
+                            uploaderName = data.uploaderName,
+                        ))
+                        searchProcessingTimeMs = 0
+                    }
+                }
+            }
+
             val resp = api.songModule.search(
                 SongModule.SearchReq(
                     q = query,
@@ -78,7 +110,6 @@ class SearchViewModel(
             if (resp.ok) {
                 val data = resp.okData<SongModule.SearchResp>()
                 Snapshot.withMutableSnapshot {
-                    songData.clear()
                     songData.addAll(data.hits)
                     searchProcessingTimeMs = data.processingTimeMs
                 }
@@ -98,6 +129,20 @@ class SearchViewModel(
         loading = true
         try {
             userData.clear()
+            if (query.toLongOrNull() != null) {
+                val resp = api.userModule.profile(query.toLong())
+                if (resp.ok) {
+                    val data = resp.ok()
+                    Snapshot.withMutableSnapshot {
+                        userData.add(data)
+                        searchProcessingTimeMs = 0
+                    }
+                } else {
+                    val err = resp.err()
+                    global.alert(err.msg)
+                }
+            }
+
             val resp = api.userModule.search(
                 UserModule.SearchReq(
                     q = query,
@@ -108,7 +153,6 @@ class SearchViewModel(
             if (resp.ok) {
                 val data = resp.ok()
                 Snapshot.withMutableSnapshot {
-                    userData.clear()
                     userData.addAll(data.hits)
                     searchProcessingTimeMs = data.processingTimeMs
                 }

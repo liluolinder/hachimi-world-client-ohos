@@ -101,8 +101,6 @@ fun CompactPlayerScreen(
         info?.displayId
     } ?: ""
 
-    var showOriginInfo by remember { mutableStateOf(false) }
-
     Column(Modifier.systemBarsPadding()) {
         Box(Modifier.fillMaxWidth().weight(1f)) {
             val lyricsAlpha by animateFloatAsState(if (displayingLyrics) 1f else 0f)
@@ -202,17 +200,6 @@ fun CompactPlayerScreen(
                 onProgressChange = onProgressChange
             )
         }
-    }
-
-    if (showOriginInfo) {
-        val originInfo = playerState.songInfo?.originInfos?.firstOrNull()
-
-        if (originInfo != null) OriginInfoDialog(
-            onDismissRequest = { showOriginInfo = false },
-            title = originInfo.title,
-            artist = originInfo.artist,
-            url = originInfo.url
-        )
     }
 }
 
@@ -345,6 +332,7 @@ private fun MetadataInfo(
 ) {
     var showOriginInfo by remember { mutableStateOf(false) }
     var showExternalLinks by remember { mutableStateOf(false) }
+    var showStaffInfo by remember { mutableStateOf(false) }
 
     val previewMetadata = playerState.previewMetadata
     val info = playerState.songInfo
@@ -381,11 +369,21 @@ private fun MetadataInfo(
     ) {
         Text(
             modifier = Modifier.clickable(indication = null, interactionSource = null, onClick = {
-                info?.uploaderUid?.let {
-                    onNavToAuthor(it)
+                info?.let {
+                    if (it.productionCrew.isNotEmpty()) {
+                        showStaffInfo = true
+                    } else {
+                        onNavToAuthor(info.uploaderUid)
+                    }
                 }
             }),
-            text = "作者: ${displayedAuthor}",
+            text = info.let { info ->
+                if (info?.productionCrew?.isNotEmpty() == true) {
+                    "作者: $displayedAuthor 等人"
+                } else {
+                    "作者: $displayedAuthor"
+                }
+            },
             style = MaterialTheme.typography.labelSmall,
             color = LocalContentColor.current.copy(0.7f)
         )
@@ -443,6 +441,18 @@ private fun MetadataInfo(
             ExternalLinkDialog(
                 onDismissRequest = { showExternalLinks = false },
                 links = it
+            )
+        }
+    }
+
+    if (showStaffInfo) {
+        info?.let { info ->
+            StaffDialog(
+                onDismissRequest = { showStaffInfo = false },
+                uploaderUid = info.uploaderUid,
+                uploaderName = info.uploaderName,
+                crew = info.productionCrew,
+                onNavToAuthorClick = onNavToAuthor
             )
         }
     }

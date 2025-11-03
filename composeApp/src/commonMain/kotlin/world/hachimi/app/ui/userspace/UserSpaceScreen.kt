@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Female
 import androidx.compose.material.icons.filled.Male
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -38,126 +39,139 @@ fun UserSpaceScreen(uid: Long?, vm: UserSpaceViewModel = koinViewModel()) {
     }
     val global = koinInject<GlobalStore>()
 
-
-    LazyVerticalGrid(
-        modifier = Modifier.fillMaxSize(),
-        columns = GridCells.Adaptive(minSize = 160.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
-        contentPadding = PaddingValues(24.dp)
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                Row(Modifier.fillMaxWidth()) {
-                    Text(
-                        modifier = Modifier.weight(1f),
-                        text = "神人空间",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    if (vm.myself) TextButton(onClick = { global.logout() }) {
-                        Text("退出登录")
-                    }
-                }
-
-                if (vm.loadingProfile) Box(Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                } else vm.profile?.let { profile ->
+    BoxWithConstraints {
+        LazyVerticalGrid(
+            modifier = Modifier.fillMaxSize(),
+            columns = if (maxWidth < 400.dp) GridCells.Adaptive(minSize = 120.dp)
+            else GridCells.Adaptive(minSize = 160.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(24.dp)
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                     Row(Modifier.fillMaxWidth()) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Card(
-                                modifier = Modifier.size(128.dp),
-                                shape = CircleShape,
-                                enabled = vm.myself,
-                                onClick = { vm.editAvatar() }
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    AsyncImage(
-                                        model = profile.avatarUrl,
-                                        contentDescription = "User Avatar",
-                                        modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.small),
-                                        filterQuality = FilterQuality.High,
-                                        contentScale = ContentScale.Crop
-                                    )
-
-                                    if (vm.avatarUploading) {
-                                        if (vm.avatarUploadProgress > 0f && vm.avatarUploadProgress < 1f)
-                                            CircularProgressIndicator(progress = { vm.avatarUploadProgress })
-                                        else CircularProgressIndicator()
-                                    }
-                                }
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    modifier = Modifier.clickable(enabled = vm.myself) { vm.editUsername() },
-                                    text = profile.username,
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Box(Modifier.size(16.dp)) {
-                                    when (profile.gender) {
-                                        0 -> Icon(Icons.Default.Male, contentDescription = "Male")
-                                        1 -> Icon(Icons.Default.Female, contentDescription = "Female")
-                                    }
-                                }
-                            }
-                        }
-                        Spacer(Modifier.width(24.dp))
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(text = "UID: ${profile.uid}", style = MaterialTheme.typography.labelMedium)
-                            Text(text = "介绍", style = MaterialTheme.typography.labelMedium)
-
-                            Card(
-                                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 120.dp),
-                                enabled = vm.myself,
-                                onClick = { vm.editBio() }
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(12.dp),
-                                    text = profile.bio ?: "",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = "神人空间",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        if (vm.myself) TextButton(onClick = { global.logout() }) {
+                            Text("退出登录")
                         }
                     }
 
-                    Text(
-                        text = "全部作品",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier
-                    )
-
-                    if (vm.loadingSongs) Box(Modifier.fillMaxWidth().height(300.dp), Alignment.Center) {
+                    if (vm.loadingProfile) Box(Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
-                    } else if (vm.songs.isEmpty()) {
-                        Box(Modifier.fillMaxWidth().height(300.dp), Alignment.Center) {
-                            Text(text = "什么也没有")
+                    } else vm.profile?.let { profile ->
+                        Row(Modifier.fillMaxWidth()) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Card(
+                                    modifier = Modifier.size(128.dp),
+                                    shape = CircleShape,
+                                    enabled = vm.myself,
+                                    onClick = { vm.editAvatar() }
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        AsyncImage(
+                                            model = profile.avatarUrl,
+                                            contentDescription = "User Avatar",
+                                            modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.small),
+                                            filterQuality = FilterQuality.High,
+                                            contentScale = ContentScale.Crop
+                                        )
+
+                                        if (vm.avatarUploading) {
+                                            if (vm.avatarUploadProgress > 0f && vm.avatarUploadProgress < 1f)
+                                                CircularProgressIndicator(progress = { vm.avatarUploadProgress })
+                                            else CircularProgressIndicator()
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        modifier = Modifier.clickable(enabled = vm.myself) { vm.editUsername() },
+                                        text = profile.username,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Box(Modifier.size(16.dp)) {
+                                        when (profile.gender) {
+                                            0 -> Icon(Icons.Default.Male, contentDescription = "Male")
+                                            1 -> Icon(Icons.Default.Female, contentDescription = "Female")
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.width(24.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(text = "UID: ${profile.uid}", style = MaterialTheme.typography.labelMedium)
+                                Text(text = "介绍", style = MaterialTheme.typography.labelMedium)
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 120.dp),
+                                    enabled = vm.myself,
+                                    onClick = { vm.editBio() }
+                                ) {
+                                    Text(
+                                        modifier = Modifier.padding(12.dp),
+                                        text = profile.bio ?: "",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "全部作品",
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier
+                            )
+                            Box(Modifier.weight(1f))
+                            if (vm.songs.isNotEmpty()) Button(
+                                modifier = Modifier,
+                                onClick = { vm.playAll() }
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                                Spacer(Modifier.width(8.dp))
+                                Text("播放全部")
+                            }
+                        }
+
+                        if (vm.loadingSongs) Box(Modifier.fillMaxWidth().height(300.dp), Alignment.Center) {
+                            CircularProgressIndicator()
+                        } else if (vm.songs.isEmpty()) {
+                            Box(Modifier.fillMaxWidth().height(300.dp), Alignment.Center) {
+                                Text(text = "什么也没有")
+                            }
                         }
                     }
                 }
             }
-        }
-        items(vm.songs, key = { it.id }) { song ->
-            SongCard(
-                coverUrl = song.coverUrl,
-                title = song.title,
-                subtitle = song.subtitle,
-                author = song.uploaderName,
-                tags = remember(song.tags) { song.tags.map { item -> item.name } },
-                playCount = song.playCount,
-                likeCount = song.likeCount,
-                onClick = {
-                    global.player.insertToQueue(GlobalStore.MusicQueueItem(
-                        id = song.id,
-                        displayId = song.displayId,
-                        name = song.title,
-                        artist = song.uploaderName,
-                        duration = song.durationSeconds.seconds,
-                        coverUrl = song.coverUrl
-                    ), true, false)
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+            items(vm.songs, key = { it.id }) { song ->
+                SongCard(
+                    coverUrl = song.coverUrl,
+                    title = song.title,
+                    subtitle = song.subtitle,
+                    author = song.uploaderName,
+                    tags = remember(song.tags) { song.tags.map { item -> item.name } },
+                    playCount = song.playCount,
+                    likeCount = song.likeCount,
+                    onClick = {
+                        global.player.insertToQueue(GlobalStore.MusicQueueItem(
+                            id = song.id,
+                            displayId = song.displayId,
+                            name = song.title,
+                            artist = song.uploaderName,
+                            duration = song.durationSeconds.seconds,
+                            coverUrl = song.coverUrl
+                        ), true, false)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 
