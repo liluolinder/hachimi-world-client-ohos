@@ -17,30 +17,76 @@ export struct SongListInfoPage {
   @Local songListInfo?: I_GetSongListInfo_data
   @Local ColumnNumber: number = 2
   @Local canGetMore: boolean = true
-  @Local contentEndOffsetNum: number =
-    __System__.windowWidth > min_width ? 10 : Math.max(__System__.bottomRectHeight, 16) + 100
 
   @Builder
   songListBuilder() {
     Column() {
       List({ space: 10 }) {
-        ForEach(this.songListInfo?.songs, (item: I_GetRecentSongRes_data_song, index: number) => {
-          ListItem() {
-            songListItemCover({ data: item })
-          }
-          .borderRadius(10)
-          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-          .clip(true)
-          .onClick(async () => {
-            __musicPlayer__.playNow = item
-            __musicPlayer__.playList = []
-            this.songListInfo?.songs.forEach((itemA) => {
-              __musicPlayer__.playList.push(itemA.song_display_id)
-            })
-            __musicPlayer__.playIndex = index
-          })
 
-        }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
+        if (__System__.windowWidth < min_width) {
+          ListItemGroup() {
+            ListItem() {
+              Column() {
+                Row({ space: 10 }) {
+                  Image(this.songListInfo?.playlist_info.cover_url)
+                    .size({ width: 80 })
+                    .aspectRatio(1)
+                    .borderRadius(20)
+                  Text(this.songListInfo?.playlist_info.name)
+                    .fontSize(22)
+                    .layoutWeight(1)
+                    .fontWeight(FontWeight.Bold)
+                    .textOverflow({ overflow: TextOverflow.MARQUEE })
+                }.size({ width: '100%' })
+                .padding({
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  bottom: 10
+                })
+
+                Scroll() {
+                  Text(this.songListInfo?.playlist_info.description)
+                    .width('100%')
+                    .fontSize(18)
+                    .fontWeight(FontWeight.Medium)
+                }
+                .padding({ left: 8, right: 8 })
+                .scrollBar(BarState.Off)
+                .edgeEffect(EdgeEffect.Spring)
+                .align(Alignment.Top)
+                .width('100%')
+                .layoutWeight(1)
+                .clip(true)
+              }
+              .padding({ bottom: 8 })
+              .size({ width: '100%', height: 200 })
+              .clip(true)
+              .borderRadius(20)
+              .attributeModifier(backgroundBlurModifier)
+            }
+          }
+        }
+
+        ListItemGroup({ space: 10 }) {
+          ForEach(this.songListInfo?.songs, (item: I_GetRecentSongRes_data_song, index: number) => {
+            ListItem() {
+              songListItemCover({ data: item })
+            }
+            .borderRadius(10)
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+            .clip(true)
+            .onClick(async () => {
+              __musicPlayer__.playNow = item
+              __musicPlayer__.playList = []
+              this.songListInfo?.songs.forEach((itemA) => {
+                __musicPlayer__.playList.push(itemA.song_display_id)
+              })
+              __musicPlayer__.playIndex = index
+            })
+
+          }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
+        }
       }
       .onAreaChange((_, newValue) => {
         XAnimation.runWithAnimation(() => {
@@ -49,8 +95,8 @@ export struct SongListInfoPage {
       })
       .padding({ left: 16, right: 16 })
       .scrollBar(BarState.Off)
-      .contentStartOffset(10)
-      .contentEndOffset(this.contentEndOffsetNum)
+      .contentStartOffset(16)
+      .contentEndOffset(16)
       .height('100%')
       .width('100%')
       .lanes(this.ColumnNumber, 10)
@@ -68,11 +114,12 @@ export struct SongListInfoPage {
 
       Column() {
 
-        if (__System__.windowWidth > min_width) {
-          Row({ space: 10 }) {
+
+        Row({ space: 10 }) {
+
+          if (__System__.windowWidth > min_width) {
             Column() {
               Scroll() {
-
                 Column() {
                   Image(this.songListInfo?.playlist_info.cover_url)
                     .width('100%')
@@ -106,64 +153,13 @@ export struct SongListInfoPage {
             }.size({ width: 250, height: '100%' })
             .backgroundColor($r('sys.color.gray_01'))
             .borderRadius(20)
-
-            this.songListBuilder()
-
-          }.size({ width: '100%', height: '100%' })
-          .padding({ bottom: Math.max(__System__.bottomRectHeight, 5) + 75 })
-
-        } else {
-
-          Column({ space: 10 }) {
-            Column() {
-
-              Row({ space: 10 }) {
-
-                Image(this.songListInfo?.playlist_info.cover_url)
-                  .size({ width: 80 })
-                  .aspectRatio(1)
-                  .borderRadius(20)
-
-
-                Text(this.songListInfo?.playlist_info.name)
-                  .fontSize(22)
-                  .layoutWeight(1)
-                  .fontWeight(FontWeight.Bold)
-                  .textOverflow({ overflow: TextOverflow.MARQUEE })
-
-              }.size({ width: '100%' })
-              .padding({
-                top: 20,
-                left: 20,
-                right: 20,
-                bottom: 10
-              })
-
-              Scroll() {
-                Text(this.songListInfo?.playlist_info.description)
-                  .width('100%')
-                  .fontSize(18)
-                  .fontWeight(FontWeight.Medium)
-              }
-              .padding({ left: 16, right: 16 })
-              .scrollBar(BarState.Off)
-              .edgeEffect(EdgeEffect.Spring)
-              .align(Alignment.Top)
-              .width('100%')
-              .layoutWeight(1)
-              .clip(true)
-            }
-            .padding({ bottom: 8 })
-            .size({ width: '100%', height: 200 })
-            .clip(true)
-            .borderRadius(20)
-            .backgroundColor($r('sys.color.gray_01'))
-
-            this.songListBuilder()
           }
-          .layoutWeight(1)
-          .size({ width: '100%', height: '100%' })
-        }
+
+          this.songListBuilder()
+
+        }.size({ width: '100%', height: '100%' })
+        .padding({ bottom: Math.max(__System__.bottomRectHeight, 5) + 75 })
+
       }.padding({ left: 16, right: 16 })
 
     }.padding({ top: Math.max(__System__.topRectHeight, 10) })

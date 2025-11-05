@@ -11,89 +11,89 @@ import { min_width } from '../commons/commonItem';
 @Entry
 @ComponentV2
 struct Index {
-    @Provider('tabController') tabController: TabsController = new TabsController()
-    @Provider('currentTabIndex') currentTabIndex: number = XPreferencesManager.getPreferencesValue("pilipala", "currentTabIndex", 0) as number
-    async aboutToAppear(): Promise<void> {
-         __Client__.getRecentSong(true)
-        __UI__.mainPageStack.pushPathByName('indexPage', undefined, false)
+  @Provider('tabController') tabController: TabsController = new TabsController()
+  @Provider('currentTabIndex') currentTabIndex: number =
+    XPreferencesManager.getPreferencesValue("pilipala", "currentTabIndex", 0) as number
 
+  async aboutToAppear(): Promise<void> {
+    __Client__.getRecentSong(true)
+    __UI__.mainPageStack.pushPathByName('indexPage', undefined, false)
+
+  }
+
+  onBackPress(): boolean | void {
+
+  }
+
+  build() {
+    Stack({ alignContent: Alignment.TopStart }) {
+      if (__System__.pcMode) {
+        DecorBar()
+          .zIndex(114514)
+      }
+      CustomBackground()
+
+      Navigation(__UI__.mainPageStack)
+        .size({ width: '100%', height: '100%' })
+        .backgroundColor(Color.Transparent)
+        .layoutWeight(1)
+        .hideToolBar(true)
+        .navBarWidth(__System__.windowWidth / 2.5 + (__UI__.isLargeSidebar ? 190 : 0))
+        .mode(__UI__.indexNavigationMode)
+        .onNavigationModeChange((mode) => {
+          __UI__.indexNavigationMode = mode
+        })
     }
 
-    onBackPress(): boolean | void {
-
-    }
-
-    build() {
-        Stack({ alignContent: Alignment.TopStart }) {
-            if (__System__.pcMode) {
-                DecorBar()
-                    .zIndex(114514)
-            }
-            CustomBackground()
-
-            Navigation(__UI__.mainPageStack)
-                .size({ width: '100%', height: '100%' })
-                .backgroundColor(Color.Transparent)
-                .layoutWeight(1)
-                .hideToolBar(true)
-                .navBarWidth(__System__.windowWidth / 2.5 + (__UI__.isLargeSidebar? 190: 0))
-                .mode(__UI__.indexNavigationMode)
-                .onNavigationModeChange((mode) => {
-                    __UI__.indexNavigationMode = mode
-                })
-        }
-
-    }
+  }
 }
 
 @Builder
-export function indexPageBuilder(){
-    IndexPage()
+export function indexPageBuilder() {
+  IndexPage()
 }
 
 @ComponentV2
-struct IndexPage{
-
-    build() {
-        NavDestination(){
-            SideBarContainer(__UI__.sideBarMode) {
-                SideBar()
-                Body()
+struct IndexPage {
+  build() {
+    NavDestination() {
+      SideBarContainer(__UI__.sideBarMode) {
+        SideBar()
+        Body()
+      }
+      .showSideBar(__UI__.isShowSideBar)
+      .autoHide(false)
+      .showControlButton(false)
+      .sideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
+      .maxSideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
+      .minSideBarWidth(__UI__.isLargeSidebar ? 260 : 70)
+      .gesture(
+        PanGesture({ fingers: 1, direction: PanDirection.Right })
+          .onActionEnd(() => {
+            if (__System__.windowWidth < min_width) {
+              XAnimation.runWithAnimation(() => {
+                __UI__.isShowSideBar = true
+              })
             }
-            .showSideBar(__UI__.isShowSideBar)
-            .autoHide(false)
-            .showControlButton(false)
-            .sideBarWidth(__UI__.isLargeSidebar? 260: 70)
-            .maxSideBarWidth(__UI__.isLargeSidebar? 260: 70)
-            .minSideBarWidth(__UI__.isLargeSidebar? 260: 70)
-            .gesture(
-                PanGesture({ fingers: 1, direction: PanDirection.Right })
-                    .onActionEnd(() => {
-                        if (__System__.windowWidth < min_width) {
-                            XAnimation.runWithAnimation(() => {
-                                __UI__.isShowSideBar = true
-                            })
-                        }
-                    })
-            )
-            .gesture(
-                PanGesture({ fingers: 1, direction: PanDirection.Left })
-                    .onActionEnd(() => {
-                        if (__System__.windowWidth < min_width) {
-                            XAnimation.runWithAnimation(() => {
-                                __UI__.isShowSideBar = false
-                            })
-                        }
-                    })
-            )
-        }
-        .hideTitleBar(true)
-        .onBackPressed(()=>{
-            XContext.getAbilityContext().moveAbilityToBackground()
-            return true
-        })
-        .transition(TransitionEffect.OPACITY)
-
-
+          })
+      )
+      .gesture(
+        PanGesture({ fingers: 1, direction: PanDirection.Left })
+          .onActionEnd(() => {
+            if (__System__.windowWidth < min_width) {
+              XAnimation.runWithAnimation(() => {
+                __UI__.isShowSideBar = false
+              })
+            }
+          })
+      )
     }
+    .hideTitleBar(true)
+    .onBackPressed(() => {
+      XContext.getAbilityContext().moveAbilityToBackground()
+      return true
+    })
+    .transition(TransitionEffect.OPACITY)
+
+  }
 }

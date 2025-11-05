@@ -3,8 +3,7 @@ import { minPlayerWidth, min_width } from "../../../main/ets/commons/commonItem"
 import { __PlayerUIData__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas";
 import { __Client__ } from "../../../main/ets/models/classes/hachimi";
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer";
-import WindowsUtil from "../../../main/ets/models/classes/WindowsUtil";
-import text from "@ohos.graphics.text";
+import { ImageModifier } from "@kit.ArkUI";
 
 @Builder
 export function playerBuilder() {
@@ -14,114 +13,189 @@ export function playerBuilder() {
 @ComponentV2
 export struct Player {
   @Local ImageMarginTop: number = 0
+  @Local infoWidth: number = 0
+  @Local infoHeight: number = 0
   @Provider('lrcController') lrcController: ListScroller = new ListScroller()
+
+  @Builder
+  musicController() {
+    Row({ space: 10 }) {
+      Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
+        SymbolGlyph($r('sys.symbol.backward_end_fill'))
+          .fontSize(60)
+          .fontColor([Color.White])
+      }
+      .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+      .onClick(() => {
+        __musicPlayer__.Last()
+      })
+      .geometryTransition('playerPreviousButton')
+      .transition(TransitionEffect.OPACITY)
+
+      Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
+        SymbolGlyph(__musicPlayer__.isPlaying ? $r('sys.symbol.pause') : $r('sys.symbol.play_fill'))
+          .fontSize(60)
+          .fontColor([Color.White])
+      }
+      .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+      .onClick(() => {
+        __musicPlayer__.isPlaying ? __musicPlayer__.Pause() : __musicPlayer__.Play()
+      })
+      .geometryTransition('playerPlayPauseButton')
+      .transition(TransitionEffect.OPACITY)
+
+      Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
+        SymbolGlyph($r('sys.symbol.forward_end_fill'))
+          .fontSize(60)
+          .fontColor([Color.White])
+      }
+      .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
+      .onClick(() => {
+        __musicPlayer__.Next()
+      })
+      .geometryTransition('playerNextButton')
+      .transition(TransitionEffect.OPACITY)
+
+    }
+    .transition(TransitionEffect.OPACITY)
+    .size({ width: '100%' })
+    .padding({ left: 32, right: 32 })
+    .justifyContent(FlexAlign.SpaceBetween)
+
+  }
+
+  @Builder
+  songTitleWithUPer(){
+    Column() {
+      Text(__musicPlayer__.playNow?.title ?? '暂未播放')
+        .fontWeight(FontWeight.Bolder)
+        .fontSize(28)
+        .textAlign(TextAlign.Center)
+        .size({ width: '100%' })
+        .maxLines(2)
+        .geometryTransition('playerTitleText', { follow: true })
+        .transition(TransitionEffect.OPACITY)
+        .fontColor(Color.White)
+
+      Text(__musicPlayer__.playNow?.uploader_name ?? '')
+        .fontWeight(FontWeight.Normal)
+        .fontSize(18)
+        .textAlign(TextAlign.Center)
+        .size({ width: '100%' })
+        .maxLines(1)
+        .geometryTransition('playerArtistsText', { follow: true })
+        .transition(TransitionEffect.OPACITY)
+        .fontColor(Color.White)
+    }.size({ width: '100%' })
+    .transition(TransitionEffect.OPACITY)
+  }
 
   @Builder
   songInfo() {
     Column() {
-      Image(__musicPlayer__.playNow?.cover_url ?? $r('app.media.linder'))
-        .size({ width: '60%', height: '60%' })
-        .aspectRatio(1)
-        .constraintSize({
-          maxWidth: 350,
-          maxHeight: 350
-        })
-        .borderRadius(20)
-        .margin({ top: this.ImageMarginTop })
-        .geometryTransition('playerCoverImage', { follow: true })
-        .transition(TransitionEffect.OPACITY)
+      Column() {
+        if (this.infoHeight <= 600) {
+          Column() {
+            Image(__musicPlayer__.playNow?.cover_url ?? $r('app.media.linder'))
+              .layoutWeight(__System__.windowWidth <= minPlayerWidth ? 1 : undefined)
+              .size({
+                width: (__System__.windowWidth <= minPlayerWidth) ? undefined :
+                  (this.infoWidth <= this.infoHeight) ? '70%' : undefined,
+                height: (__System__.windowWidth <= minPlayerWidth) ? undefined :
+                  (this.infoWidth > this.infoHeight) ? '70%' : undefined
+              })
+              .borderRadius(20)
+              .aspectRatio(1)
+              .geometryTransition('playerCoverImage', { follow: true })
+              .transition(TransitionEffect.OPACITY)
 
-      Column({ space: 10 }) {
-        Text(__musicPlayer__.playNow?.title ?? '暂未播放')
-          .fontWeight(FontWeight.Bolder)
-          .fontSize(24)
-          .textAlign(TextAlign.Center)
-          .size({ width: '100%' })
-          .maxLines(2)
-          .geometryTransition('playerTitleText', { follow: true })
-          .transition(TransitionEffect.OPACITY)
-          .fontColor(Color.White)
-        Text(__musicPlayer__.playNow?.uploader_name ?? '')
-          .fontWeight(FontWeight.Normal)
-          .fontSize(16)
-          .textAlign(TextAlign.Center)
-          .size({ width: '100%' })
-          .maxLines(1)
-          .geometryTransition('playerArtistsText', { follow: true })
-          .transition(TransitionEffect.OPACITY)
-          .fontColor(Color.White)
+          }.layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
+          .size({ width: '100%', height: '100%' })
+        } else if (this.infoHeight <= 700) {
+          Column() {
 
-      }.size({ width: '60%' })
-      .margin({ top: 20 })
+            this.songTitleWithUPer()
 
-      Row({ space: 10 }) {
-        Text(StringFormat.formatMilliseconds(__musicPlayer__.currentTime))
-          .fontColor(Color.White)
-        Slider({
-          value: __musicPlayer__.currentTime,
-          min: 0,
-          max: __musicPlayer__.durationTime ?? 0,
-          style: SliderStyle.NONE
-        })
-          .size({ width: '60%' })
-          .trackThickness(10)
-          .selectedColor(Color.White)
-          .onChange((value: number, mode: SliderChangeMode) => {
-            __musicPlayer__.Seek(value)
-          })
-        Text(StringFormat.formatMilliseconds(__musicPlayer__.durationTime))
-          .fontColor(Color.White)
+            Image(__musicPlayer__.playNow?.cover_url ?? $r('app.media.linder'))
+              .borderRadius(20)
+              .layoutWeight(0.5)
+              .geometryTransition('playerCoverImage', { follow: true })
+              .transition(TransitionEffect.OPACITY)
+              .aspectRatio(1)
+              .constraintSize({maxWidth:500, maxHeight:500})
+              .size({
+                width: this.infoWidth < this.infoHeight ? '70%' : undefined,
+                height: this.infoWidth > this.infoHeight ? '70%' : undefined
+              })
+
+
+            if (this.infoWidth <= 500) {
+              this.musicController()
+            }
+
+
+          }.size({ width: '100%', height: '100%' })
+          .padding({ top: __System__.topRectHeight })
+          .justifyContent(FlexAlign.SpaceEvenly)
+
+        } else {
+          Column() {
+            Column({space:10}){
+              Image(__musicPlayer__.playNow?.cover_url ?? $r('app.media.linder'))
+                .constraintSize({maxWidth:400, maxHeight:400})
+                .borderRadius(20)
+                .geometryTransition('playerCoverImage', { follow: true })
+                .transition(TransitionEffect.OPACITY)
+                .aspectRatio(1)
+
+              this.songTitleWithUPer()
+            }.offset({top:Math.min(this.ImageMarginTop,40)})
+            .constraintSize({ maxHeight:430})
+            .size({ width: '100%' })
+            .padding({left:16, right:16})
+
+
+            Column({space:20}) {
+              Row({ space: 10 }) {
+                Text(StringFormat.formatMilliseconds(__musicPlayer__.currentTime))
+                  .fontColor(Color.White)
+                Slider({
+                  value: __musicPlayer__.currentTime,
+                  min: 0,
+                  max: __musicPlayer__.durationTime ?? 0,
+                  style: SliderStyle.NONE
+                })
+                  .layoutWeight(1)
+                  .trackThickness(10)
+                  .selectedColor(Color.White)
+                  .onChange((value: number, mode: SliderChangeMode) => {
+                    __musicPlayer__.Seek(value)
+                  })
+                Text(StringFormat.formatMilliseconds(__musicPlayer__.durationTime))
+                  .fontColor(Color.White)
+              }
+              .size({ width: '100%' })
+              .padding({ left: 32, right: 32 })
+              .justifyContent(FlexAlign.Center)
+              this.musicController()
+            }.offset({bottom:50})
+          }
+          .size({ width: '100%', height: '100%' })
+          .padding({ top: __System__.topRectHeight })
+          .justifyContent(FlexAlign.SpaceBetween)
+        }
+
+
       }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .margin({ top: 30 })
-
-      Row({ space: 10 }) {
-        Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
-          SymbolGlyph($r('sys.symbol.backward_end_fill'))
-            .fontSize(60)
-            .fontColor([Color.White])
-        }
-        .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
-        .onClick(() => {
-          __musicPlayer__.Last()
-        })
-        .geometryTransition('playerPreviousButton', { follow: true })
-        .transition(TransitionEffect.OPACITY)
-
-        Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
-          SymbolGlyph(__musicPlayer__.isPlaying ? $r('sys.symbol.pause') : $r('sys.symbol.play_fill'))
-            .fontSize(60)
-            .fontColor([Color.White])
-        }
-        .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
-        .onClick(() => {
-          __musicPlayer__.isPlaying ? __musicPlayer__.Pause() : __musicPlayer__.Play()
-        })
-        .geometryTransition('playerPlayPauseButton', { follow: true })
-        .transition(TransitionEffect.OPACITY)
-
-        Button({ type: ButtonType.ROUNDED_RECTANGLE }) {
-          SymbolGlyph($r('sys.symbol.forward_end_fill'))
-            .fontSize(60)
-            .fontColor([Color.White])
-        }
-        .backgroundColor($r('sys.color.ohos_id_color_background_transparent'))
-        .onClick(() => {
-          __musicPlayer__.Next()
-        })
-        .geometryTransition('playerNextButton', { follow: true })
-        .transition(TransitionEffect.OPACITY)
-
-      }.size({ width: '80%' })
-      .justifyContent(FlexAlign.SpaceBetween)
-      .margin({ top: 40 })
-
-    }.size({ width: '100%', height: '90%' })
-    .margin({ bottom: 40 })
-    .justifyContent(FlexAlign.SpaceBetween)
+    }.size({ width: '100%', height: '100%' })
     .onAreaChange((_, newArea) => {
-      this.ImageMarginTop = (Number(newArea.width) - Number(newArea.width) * 0.6) / 2
+      this.infoWidth = Number(newArea.width)
+      this.infoHeight = Number(newArea.height)
+      this.ImageMarginTop = (Number(newArea.width) - Number(newArea.width) * 0.7) / 2
+      console.log(this.ImageMarginTop.toString())
+      console.log(`信息组件${JSON.stringify(newArea)}`);
     })
   }
 
@@ -138,6 +212,7 @@ export struct Player {
       } else {
         Text('暂无歌词')
           .fontSize(26)
+          .fontColor(Color.Blue)
           .fontWeight(FontWeight.Bold)
       }
     }.padding({ top: __System__.topRectHeight })
@@ -175,6 +250,9 @@ export struct Player {
           .size({ width: '100%', height: '100%' })
         }
       }.size({ width: '100%', height: '100%' })
+      .onAreaChange((_, newArea) => {
+        console.log(`最大组件${JSON.stringify(newArea)}`);
+      })
     }
     .hideTitleBar(true)
     .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: __System__.windowHeight })))

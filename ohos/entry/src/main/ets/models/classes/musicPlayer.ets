@@ -18,7 +18,7 @@ export class musicPlayer {
   @Trace playList: string[] = []
   private avSessionController: AVSessionController = new AVSessionController()
 
-  @Monitor('playIndex')
+  @Monitor('playIndex','playList')
   async changePlayNow() {
     await __Client__.getSongDetail(this.playList[this.playIndex]).then((res) => {
       this.playNow = res
