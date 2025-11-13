@@ -2,11 +2,13 @@ import { window } from "@kit.ArkUI"
 import { ConfigurationConstant } from "@kit.AbilityKit"
 import { XAnimation } from "commonpackage"
 import { __CustomBackgroundData__ } from "../../../productDefault/components/CustomBackground"
-import { I_GetRecentSongRes_data_song } from "../models/interfaces/I_GetRecentSong"
+import { I_GetSongRes_data_song } from "../models/interfaces/I_GetSong"
 import { musicPlayer, __musicPlayer__ } from "../models/classes/musicPlayer"
 import { AVSessionController } from "../models/classes/AVSessionController"
 import { __Client__ } from "../models/classes/hachimi"
 import { min_split_width, min_width } from "./commonItem"
+import { I_GetProfileRes_data } from "../models/interfaces/I_GetProfile"
+import { I_GetUserSongRes_Data } from "../models/interfaces/I_GetUserSong"
 
 
 @ObservedV2
@@ -51,6 +53,8 @@ export class UserData {
   @Trace expires_in: string = ''
   @Trace uid:number = 0
   @Trace username:string = ''
+  @Trace userInfo:I_GetProfileRes_data|undefined
+  @Trace userSong:I_GetUserSongRes_Data|undefined
 }
 
 export let __User__: UserData = new UserData()

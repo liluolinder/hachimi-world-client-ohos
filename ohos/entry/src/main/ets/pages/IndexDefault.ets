@@ -12,11 +12,24 @@ import { min_width } from '../commons/commonItem';
 @ComponentV2
 struct Index {
   @Provider('tabController') tabController: TabsController = new TabsController()
-  @Provider('currentTabIndex') currentTabIndex: number =
-    XPreferencesManager.getPreferencesValue("pilipala", "currentTabIndex", 0) as number
+  @Provider('currentTabIndex') currentTabIndex: number = 1
 
   async aboutToAppear(): Promise<void> {
     __Client__.getRecentSong(true)
+    __Client__.getRecommendSong(true)
+    __Client__.getWeeklySong(true)
+    __Client__.searchSong({
+      filter:'tags = 古典',
+      type:'古典'
+    })
+    __Client__.searchSong({
+      filter:'tags = 纯净哈基米',
+      type:'纯净'
+    })
+    __Client__.searchSong({
+      filter:'tags = 原曲不使用',
+      type:'原曲不使用'
+    })
     __UI__.mainPageStack.pushPathByName('indexPage', undefined, false)
 
   }

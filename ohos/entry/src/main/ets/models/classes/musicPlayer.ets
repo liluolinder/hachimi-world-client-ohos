@@ -3,9 +3,8 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { AVSessionController } from "./AVSessionController";
 import { BackgroundUtil } from "./BackgroundRunningManager";
 import { __PlayerUIData__, __User__ } from "../../commons/shareDatas";
-import { I_GetRecentSongRes_data_song } from "../interfaces/I_GetRecentSong";
+import { I_GetSongRes_data_song } from "../interfaces/I_GetSong";
 import { __Client__ } from "./hachimi";
-import { I_SearchSongRes_data_hit } from "../interfaces/I_SearchSong";
 
 @ObservedV2
 export class musicPlayer {
@@ -13,7 +12,7 @@ export class musicPlayer {
   @Trace durationTime: number = 0
   @Trace currentTime: number = 0
   @Trace isPlaying: boolean = false
-  @Trace playNow?: I_GetRecentSongRes_data_song | I_SearchSongRes_data_hit
+  @Trace playNow?: I_GetSongRes_data_song
   @Trace playIndex: number = -1
   @Trace playList: string[] = []
   private avSessionController: AVSessionController = new AVSessionController()

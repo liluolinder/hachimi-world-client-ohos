@@ -4,6 +4,7 @@ import { __PlayerUIData__, __System__, __UI__ } from "../../../main/ets/commons/
 import { __Client__ } from "../../../main/ets/models/classes/hachimi";
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer";
 import { ImageModifier } from "@kit.ArkUI";
+import { I_GetSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetSong";
 
 @Builder
 export function playerBuilder() {
@@ -77,6 +78,15 @@ export struct Player {
         .transition(TransitionEffect.OPACITY)
         .fontColor(Color.White)
 
+      Text(__musicPlayer__.playNow?.subtitle)
+        .fontWeight(FontWeight.Bolder)
+        .fontSize(28)
+        .textAlign(TextAlign.Center)
+        .size({ width: '100%' })
+        .maxLines(1)
+        .transition(TransitionEffect.OPACITY)
+        .fontColor(Color.White)
+
       Text(__musicPlayer__.playNow?.uploader_name ?? '')
         .fontWeight(FontWeight.Normal)
         .fontSize(18)
@@ -86,6 +96,21 @@ export struct Player {
         .geometryTransition('playerArtistsText', { follow: true })
         .transition(TransitionEffect.OPACITY)
         .fontColor(Color.White)
+
+
+      //TODO:点击打开半模态展示完整信息
+      if (__musicPlayer__.playNow?.origin_infos && __musicPlayer__.playNow?.origin_infos != null && __musicPlayer__.playNow?.origin_infos[0] != undefined) {
+        Text("原作:" + __musicPlayer__.playNow?.origin_infos[0].title??'')
+      }
+
+
+      //TODO:只展示存在MV，点击后可以跳转B站
+      if (__musicPlayer__.playNow?.external_links && __musicPlayer__.playNow?.external_links!=null )
+      {
+        Text("MV")
+      }
+
+
     }.size({ width: '100%' })
     .transition(TransitionEffect.OPACITY)
   }

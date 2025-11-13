@@ -2,7 +2,7 @@ import { XAnimation } from "commonpackage"
 import { min_width } from "../../../main/ets/commons/commonItem"
 import { __System__ } from "../../../main/ets/commons/shareDatas"
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect"
-import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
+import { I_GetSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetSong"
 import { I_GetSongListInfo_data } from "../../../main/ets/models/interfaces/I_GetSongListInfo"
 import { curves } from "@kit.ArkUI"
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
@@ -22,7 +22,6 @@ export struct SongListInfoPage {
   songListBuilder() {
     Column() {
       List({ space: 10 }) {
-
         if (__System__.windowWidth < min_width) {
           ListItemGroup() {
             ListItem() {
@@ -32,6 +31,7 @@ export struct SongListInfoPage {
                     .size({ width: 80 })
                     .aspectRatio(1)
                     .borderRadius(20)
+
                   Text(this.songListInfo?.playlist_info.name)
                     .fontSize(22)
                     .layoutWeight(1)
@@ -69,7 +69,7 @@ export struct SongListInfoPage {
         }
 
         ListItemGroup({ space: 10 }) {
-          ForEach(this.songListInfo?.songs, (item: I_GetRecentSongRes_data_song, index: number) => {
+          ForEach(this.songListInfo?.songs, (item: I_GetSongRes_data_song, index: number) => {
             ListItem() {
               songListItemCover({ data: item })
             }
@@ -85,7 +85,7 @@ export struct SongListInfoPage {
               __musicPlayer__.playIndex = index
             })
 
-          }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
+          }, (item: I_GetSongRes_data_song) => JSON.stringify(item))
         }
       }
       .onAreaChange((_, newValue) => {
@@ -111,9 +111,7 @@ export struct SongListInfoPage {
 
   build() {
     NavDestination() {
-
       Column() {
-
 
         Row({ space: 10 }) {
 
@@ -173,7 +171,7 @@ export struct SongListInfoPage {
 
 @ComponentV2
 export struct songListItemCover {
-  @Param @Require data: I_GetRecentSongRes_data_song
+  @Param @Require data: I_GetSongRes_data_song
   @Param defaultImg: ResourceStr = $r('app.media.layered_image')
   @Param imageFit: ImageFit = ImageFit.Cover
   @Local private isFinish: boolean = false

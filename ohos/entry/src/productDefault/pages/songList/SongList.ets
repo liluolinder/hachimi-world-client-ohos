@@ -95,6 +95,7 @@ export struct songListCover {
           }.width('100%').enabled(false).aspectRatio(1)
 
 
+
           Text(`${this.data.songs_count}首 `)
             .fontSize(12)
             .fontColor(Color.White)

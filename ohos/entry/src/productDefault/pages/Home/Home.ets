@@ -1,12 +1,11 @@
-import { StringFormat, XAnimation } from "commonpackage"
+import { BasicDataSource, StringFormat, XAnimation } from "commonpackage"
 import { __System__, __UI__, __User__ } from "../../../main/ets/commons/shareDatas"
 import { backgroundBlurModifier } from "../../../main/ets/models/classes/backGroundEffect"
 import { __Client__ } from "../../../main/ets/models/classes/hachimi"
-import { I_GetRecentSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetRecentSong"
-import { I_SearchSongRes_data_hit } from "../../../main/ets/models/interfaces/I_SearchSong"
+import { I_GetSongRes_data_song } from "../../../main/ets/models/interfaces/I_GetSong"
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer"
-import { Player } from "../player/Player"
 import { curves } from "@kit.ArkUI"
+import { min_width } from "../../../main/ets/commons/commonItem"
 
 
 @ObservedV2
@@ -18,14 +17,35 @@ export const __Home__ = new HomeData()
 
 @ComponentV2
 export struct Home {
-  @Local ColumnNumber: number = -1
   @Local canGetMore: boolean = true
   @Local showType: number = 0 //0为最新歌曲 , 1为搜索
+  @Local homoBlockArray: ResourceStr[] =
+    ['最近发布', '每日推荐', '本周热门', '纯净哈基米专区', '古典专区', '原曲不使用专区']
+
+  @Local tempListItemArray:number[] =[]
+
+  getDaraProvider(index:number):BasicDataSource<I_GetSongRes_data_song>{
+
+    switch (index){
+      case 0:
+        return __Client__.recentSongArray
+      case 1:
+        return __Client__.recommendSongArray
+      case 2:
+        return __Client__.weeklySongArray
+      case 3:
+        return __Client__.pureSongArray
+      case 4:
+        return __Client__.classicalSongArray
+      case 5:
+        return __Client__.useNoOriginalSongArray
+    }
+    return __Client__.recentSongArray
+  }
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
       Row({ space: 10 }) {
-
         Search()
           .attributeModifier(backgroundBlurModifier)
           .width(__Home__.inSearchMode ? '100%' : "45%")
@@ -36,7 +56,7 @@ export struct Home {
             })
             if (value != '') {
               this.showType = 1
-              __Client__.searchSong(value, true)
+             // __Client__.searchSong(value, true)
             }
           })
           .onChange((value: string) => {
@@ -59,60 +79,70 @@ export struct Home {
       .transition(XAnimation.getAnimation('up'))
       .zIndex(114514)
 
-      if ((this.showType == 0 && __Client__.recentSongArray.dataArray.length == 0) ||
-        (this.showType == 1 && __Client__.searchSongArray.dataArray.length == 0)) {
-        Column({ space: 10 }) {
-          LoadingProgress()
-            .size({ width: 80, height: 80 })
-          Text('正在加载请稍后，加载速度取决于网速')
-            .fontWeight(FontWeight.Bold)
-            .fontSize(26)
-        }.size({ width: '100%', height: '100%' })
-        .justifyContent(FlexAlign.Center)
-      } else {
-        List({ space: 10 }) {
-          if (this.showType == 0) {
-            LazyForEach(__Client__.recentSongArray, (item: I_GetRecentSongRes_data_song, index: number) => {
-              HomeCover({ data: item, type: 0 })
-                .onClick(async () => {
-                  __musicPlayer__.playNow = item
-                  __musicPlayer__.playList = []
-                  __Client__.recentSongArray.dataArray.forEach((itemA) => {
-                    __musicPlayer__.playList.push(itemA.display_id)
-                  })
-                  __musicPlayer__.playIndex = index
-                })
 
-            }, (item: I_GetRecentSongRes_data_song) => JSON.stringify(item))
-          } else {
-            LazyForEach(__Client__.searchSongArray, (item: I_SearchSongRes_data_hit, index: number) => {
-              HomeCover({ data: item, type: 1 })
-                .onClick(async () => {
-                  __musicPlayer__.playNow = item
-                  __musicPlayer__.playList = []
-                  __Client__.searchSongArray.dataArray.forEach((itemA) => {
-                    __musicPlayer__.playList.push(itemA.display_id)
-                  })
-                  __musicPlayer__.playIndex = index
-                })
-            }, (item: I_SearchSongRes_data_hit) => JSON.stringify(item))
-          }
-        }
-        .padding({ left: 16, right: 16 })
-        .scrollBar(BarState.Off)
-        .contentStartOffset(__System__.topRectHeight + 70)
-        .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 100)
-        .onAreaChange((_, newValue) => {
-          XAnimation.runWithAnimation(() => {
-            this.ColumnNumber = Math.max(Math.ceil(new Number(newValue.width).valueOf() / 300), 2)
-          }, this.ColumnNumber > 0)
+      List({ space: 30 }) {
+        ForEach(this.tempListItemArray,()=>{
+          ListItem()
+            .height(__System__.topRectHeight + 70)
+            .width('100%')
         })
-        .lanes(this.ColumnNumber, 10)
-        .layoutWeight(1)
-        .cachedCount(this.ColumnNumber * 10)
-        .edgeEffect(EdgeEffect.Spring)
-        .blur(__Home__.inSearchMode ? 50 : 0)
+        ForEach(this.homoBlockArray, (item: ResourceStr, index: number) => {
+          ListItem() {
+            Column() {
+              Row() {
+                Text(item)
+                  .width('100%')
+                  .fontSize(24)
+                  .fontWeight(FontWeight.Bold)
+              }
+
+              Column() {
+                if ((this.getDaraProvider(index).totalCount() != 0 ) ){
+                  List({ space: 10 }) {
+                    LazyForEach(this.getDaraProvider(index), (item: I_GetSongRes_data_song, indexA: number) => {
+                      HomeCover({ data: item, type: index >=3?1:0 })
+                        .width(150)
+                        .onClick(async () => {
+                          __musicPlayer__.playNow = item
+                          __musicPlayer__.playList = []
+                          this.getDaraProvider(index).dataArray.forEach((itemA) => {
+                            __musicPlayer__.playList.push(itemA.display_id)
+                          })
+                          __musicPlayer__.playIndex = indexA
+                        })
+
+                    }, (item: I_GetSongRes_data_song) => JSON.stringify(item))
+                  }
+                  .scrollBar(BarState.Off)
+                  .width('100%')
+                  .listDirection(Axis.Horizontal)
+                  .lanes(2, 10)
+                  .edgeEffect(EdgeEffect.Spring)
+                  .blur(__Home__.inSearchMode ? 50 : 0)
+                } else {
+                  Column() {
+                    LoadingProgress()
+                      .size({ width: 100 })
+                  }.height('100%')
+                  .justifyContent(FlexAlign.Center)
+                }
+              }
+            }.height(482)
+          }
+        },(item:ResourceStr)=>item.toString() + (new Date).toDateString())
+
       }
+      .onAreaChange(()=>{
+        this.tempListItemArray = []
+        for (let index = 0; index < (__System__.windowWidth > min_width ? 2 : 1); index++) {
+          this.tempListItemArray.push(0)
+        }
+      })
+      .height('100%')
+      .width('100%')
+      .contentEndOffset(Math.max(__System__.bottomRectHeight, 16) + 100)
+      .padding({ left: 16, right: 16 })
+      .lanes(__System__.windowWidth > min_width ? 2 : 1, 20)
 
 
       if (__Home__.inSearchMode) {
@@ -134,7 +164,7 @@ export struct Home {
 @ComponentV2
 export struct HomeCover {
   @Param @Require type: number
-  @Param @Require data: I_GetRecentSongRes_data_song | I_SearchSongRes_data_hit
+  @Param @Require data: I_GetSongRes_data_song
   @Param defaultImg: ResourceStr = $r('app.media.layered_image')
   @Param imageFit: ImageFit = ImageFit.Cover
   @Local private isFinish: boolean = false
@@ -144,8 +174,8 @@ export struct HomeCover {
       Column() {
         RelativeContainer() {
           Stack() {
-            Image((this.type == 0 ? (this.data as I_GetRecentSongRes_data_song).cover_url :
-              (this.data as I_SearchSongRes_data_hit).cover_art_url) ?? this.defaultImg)
+            Image((this.type == 0 ? this.data.cover_url :
+              this.data.cover_art_url) ?? this.defaultImg)
               .transition(TransitionEffect.OPACITY)
               .objectFit(this.imageFit)
               .onComplete((res) => {
@@ -156,10 +186,10 @@ export struct HomeCover {
                 .transition(TransitionEffect.OPACITY.animation({ duration: 150, curve: Curve.Ease }))
                 .objectFit(ImageFit.Cover)
             }
-          }.width('100%').enabled(false).aspectRatio(3 / 2)
+          }.width('100%').enabled(false).aspectRatio(1)
 
 
-          Text(StringFormat.formatSeconds(this.data.duration_seconds))
+          Text(StringFormat.formatSeconds(this.data.duration_seconds ?? 0))
             .fontSize(12)
             .fontColor(Color.White)
             .backgroundColor('#40000000')
@@ -194,7 +224,7 @@ export struct HomeCover {
             bottom: 3
           })
           .borderRadius({ topRight: 5 })
-        }.aspectRatio(3 / 2)
+        }.aspectRatio(1)
 
         Column({ space: 10 }) {
           Column() {

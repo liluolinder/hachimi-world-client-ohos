@@ -1,4 +1,4 @@
-import { I_GetRecentSongRes_data_song } from "./I_GetRecentSong"
+import { I_GetSongRes_data_song } from "./I_GetSong"
 
 
 export interface I_GetHistoryRes{
@@ -12,6 +12,6 @@ export interface I_GetHistoryRes_Data{
 
 export interface I_GetHistoryRes_Data_Item {
   id:number
-  song_info:I_GetRecentSongRes_data_song
+  song_info:I_GetSongRes_data_song
   play_time:string
 }

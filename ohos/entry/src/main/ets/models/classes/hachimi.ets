@@ -1,28 +1,39 @@
 import { http } from "@kit.NetworkKit";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { JSON } from "@kit.ArkTS";
-import { I_GetRecentSongRes, I_GetRecentSongRes_data_song, I_GetSongDetailRes } from "../interfaces/I_GetRecentSong";
+import { I_GetSongRes, I_GetSongRes_data_song, I_GetSongDetailRes } from "../interfaces/I_GetSong";
 import { BasicDataSource, XPreferencesManager } from "commonpackage";
 import { USER_AGENT } from "../../commons/commonItem";
-import { I_SearchSongRes, I_SearchSongRes_data_hit } from "../interfaces/I_SearchSong";
+import { I_SearchSongParm, I_SearchSongRes } from "../interfaces/I_SearchSong";
 import { __System__, __User__ } from "../../commons/shareDatas";
 import { I_UpdateHistoryRes } from "../interfaces/I_UpdateHistory";
 import { I_GenerateCaptchaRes, I_GenerateCaptchaRes_data } from "../interfaces/I_GenerateCaptcha";
 import { I_LoginRes, I_LoginRes_data, I_LoginRes_dataError } from "../interfaces/I_Login";
-import { I_GetProfileRes } from "../interfaces/I_GetProfile";
+import { I_GetProfileRes, I_GetProfileRes_data } from "../interfaces/I_GetProfile";
 import { I_GetHistoryRes, I_GetHistoryRes_Data_Item } from "../interfaces/I_GetHistory";
 import { I_RefreshToken, I_RefreshToken_data_OK } from "../interfaces/I_RefreshToken";
 import { I_CreateSongListRes } from "../interfaces/I_CreateSongList";
 import { I_GetSongListRes, I_GetSongListRes_data_item } from "../interfaces/I_GetSongList";
 import { I_AddSong2SongListInfoParm, I_AddSong2SongListInfoRes } from "../interfaces/I_AddSong2SongListInfo";
 import { I_GetSongListInfoRes, I_GetSongListInfo_data } from "../interfaces/I_GetSongListInfo";
+import { I_GetUserSongRes, I_GetUserSongRes_Data } from "../interfaces/I_GetUserSong";
 
 
 @ObservedV2
 export class hachimi {
-  @Trace recentSongArray: BasicDataSource<I_GetRecentSongRes_data_song> =
-    new BasicDataSource<I_GetRecentSongRes_data_song>()
-  @Trace searchSongArray: BasicDataSource<I_SearchSongRes_data_hit> = new BasicDataSource<I_SearchSongRes_data_hit>()
+  @Trace recentSongArray: BasicDataSource<I_GetSongRes_data_song> =
+    new BasicDataSource<I_GetSongRes_data_song>()
+  @Trace recommendSongArray: BasicDataSource<I_GetSongRes_data_song> =
+    new BasicDataSource<I_GetSongRes_data_song>()
+  @Trace weeklySongArray: BasicDataSource<I_GetSongRes_data_song> =
+    new BasicDataSource<I_GetSongRes_data_song>()
+  @Trace pureSongArray: BasicDataSource<I_GetSongRes_data_song> =
+    new BasicDataSource<I_GetSongRes_data_song>()
+  @Trace classicalSongArray: BasicDataSource<I_GetSongRes_data_song> =
+    new BasicDataSource<I_GetSongRes_data_song>()
+  @Trace useNoOriginalSongArray: BasicDataSource<I_GetSongRes_data_song> =
+    new BasicDataSource<I_GetSongRes_data_song>()
+  @Trace searchSongArray: BasicDataSource<I_GetSongRes_data_song> = new BasicDataSource<I_GetSongRes_data_song>()
   @Trace playHistoryArray: BasicDataSource<I_GetHistoryRes_Data_Item> = new BasicDataSource<I_GetHistoryRes_Data_Item>()
   @Trace songListArray: BasicDataSource<I_GetSongListRes_data_item> = new BasicDataSource<I_GetSongListRes_data_item>()
 
@@ -98,7 +109,7 @@ export class hachimi {
       });
   }
 
-  async getProfile(uid: number) {
+  async getProfile(uid: number):Promise<undefined | I_GetProfileRes_data > {
     await this.refreshToken()
     let req = http.createHttp()
     return await req.request(`https://api.hachimi.world/user/profile?uid=${uid}`, {
@@ -112,7 +123,34 @@ export class hachimi {
       let result = JSON.parse((obj as object)?.['result'])
       let res: I_GetProfileRes = result as I_GetProfileRes
       if (res.ok) {
-        return 'ok'
+        return res.data
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async getUserSong(uid: number):Promise<undefined | I_GetUserSongRes_Data> {
+    await this.refreshToken()
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/song/page_by_user?user_id=${uid}`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetUserSongRes = result as I_GetUserSongRes
+      if (res.ok) {
+        return res.data
       } else {
         return undefined
       }
@@ -185,7 +223,7 @@ export class hachimi {
     }).then(async (data: http.HttpResponse) => {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
-      let res: I_GetRecentSongRes = result as I_GetRecentSongRes
+      let res: I_GetSongRes = result as I_GetSongRes
       if (res.ok) {
 
         res.data.songs.forEach((item) => {
@@ -205,7 +243,110 @@ export class hachimi {
       });
   }
 
-  async getSongDetail(id: string): Promise<undefined | I_GetRecentSongRes_data_song> {
+  async getRecommendSong(needClear: boolean = false): Promise<undefined | number> {
+    if (needClear) {
+      this.recentSongArray.clearData()
+    }
+    if (__User__.isLogin) {
+      return await this.getRecommendSongLogin()
+    } else {
+      return await this.getRecommendSongNoLogin()
+    }
+  }
+
+  async getRecommendSongLogin(): Promise<undefined | number> {
+    await this.refreshToken()
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/song/recommend`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+        'authorization': `Bearer ${__User__.access_token}`,
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetSongRes = result as I_GetSongRes
+      if (res.ok) {
+        res.data.songs.forEach((item) => {
+          this.recommendSongArray.pushData(item)
+        })
+        return res.data.songs.length
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async getRecommendSongNoLogin(): Promise<undefined | number> {
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/song/recommend_anonymous`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetSongRes = result as I_GetSongRes
+      if (res.ok) {
+        res.data.songs.forEach((item) => {
+          this.recommendSongArray.pushData(item)
+        })
+        return res.data.songs.length
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async getWeeklySong(needClear: boolean = false): Promise<undefined | number> {
+    if (needClear) {
+      this.recentSongArray.clearData()
+    }
+    let req = http.createHttp()
+    return await req.request(`https://api.hachimi.world/song/hot/weekly`, {
+      method: http.RequestMethod.GET,
+      header: {
+        'sec-ch-ua-platform': '"Windows"',
+        'user-agent': USER_AGENT,
+      },
+    }).then(async (data: http.HttpResponse) => {
+      let obj = JSON.parse(JSON.stringify(data))
+      let result = JSON.parse((obj as object)?.['result'])
+      let res: I_GetSongRes = result as I_GetSongRes
+      if (res.ok) {
+        res.data.songs.forEach((item) => {
+          this.weeklySongArray.pushData(item)
+        })
+        return res.data.songs.length
+      } else {
+        return undefined
+      }
+    })
+      .catch((err: BusinessError) => {
+        console.log(`Liquid:${JSON.stringify(err)}`)
+        return undefined
+      }).finally(() => {
+        req.destroy();
+      });
+  }
+
+  async getSongDetail(id: string): Promise<undefined | I_GetSongRes_data_song> {
     let req = http.createHttp()
     console.log(`https://api.hachimi.world/song/detail?id=${id}`)
     return await req.request(`https://api.hachimi.world/song/detail?id=${id}`, {
@@ -232,9 +373,10 @@ export class hachimi {
       });
   }
 
-  async searchSong(songName: string, needClear: boolean = false): Promise<undefined | number> {
+  async searchSong(param:I_SearchSongParm, needClear: boolean = false): Promise<undefined | number> {
     let req = http.createHttp()
-    return await req.request(`https://api.hachimi.world/song/search?q=${encodeURI(songName)}`, {
+    return await req.request(`https://api.hachimi.world/song/search?q=${encodeURI(param.songName??'')}&${param.limit??-1 == -1 ? '' :
+      `limit=${param.limit}&`}&filter=${encodeURI(param.filter??'')}`, {
       method: http.RequestMethod.GET,
       header: {
         'sec-ch-ua-platform': '"Windows"',
@@ -244,13 +386,43 @@ export class hachimi {
       let obj = JSON.parse(JSON.stringify(data))
       let result = JSON.parse((obj as object)?.['result'])
       let res: I_SearchSongRes = result as I_SearchSongRes
+      console.log(JSON.stringify(res))
       if (res.ok) {
-        if (needClear) {
-          this.searchSongArray.clearData()
+        switch (param.type??'') {
+          case '纯净':
+            if (needClear) {
+              this.pureSongArray.clearData()
+            }
+            res.data.hits.forEach((item) => {
+              this.pureSongArray.pushData(item)
+            })
+            break;
+          case '古典':
+            if (needClear) {
+              this.classicalSongArray.clearData()
+            }
+            res.data.hits.forEach((item) => {
+              this.classicalSongArray.pushData(item)
+            })
+            break;
+          case '原曲不使用':
+            if (needClear) {
+              this.useNoOriginalSongArray.clearData()
+            }
+            res.data.hits.forEach((item) => {
+              this.useNoOriginalSongArray.pushData(item)
+            })
+            break;
+          default :
+            if (needClear) {
+              this.searchSongArray.clearData()
+            }
+            res.data.hits.forEach((item) => {
+              this.searchSongArray.pushData(item)
+            })
+            break;
         }
-        res.data.hits.forEach((item) => {
-          this.searchSongArray.pushData(item)
-        })
+
 
         return res.data.hits.length
       } else {

@@ -32,6 +32,7 @@ export struct personalSheet {
   @Local password: string = ''
   @Local confirmPassword: string = ''
   @Local captchaInfo?: I_GenerateCaptchaRes_data
+  @Local showVerifyWeb:boolean = false
   @Consumer('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
 
   @Monitor('localLoginType')
@@ -39,6 +40,21 @@ export struct personalSheet {
     this.email = ''
     this.password = ''
     this.confirmPassword = ''
+  }
+
+  @Builder
+  verifyWebBuilder(){
+    Column(){
+      Web({ src: this.captchaInfo?.url, controller: this.controller })
+        .onControllerAttached(() => {
+          console.info("onControllerAttached");
+          try {
+            this.controller.setCustomUserAgent('Mozilla/5.0 (PC; OpenHarmony 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 ArkWeb/6.0.0.107 HuaweiBrowser/5.1.9.311');
+          } catch (error) {
+            console.error(`ErrorCode: ${(error as BusinessError).code},  Message: ${(error as BusinessError).message}`);
+          }
+        })
+    }.size({width:'100%', height:'100%'})
   }
 
   @Builder
@@ -125,6 +141,21 @@ export struct personalSheet {
         SymbolGlyph($r('sys.symbol.arrow_right'))
       }
     }.size({ width: 80, height: 80 })
+    .bindSheet($$this.showVerifyWeb,this.verifyWebBuilder(),{
+      height: SheetSize.LARGE,
+      preferType: SheetType.CENTER,
+      title: { title: '入机验证' },
+      onWillDisappear: async ()=>{
+        this.loginErrorInfo = await __Client__.login(this.email, this.password, this.captchaInfo?.captcha_key)
+        if (this.loginErrorInfo != 'ok' || this.loginErrorInfo == undefined) {
+          this.localLoginState = loginState.Error
+        } else {
+          this.localLoginState = loginState.Complete
+          this.showLoginOrUserInfo = false
+          XContext.toast(`欢迎${__User__.username}`)
+        }
+      }
+    })
     .onClick(() => {
       if (this.localLoginState != loginState.Loading) {
         this.loginErrorInfo = ''
@@ -133,41 +164,7 @@ export struct personalSheet {
           this.captchaInfo = await __Client__.generateCaptcha()
 
           if (this.captchaInfo && this.captchaInfo.url && this.captchaInfo.url!='') {
-            let want: Want = {
-              action: 'ohos.want.action.viewData',
-              entities: ['entity.system.browsable'],
-              uri: this.captchaInfo?.url,
-            };
-
-            XContext.startAbility(want)
-            XContext.getContext().showAlertDialog(
-              {
-                title: '提醒',
-                message: '是否在弹出浏览器进行完成人机验证',
-                alignment: DialogAlignment.Center,
-                primaryButton: {
-                  value: '否',
-                  action: () => {
-                  }
-                },
-                secondaryButton: {
-                  enabled: true,
-                  defaultFocus: true,
-                  style: DialogButtonStyle.HIGHLIGHT,
-                  value: '是',
-                  action: async () => {
-                    this.loginErrorInfo = await __Client__.login(this.email, this.password, this.captchaInfo?.captcha_key)
-                    if (this.loginErrorInfo != 'ok' || this.loginErrorInfo == undefined) {
-                      this.localLoginState = loginState.Error
-                    } else {
-                      this.localLoginState = loginState.Complete
-                      this.showLoginOrUserInfo = false
-                      XContext.toast(`欢迎${__User__.username}`)
-                    }
-                  }
-                }
-              }
-            )
+            this.showVerifyWeb = true
           }else {
             this.loginErrorInfo = '出现意料之外的问题'
           }

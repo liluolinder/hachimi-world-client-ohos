@@ -3,18 +3,18 @@ import { min_width } from "../../../main/ets/commons/commonItem";
 import {  __SettingsUIData__, __System__, __UI__ } from "../../../main/ets/commons/shareDatas";
 import { __musicPlayer__ } from "../../../main/ets/models/classes/musicPlayer";
 import { Home } from "../home/Home";
-import { playerBuilder } from "../player/Player";
 import { PlayHistory } from "../playHistory/PlayHistory";
 
 import { settingsPageBuilder } from "../settings/SettingsMainPage";
 import { SongList } from "../songList/SongList";
+import { userProfile } from "../userProfile/userProfile";
 
 
 @ComponentV2
 export struct Body{
   @Consumer('tabController') tabController: TabsController = new TabsController();
   @Consumer('mainPageStack') pageStack: NavPathStack = new NavPathStack()
-  @Consumer('currentTabIndex') currentTabIndex: number = 0
+  @Consumer('currentTabIndex') currentTabIndex: number = 1
 
 
 
@@ -22,6 +22,9 @@ export struct Body{
     NavDestination(){
       Stack(){
         Tabs({ controller: this.tabController, index: $$this.currentTabIndex }) {
+          TabContent() {
+            userProfile()
+          }
           TabContent() {
             Home()
           }
@@ -39,6 +42,9 @@ export struct Body{
         .scrollable(false)
         .vertical(__System__.windowWidth > min_width)
         .barWidth(0)
+        .onChange(()=>{
+
+        })
         .barHeight(0)
         .barMode(BarMode.Fixed)
 

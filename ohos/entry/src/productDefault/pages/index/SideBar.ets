@@ -13,7 +13,7 @@ import { __Client__ } from "../../../main/ets/models/classes/hachimi";
 @ComponentV2
 export struct SideBar {
   @Consumer('tabController') tabController: TabsController = new TabsController();
-  @Consumer('currentTabIndex') currentTabIndex: number = 0
+  @Consumer('currentTabIndex') currentTabIndex: number = 1
   @Provider('showLoginOrUserInfo') showLoginOrUserInfo: boolean = false
   pageArray: I_PageInfo[] = [
     { name: '主页', symbol: $r('sys.symbol.house') },
@@ -67,9 +67,17 @@ export struct SideBar {
           .padding(__UI__.isLargeSidebar ? 12 : 0)
           .width('100%')
           .height(100)
-          .onClick(() => {
+          .onClick(async () => {
             if (!__User__.isLogin) {
               this.showLoginOrUserInfo = true
+            }else{
+              this.tabController.changeIndex(0)
+              __Client__.getProfile(__User__.uid).then((res)=>{
+                __User__.userInfo = res
+              })
+              __Client__.getUserSong(__User__.uid).then((res)=>{
+                __User__.userSong = res
+              })
             }
           })
           .bindSheet($$this.showLoginOrUserInfo, personalSheetBuilder(), {
@@ -86,14 +94,14 @@ export struct SideBar {
                 image: item.image,
                 message: item.name,
                 isLarge: __UI__.isLargeSidebar,
-                isHighlight: this.currentTabIndex == index
+                isHighlight: this.currentTabIndex == index+1
               })
                 .onClick(() => {
-                  this.tabController.changeIndex(index)
-                  if (this.currentTabIndex != index) {
+                  this.tabController.changeIndex(index+1)
+                  if (this.currentTabIndex != index+1) {
                     switch (index) {
                       case 0:
-                        __Client__.getRecentSong(true)
+                        //__Client__.getRecentSong(true)
                         break
                       case 1:
                         break
